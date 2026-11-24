@@ -56,6 +56,7 @@ import FormatToolbar from "./ui/FormatToolbar.svelte";
 import CopyButton from "./ui/CopyButton.svelte";
 import icon from "./favicon.ico?inline";
 import { publish, current } from "./published.ts";
+import { htmlView } from "./editor/surface.ts";
 
 /* the read-only build (`vite build --mode reader`): the entries a picked
    bundle holds, every one locked */
@@ -259,7 +260,8 @@ const leftEntry = (): void => {
 };
 const entryShown = (stored: string, ekey: string): void => {
   dropStaleCopy();
-  screen.gutter = !!session.view && offersInterval(session.view.dom);
+  const view = htmlView(session.shown);
+  screen.gutter = !!view && offersInterval(view.dom);
   /* a warning belongs to the entry it was met on (pin: alerts and places
      › another entry clears the warning); one met before any entry was
      shown, an address refused at launch, stays (pin: bridge › an unknown
@@ -359,7 +361,6 @@ const showEditor = (on: boolean): void => {
    entry inserts nothing (pin: alerts and surfaces › a shortcut chosen with
    no cursor in the entry) */
 const caretInEntry = (): boolean => { const a = document.getSelection()?.anchorNode; return !!a && mountEl.contains(a); };
-const markdownPort = { insertAfter: (text: string) => { session.insertText(text, true); }, inHeading: () => session.markdownLineIsHeading() };
 let cardCaret = false;
 const openShortcuts = (): void => {
   cardCaret = caretInEntry();
@@ -449,9 +450,8 @@ const kept = keptState({
 });
 const life = lifecycle({
   layer, journal, session,
-  view: () => session.view,
+  shown: () => session.shown,
   caretInEntry,
-  markdown: () => session.markdownMode ? markdownPort : null,
   dialogs: { prompt: (text, value) => prompt(text, value), confirm: (text) => confirm(text), alert: (text) => alert(text) },
   kept,
   ...pictureMoves(images),

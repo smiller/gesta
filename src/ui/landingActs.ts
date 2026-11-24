@@ -7,6 +7,8 @@ import { endsLineMark, landingPos, setLanding } from "../editor/landing.ts";
 import { caretNear } from "../editor/rowKeys.ts";
 import type { Raise } from "../model/alertText.ts";
 import { pageTop } from "./alertArea.ts";
+import { htmlView } from "../editor/surface.ts";
+import type { EditorView } from "prosemirror-view";
 
 /* the window the landing scrolls: `top` is where the page shows from */
 export interface LandingPage { scrollBy(dy: number): void; top(): number; height(): number; nextFrame(f: () => void): void }
@@ -24,7 +26,7 @@ export const windowHand: Hand = {
   },
 };
 export interface LandingDeps {
-  session: Pick<Session, "current" | "view" | "markdownMode">;
+  session: Pick<Session, "current" | "shown">;
   conventions(): Conventions;
   raise: Raise;
   warmed(): boolean;
@@ -42,7 +44,7 @@ export interface Landing {
   centreSoon(): void;
   replayOwed(): void;
 }
-type View = NonNullable<Session["view"]>;
+type View = EditorView;
 
 export function landingActs(d: LandingDeps): Landing {
   const { session, conventions, raise, warmed, page, hand } = d;
@@ -54,7 +56,7 @@ export function landingActs(d: LandingDeps): Landing {
     const top = page.top();
     page.scrollBy((rect.top + rect.bottom) / 2 - (top + (page.height() - top) / 2));
   }
-  const drawnView = (): View | null => (session.markdownMode ? null : session.view);
+  const drawnView = (): View | null => htmlView(session.shown);
   function centreSelection(): void {
     const view = drawnView();
     if (!view || view.state.selection.empty) return;
@@ -73,7 +75,7 @@ export function landingActs(d: LandingDeps): Landing {
     scrollIntoBand({ top: Math.min(a.top, b.top), bottom: Math.max(a.bottom, b.bottom) });
   };
   const answer = (words: Words, from: "toolbar" | "link"): boolean => {
-    const view = session.view!;
+    const view = htmlView(session.shown)!;
     const a = ask(view.state.doc, conventions(), words, { pos: landingPos(view.state), asked: lineAsked }, from);
     if ("pos" in a) { lineAsked = a.asked; landOn(view, a.pos); }
     if (a.said) raise(a.said);
@@ -86,11 +88,11 @@ export function landingActs(d: LandingDeps): Landing {
     view.dispatch(view.state.tr.setSelection(caretNear(view.state.doc, at)));
   };
   const caretBack = (): void => {
-    const view = session.view;
+    const view = htmlView(session.shown);
     const pos = view ? landingPos(view.state) : null;
     if (view && pos !== null) caretOn(view, pos);
   };
-  const unmark = (): void => { if (session.view) setLanding(session.view, null); };
+  const unmark = (): void => { const view = htmlView(session.shown); if (view) setLanding(view, null); };
   /* before the warm a work's own page, which says how it is referred to, may
      not be read (pin: a link to a line › a link to a paragraph before the warm) */
   let lineOwed: { v: string; key: string } | null = null;

@@ -5,7 +5,7 @@ import type { Screen } from "./screen.svelte.ts";
 function barOf(kind: Screen["gotoToolbar"]["kind"]) {
   const lb: Screen["gotoToolbar"] = { open: true, kind, line: "", page: "", stanza: "", lineLabel: "Line", pageLabel: "Page" };
   const landing = { answer: () => false, forgetAsked: () => {}, caretBack: () => {}, unmark: () => {}, followSoon: () => {}, centreSoon: () => {}, replayOwed: () => {} };
-  const deps: GotoToolbarDeps = { lb, session: { current: { date: "bookshelf", tag: "A/W" }, view: null, markdownMode: false }, journal: {} as never, raise: () => {}, opened: () => {}, focusBar: () => {}, landing, listen: () => {} };
+  const deps: GotoToolbarDeps = { lb, session: { current: { date: "bookshelf", tag: "A/W" }, shown: null }, journal: {} as never, raise: () => {}, opened: () => {}, focusBar: () => {}, landing, listen: () => {} };
   return { lb, acts: gotoToolbarActs(deps) };
 }
 

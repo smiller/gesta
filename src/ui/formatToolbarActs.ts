@@ -6,14 +6,16 @@ import { blankRowSelected } from "../editor/rowKeys.ts";
 import { passageAt } from "../editor/passage.ts";
 import { pageTop } from "./alertArea.ts";
 import { said, type Raise } from "../model/alertText.ts";
+import { htmlView } from "../editor/surface.ts";
+import type { EditorView } from "prosemirror-view";
 
-type BarView = NonNullable<Session["view"]>;
+type BarView = EditorView;
 type Command = (state: EditorState, dispatch?: (tr: Transaction) => void) => boolean;
 
 export interface FormatToolbarDeps {
   toolbar: Screen["formatToolbar"];
   buttons: () => Screen["masthead"]["buttons"];
-  session: Pick<Session, "view" | "markdownMode" | "copyReference" | "showWordCount">;
+  session: Pick<Session, "shown" | "copyReference" | "showWordCount">;
   raise: Raise;
   extract(): void;
   mountEl: HTMLElement;
@@ -49,9 +51,9 @@ export function formatToolbar(d: FormatToolbarDeps): FormatToolbar {
      touches the page — the toolbar is for text a reader chose to format (pin:
      format toolbar › a word double-clicked) */
   let barSuppressed = false;
-  const barView = (): Session["view"] => {
-    const view = session.view;
-    if (!view || session.markdownMode) return null;
+  const barView = (): EditorView | null => {
+    const view = htmlView(session.shown);
+    if (!view) return null;
     return barSuppressed ? null : view;
   };
   /* the text moves only when a gesture settles, a button or a key let go:
@@ -84,7 +86,7 @@ export function formatToolbar(d: FormatToolbarDeps): FormatToolbar {
   const hide = (): void => { toolbar.show = false; if (moved) moveText(0); };
   const place = (settle = false): void => {
     const rect = placedOver();
-    if (rect) showAt(session.view!, settle ? settled(rect) : rect);
+    if (rect) showAt(htmlView(session.shown)!, settle ? settled(rect) : rect);
     else hide();
   };
   document.addEventListener("selectionchange", () => requestAnimationFrame(() => place()));
@@ -110,7 +112,7 @@ export function formatToolbar(d: FormatToolbarDeps): FormatToolbar {
     place();
   };
   const act = (name: string): void => {
-    const view = session.view;
+    const view = htmlView(session.shown);
     if (!view) return;
     if (elsewhere[name]) elsewhere[name]();
     else format(view, name);

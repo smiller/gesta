@@ -17,6 +17,7 @@ import { rootLabel } from "./rootListing.ts";
 import { retargetLinks, relabelLinks } from "../store/links.ts";
 import { linkRefusal, headingRefusal, cutsHeading, insertLinkAfter, linkMarkdown } from "../editor/insertLink.ts";
 import { cutMd, replaceWithLink } from "../editor/format.ts";
+import { htmlView, sameShown, type Shown } from "../editor/surface.ts";
 import { firstHeading } from "../store/headings.ts";
 import { nsOf, tagParts, entryKey, entryHash, KEYED_NS, NS_BOOK, plural } from "../store/keys.ts";
 import { SHELVES } from "../store/shelves.ts";
@@ -25,8 +26,7 @@ import type { KeptState } from "./keptState.ts";
 import { said, alertWords, type Raise, type Said } from "../model/alertText.ts";
 
 export type EditorPort = Pick<EditorView, "state" | "dispatch">;
-export interface MarkdownPort { insertAfter(text: string): void; inHeading(): boolean }
-export type SessionPort = Pick<Session, "current" | "save" | "open" | "refresh" | "goto">;
+export type SessionPort = Pick<Session, "current" | "save" | "open" | "refresh" | "goto" | "insertText">;
 export interface Dialogs {
   prompt(text: string, value?: string): string | null;
   confirm(text: string): boolean;
@@ -42,11 +42,9 @@ export interface UiPort {
 export interface LifecycleDeps {
   layer: EntryLayer;
   journal: Journal;
-  view(): EditorPort | null;
+  shown(): Shown | null;
   /* read as an act begins, before a prompt takes the focus */
   caretInEntry(): boolean;
-  /* markdown mode, where it is the one showing */
-  markdown(): MarkdownPort | null;
   session: SessionPort;
   dialogs: Dialogs;
   ui: UiPort;
@@ -126,21 +124,20 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     if (!nsOf(c.date) && c.tag) return said("taggedHostsNothing");
     return onShelves(c.date, c.tag) ? SHELVES_EMPTY : null;
   }
-  const nowhere = (view: EditorPort | null, markdown: MarkdownPort | null): boolean => !view && !markdown;
-  function placeRefusal(inEntry: boolean, view: EditorPort | null, markdown: MarkdownPort | null): Said | null {
-    if (!inEntry || nowhere(view, markdown)) return said("placeCursor");
-    if (view) return linkRefusal(view.state) ?? headingRefusal(view.state);
-    return markdown!.inHeading() ? said("noLinkInHeading") : null;
+  function placeRefusal(inEntry: boolean, shown: Shown | null): Said | null {
+    if (!inEntry || !shown) return said("placeCursor");
+    if (shown.mode === "html") return linkRefusal(shown.view.state) ?? headingRefusal(shown.view.state);
+    return shown.lineIsHeading() ? said("noLinkInHeading") : null;
   }
-  interface Placing { c: Current; spec: Spec; view: EditorPort | null; markdown: MarkdownPort | null }
+  interface Placing { c: Current; spec: Spec; shown: Shown }
   const placeMoved = (p: Placing): boolean =>
-    (p.view ? p.view !== deps.view() : p.markdown !== deps.markdown() || entryKey(session.current.date, session.current.tag) !== entryKey(p.c.date, p.c.tag));
+    !sameShown(p.shown, deps.shown()) || (p.shown.mode === "markdown" && entryKey(session.current.date, session.current.tag) !== entryKey(p.c.date, p.c.tag));
   function linkPlaced(p: Placing, landed: boolean): Promise<void> | void {
     if (!landed) { ui.raise("entryNotCreated"); return; }
     if (placeMoved(p)) { ui.raise("linkNotPlaced"); return; }
     const label = mdLabel(p.spec.tag, "entry");
-    if (p.view) insertLinkAfter(p.view, p.spec.href, label);
-    else p.markdown!.insertAfter(linkMarkdown(p.spec.href, label));
+    if (p.shown.mode === "html") insertLinkAfter(p.shown.view, p.spec.href, label);
+    else session.insertText(linkMarkdown(p.spec.href, label), true);
     return session.save.now().then(() => { ui.redraw(); session.goto(p.spec.href); });
   }
 
@@ -157,13 +154,13 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     const spec = askSpec(c);
     if (!spec) return done;
     if (registered(keysNow(), c.date, spec.full)) { session.goto(spec.href, said("alreadyHere")); return done; }
-    const view = deps.view(), markdown = view ? null : deps.markdown();
-    const why = placeRefusal(inEntry, view, markdown);
-    if (why) return refused(why);
+    const shown = deps.shown();
+    const why = placeRefusal(inEntry, shown);
+    if (why || !shown) return refused(why ?? said("placeCursor"));
     /* the entry FIRST, the link once it has landed: linked first, a write
        that failed left the host saved with a link to nothing
        (pin: lifecycle.test › says a registration that did not land) */
-    return layer.setEntry(entryKey(c.date, spec.full), "").then((landed) => linkPlaced({ c, spec, view, markdown }, landed));
+    return layer.setEntry(entryKey(c.date, spec.full), "").then((landed) => linkPlaced({ c, spec, shown }, landed));
   }
 
   function cutToEntry(view: EditorPort, c: Current, spec: Spec): Promise<void> {
@@ -175,7 +172,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
       /* the positions were taken before the write: a document that moved
          under them keeps its text, the new entry standing
          (pin: lifecycle.test › places no link when the text moved) */
-      if (view !== deps.view() || view.state.doc.textBetween(from, to, " ", " ") !== cutText) { ui.raise("textMoved"); return; }
+      if (view !== htmlView(deps.shown()) || view.state.doc.textBetween(from, to, " ", " ") !== cutText) { ui.raise("textMoved"); return; }
       view.dispatch(replaceWithLink(view.state, from, to, spec.href, label));
       ui.hideBar();
       return session.save.now().then(() => { ui.redraw(); session.goto(spec.href); });
@@ -186,7 +183,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
      birth where a later relabel would never see the change
      (pin: lifecycle.test › moves the selection into the new entry) */
   function extract(): Promise<void> {
-    const view = deps.view();
+    const view = htmlView(deps.shown());
     if (!view || view.state.selection.empty) return done;
     if (cold()) return done;
     const c = session.current;

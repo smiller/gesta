@@ -6,10 +6,11 @@ import { entryKey } from "../store/keys.ts";
 import { toolbarFor, type Words } from "../editor/goto.ts";
 import type { Raise } from "../model/alertText.ts";
 import type { Landing } from "./landingActs.ts";
+import { htmlView } from "../editor/surface.ts";
 
 export interface GotoToolbarDeps {
   lb: Screen["gotoToolbar"];
-  session: Pick<Session, "current" | "view" | "markdownMode">;
+  session: Pick<Session, "current" | "shown">;
   journal: Journal;
   raise: Raise;
   opened(): void;
@@ -42,7 +43,7 @@ export function gotoToolbarActs(d: GotoToolbarDeps): GotoToolbar {
   /* the caret hand-back: only the routes aimed at the toolbar */
   const putLineCaret = (): void => {
     if (!lb.open) return;
-    const view = session.view;
+    const view = htmlView(session.shown);
     const had = document.querySelector(".goto-toolbar")?.contains(document.activeElement);
     if (had) landing.caretBack();
     closeGotoToolbar();
@@ -55,8 +56,8 @@ export function gotoToolbarActs(d: GotoToolbarDeps): GotoToolbar {
   };
   const toggleBar = () => {
     if (lb.open) { putLineCaret(); return; }
-    if (session.markdownMode) { raise(toolbarFor(null, conventions()).inMarkdown); return; }
-    const view = session.view;
+    if (session.shown?.mode === "markdown") { raise(toolbarFor(null, conventions()).inMarkdown); return; }
+    const view = htmlView(session.shown);
     if (!view) return;
     const b = toolbarFor(view.state.doc, conventions());
     if (b.kind === "none") { raise(b.none); return; }
@@ -78,7 +79,7 @@ export function gotoToolbarActs(d: GotoToolbarDeps): GotoToolbar {
     if (held) setTimeout(() => { if (held.closest("[hidden]")) focusBar(); }, 0);
   };
   const reaskBar = (): void => {
-    const view = session.view;
+    const view = htmlView(session.shown);
     if (!lb.open || !view) return;
     const b = toolbarFor(view.state.doc, conventions());
     lb.lineLabel = b.label;
@@ -101,7 +102,7 @@ export function gotoToolbarActs(d: GotoToolbarDeps): GotoToolbar {
   };
   const enterBar = (kind: "line" | "page" | "stanza", v: string, repeat: boolean): void => {
     if (repeat) return;
-    if (session.markdownMode || !session.view) return;
+    if (!htmlView(session.shown)) return;
     landing.answer(wordsOf(kind, v), "toolbar");
   };
   const closeBar = putLineCaret;

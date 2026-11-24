@@ -1,6 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 import type { Node } from "prosemirror-model";
-import { surfaces, type Surface } from "./surface.ts";
+import { htmlView, sameShown, shownOf, surfaces, type ReplacePort, type Surface } from "./surface.ts";
+import type { HtmlMode } from "./htmlMode.ts";
+import type { EditorView } from "prosemirror-view";
 import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
 import { flattenDoc, flattenText } from "../model/flatten.ts";
@@ -271,5 +273,36 @@ describe("a text the model refuses", () => {
     w.s.switchTo(false);
     w.s.show("fine", "commonplace/B");
     expect(w.released).toEqual([1]);
+  });
+});
+
+describe("the view shown", () => {
+  const replace = {} as ReplacePort, view = {} as EditorView;
+  const html = { markdownMode: false, view } as unknown as HtmlMode;
+  const markdown = (text: string, caret: number) => ({ markdownMode: true, replace, md: () => text, selectionEnd: () => caret }) as unknown as Surface;
+  it("is nothing while no entry is on screen", () => {
+    expect(shownOf(null, html)).toBeNull();
+    expect(htmlView(shownOf(null, html))).toBeNull();
+  });
+  it("is HTML mode with its editor while HTML mode is on screen", () => {
+    expect(shownOf(html, html)).toEqual({ mode: "html", view });
+    expect(htmlView(shownOf(html, html))).toBe(view);
+  });
+  it("is markdown mode with its replace and whether the caret's line is a heading, and no editor", () => {
+    const shown = shownOf(markdown("# Title\n\nprose", 3), html);
+    expect(shown?.mode === "markdown" && shown.replace).toBe(replace);
+    expect(shown?.mode === "markdown" && shown.lineIsHeading()).toBe(true);
+    expect((shownOf(markdown("# Title\n\nprose", 12), html) as { lineIsHeading(): boolean }).lineIsHeading()).toBe(false);
+    expect(htmlView(shown ?? null)).toBeNull();
+  });
+  it("is the same view across two readings while neither the mode nor its editor or replace changed", () => {
+    const md = markdown("x", 0), other = { ...html, view: {} as EditorView } as unknown as HtmlMode;
+    expect(sameShown(shownOf(html, html), shownOf(html, html))).toBe(true);
+    expect(sameShown(shownOf(md, html), shownOf(md, html))).toBe(true);
+    expect(sameShown(shownOf(html, html), shownOf(md, html))).toBe(false);
+    expect(sameShown(shownOf(html, html), shownOf(other, other))).toBe(false);
+    expect(sameShown(shownOf(md, html), shownOf(markdown("x", 0), html))).toBe(true);
+    expect(sameShown(shownOf(md, html), shownOf({ ...md, replace: {} } as unknown as Surface, html))).toBe(false);
+    expect(sameShown(null, null)).toBe(true);
   });
 });

@@ -8,12 +8,13 @@ import { mdLabel } from "../store/reference.ts";
 import { bookmarkIndex, bookmarkParts, reachableBookmarks, aliasHolder, aliasRefusal, setBookmarkAlias, addBookmark, bookmarksFull, numberedBookmarks, type Bookmark } from "../store/bookmarks.ts";
 import { bookmarkRows, bookmarkFoot, bookmarkLabel, bookmarkLinkLabel, alreadyOn, typeAlias, resolveAlias, aliasCandidates, type Resolved } from "./bookmarksModel.ts";
 import type { Raise } from "../model/alertText.ts";
+import { htmlView } from "../editor/surface.ts";
 
 export type BookmarkAct = "jump" | "del" | "key" | "link";
 export interface BookmarkPanelDeps {
   bm: Screen["bookmarks"];
   marks: ReturnType<typeof bookmarkStore>;
-  session: Pick<Session, "current" | "goto" | "focusText" | "view" | "markdownMode" | "insertText" | "save">;
+  session: Pick<Session, "current" | "goto" | "focusText" | "shown" | "insertText" | "save">;
   journal: Journal;
   /* why an act did nothing */
   raise: Raise;
@@ -127,7 +128,6 @@ export function bookmarkActs(d: BookmarkPanelDeps): BookmarkPanel {
     bm.buf = ""; bm.editing = b.key; bm.draft = b.alias; bm.opening = 1;
     renderBookmarks();
   };
-  const nowhereToType = (view: typeof session.view): boolean => !view && !session.markdownMode;
   /* the link after the caret the panel opened on; every way it cannot
      land says why, nothing is appended at the end, and the keys go back
      to the text either way (pin: editing › a
@@ -139,8 +139,8 @@ export function bookmarkActs(d: BookmarkPanelDeps): BookmarkPanel {
     closeOpened();
     session.focusText();
     if (key === hereKey()) { raise(alreadyOn(key, journal)); return; }
-    const view = session.view;
-    if (!cardCaret || nowhereToType(view)) { raise("placeCursor"); return; }
+    const view = htmlView(session.shown);
+    if (!cardCaret || !session.shown) { raise("placeCursor"); return; }
     const why = view && linkRefusal(view.state);
     if (why) { raise(why); return; }
     const p = bookmarkParts(key), href = entryHash(p.date, p.tag), label = mdLabel(bookmarkLinkLabel(key, journal), "entry");

@@ -9,10 +9,12 @@ import { writeClipboard } from "./clipboard.ts";
 import { richBlockHtml, withPictureBytes } from "./richCopy.ts";
 import { pageTop } from "./alertArea.ts";
 import { type Raise } from "../model/alertText.ts";
+import { htmlView } from "../editor/surface.ts";
+import type { EditorView } from "prosemirror-view";
 
 export interface CopyDeps {
   cp: Screen["copy"];
-  session: Pick<Session, "view" | "markdownMode">;
+  session: Pick<Session, "shown">;
   raise: Raise;
 }
 export function copyButton(d: CopyDeps): { copyBlock(): void; dropStale(): void } {
@@ -41,7 +43,7 @@ export function copyButton(d: CopyDeps): { copyBlock(): void; dropStale(): void 
   /* a block gone from the screen takes its copy button with it, whether or
      not the window scrolled (pin: alerts and surfaces › the copy button
      after a navigation) */
-  const dropStale = (): void => { if (copyTarget && !session.view?.dom.contains(copyTarget)) hideCopy(); };
+  const dropStale = (): void => { if (copyTarget && !htmlView(session.shown)?.dom.contains(copyTarget)) hideCopy(); };
   const COPY_TITLES: [string, string][] = [["grid", "Copy this grid"], ["verse", "Copy this verse"], ["prose", "Copy this prose"], ["reference", "Copy this reference"], ["note", "Copy this note"]];
   const copyTitle = (target: HTMLElement): string => {
     if (target.tagName === "PRE") return "Copy this code block";
@@ -84,7 +86,7 @@ export function copyButton(d: CopyDeps): { copyBlock(): void; dropStale(): void 
   const inBand = (x: number, y: number, r: DOMRect): boolean =>
     x >= r.right - GRID_BAND.wide && x <= r.right + 8 && y >= r.top - GRID_BAND.above && y <= r.top + 2;
   const bandGrid = (x: number, y: number): HTMLElement | null => {
-    const grids = session.view?.dom.getElementsByClassName("grid");
+    const grids = htmlView(session.shown)?.dom.getElementsByClassName("grid");
     if (!grids?.length) return null;
     for (const g of Array.from(grids) as HTMLElement[]) {
       const r = g.getBoundingClientRect();
@@ -93,17 +95,17 @@ export function copyButton(d: CopyDeps): { copyBlock(): void; dropStale(): void 
     return null;
   };
   const quoteInQuote = (el: HTMLElement | null): el is HTMLElement => !!el?.parentElement && el.tagName === "BLOCKQUOTE" && el.parentElement.tagName === "BLOCKQUOTE";
-  const shownBlock = (el: HTMLElement | null): el is HTMLElement => !!el && !!session.view?.dom.contains(el) && !session.markdownMode;
+  const shownBlock = (el: HTMLElement | null): el is HTMLElement => !!el && !!htmlView(session.shown)?.dom.contains(el);
   const blockUnder = (t: Element): HTMLElement | null => {
     let target = t.closest(BLOCKS) as HTMLElement | null;
     while (quoteInQuote(target)) target = target.parentElement;
     return shownBlock(target) ? target : null;
   };
   const point = (e: MouseEvent, t: Element): void => {
-    const target = (session.view && !session.markdownMode && bandGrid(e.clientX, e.clientY)) || blockUnder(t);
+    const target = (htmlView(session.shown) && bandGrid(e.clientX, e.clientY)) || blockUnder(t);
     if (target) { if (target !== copyTarget) showCopy(target); } else hideCopy();
   };
-  const gridsShown = (): boolean => !!session.view && !session.markdownMode && session.view.dom.getElementsByClassName("grid").length > 0;
+  const gridsShown = (): boolean => (htmlView(session.shown)?.dom.getElementsByClassName("grid").length ?? 0) > 0;
   document.addEventListener("mouseover", (e) => {
     const t = e.target as Element | null;
     if (!t?.closest || t.closest(".copybtn")) return;
@@ -116,7 +118,7 @@ export function copyButton(d: CopyDeps): { copyBlock(): void; dropStale(): void 
   });
   window.addEventListener("scroll", () => { if (copyTarget) showCopy(copyTarget); }, { passive: true });
   const blockAt = (el: HTMLElement): Node | null => {
-    const view = session.view;
+    const view = htmlView(session.shown);
     if (!view) return null;
     const pos = view.posAtDOM(el, 0);
     const $pos = view.state.doc.resolve(pos);
@@ -124,7 +126,7 @@ export function copyButton(d: CopyDeps): { copyBlock(): void; dropStale(): void 
     const after = view.state.doc.nodeAt(pos);
     return after && view.nodeDOM(pos) === el ? after : null;
   };
-  const copyGone = (view: typeof session.view): boolean => !copyTarget || !view || !view.dom.contains(copyTarget);
+  const copyGone = (view: EditorView | null): boolean => !copyTarget || !view || !view.dom.contains(copyTarget);
   const settled = (mine: HTMLElement, seq: number) => (ok: boolean): void => {
     if (mine !== copyTarget || seq !== copySeq) return;
     cp.label = ok ? "copied" : "copy failed";
@@ -137,7 +139,7 @@ export function copyButton(d: CopyDeps): { copyBlock(): void; dropStale(): void 
        Mail arrived as plain lines (pin: card copy › a card hover-copied) */
     : withPictureBytes(richBlockHtml(mine)).then((html) => writeClipboard({ text: serializeMarkdown(schema.nodes.doc.create(null, dropPageLabels(Fragment.from(node)))), html })));
   const copyBlock = (): void => {
-    const view = session.view;
+    const view = htmlView(session.shown);
     if (copyGone(view)) { hideCopy(); raise("nothingToCopy"); return; }
     const mine = copyTarget!, seq = ++copySeq, done = settled(mine, seq);
     const node = blockAt(mine);

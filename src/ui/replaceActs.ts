@@ -4,10 +4,11 @@ import type { ReplacePort } from "../editor/surface.ts";
 import { matches, nearest, replaceAt, replaceEvery, countLabel, holds } from "../editor/replace.ts";
 import { pageTop } from "./alertArea.ts";
 import { type Raise } from "../model/alertText.ts";
+import { replaceOf } from "../editor/surface.ts";
 
 export interface ReplaceDeps {
   rb: Screen["replace"];
-  session: Pick<Session, "locked" | "markdownMode" | "replacer" | "setView">;
+  session: Pick<Session, "locked" | "shown" | "setView">;
   raise: Raise;
   opened(): void;
   focusBar(): void;
@@ -50,10 +51,11 @@ export function replaceActs(d: ReplaceDeps): ReplaceToolbar {
     barPort = null;
     hits = []; at = -1;
   };
+  const inMarkdown = (): boolean => session.shown?.mode === "markdown";
   /* the port the toolbar opened on, or null with the toolbar closed when the view was replaced */
   const port = (): ReplacePort | null => {
     if (!rb.open) return null;
-    if (session.replacer() === barPort) return barPort;
+    if (replaceOf(session.shown) === barPort) return barPort;
     dismiss();
     return null;
   };
@@ -66,7 +68,7 @@ export function replaceActs(d: ReplaceDeps): ReplaceToolbar {
     const was = at >= 0 ? hits[at] : 0;
     if (port()) return;
     const a = document.activeElement;
-    if (session.markdownMode && freeOrInBar(a)) session.replacer()?.place(was);
+    if (inMarkdown() && freeOrInBar(a)) replaceOf(session.shown)?.place(was);
   };
   /* every close switches back to the view the toolbar was opened from, but a
      navigation or a rebuilt view, which only closes it
@@ -79,14 +81,14 @@ export function replaceActs(d: ReplaceDeps): ReplaceToolbar {
     dismiss();
     const wanted = focus || !!document.activeElement?.closest(".replace-toolbar");
     if (back) session.setView(false);
-    if (session.markdownMode && wanted) session.replacer()?.focus();
+    if (inMarkdown() && wanted) replaceOf(session.shown)?.focus();
   };
   const close = () => closeBack(true);
   const closeOver = () => closeBack(false);
   const intoMarkdown = (): "there" | "switched" | "refused" => {
-    if (session.markdownMode) return "there";
+    if (inMarkdown()) return "there";
     session.setView(true);
-    if (!session.markdownMode) return "refused";
+    if (!inMarkdown()) return "refused";
     raise("toReplace");
     return "switched";
   };
@@ -101,7 +103,7 @@ export function replaceActs(d: ReplaceDeps): ReplaceToolbar {
     if (rb.open && port()) { focusBar(); return; }
     opened();
     const how = intoMarkdown();
-    const p = how === "refused" ? null : session.replacer();
+    const p = how === "refused" ? null : replaceOf(session.shown);
     if (!p) return;
     rb.open = true;
     barPort = p;

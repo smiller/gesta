@@ -1,7 +1,6 @@
 import type { EditorView } from "prosemirror-view";
 import type { Node } from "prosemirror-model";
 import { imageView, pastedPictureBytes } from "./editor/images.ts";
-import { headingLineAt } from "./editor/markdownKeys.ts";
 import { nextImageName, pictureKey } from "./store/names.ts";
 import { imageRefs } from "./store/exportEntries.ts";
 import { setLineInterval } from "./editor/lineNumbers.ts";
@@ -23,7 +22,7 @@ import { entrySave, type EntrySave } from "./store/entrySave.ts";
 import type { ImageStore } from "./store/store.ts";
 import { highlightIn, escapeJump } from "./editor/highlight.ts";
 import type { Highlight } from "./store/keys.ts";
-import { surfaces, type Surface, type Viewport, type ReplacePort } from "./editor/surface.ts";
+import { shownOf, surfaces, type Shown, type Surface, type Viewport } from "./editor/surface.ts";
 import { placeKeeper, type Page } from "./editor/placeKeeper.ts";
 import { htmlMode, type HtmlMode } from "./editor/htmlMode.ts";
 import { markdownMode } from "./editor/markdownMode.ts";
@@ -61,7 +60,7 @@ export interface SessionOptions {
 }
 export interface Session {
   readonly current: { date: string; tag: string | null };
-  readonly view: EditorView | null;
+  readonly shown: Shown | null;
   /* the open entry is one an import is writing */
   readonly locked: boolean;
   /* the focus back to the text in either view, its selection as it stands
@@ -96,10 +95,6 @@ export interface Session {
      (pin: search › Enter) (pin: reference paste › the reference link followed) */
   highlight(q: string, nth: number, honorMarkers: boolean): boolean;
   insertText(text: string, after?: boolean): boolean;
-  markdownLineIsHeading(): boolean;
-  /* null outside markdown mode */
-  replacer(): ReplacePort | null;
-  readonly markdownMode: boolean;
   setView(md: boolean): void;
   /* the other view, refused on a read-only page */
   switchView(): void;
@@ -258,10 +253,6 @@ export function startSession(opts: SessionOptions): Session {
     /* the folds moved the text under a held place: set again now, not a
        frame later when the size is observed (pin: places › the warm landed) */
     keeper.reapply();
-  }
-  function markdownLineIsHeading(): boolean {
-    const s = surface.current;
-    return !!s && s.markdownMode && headingLineAt(s.md(), s.selectionEnd());
   }
   function insertText(text: string, after = false): boolean {
     if (!surface.current) return false;
@@ -476,7 +467,7 @@ export function startSession(opts: SessionOptions): Session {
   }
   return {
     get current() { return current; },
-    get view() { return live(); },
+    get shown() { return shownOf(surface.current, html); },
     get locked() { return !!opts.readOnly || !!locked?.has(ekeyOf()); },
     focusText: () => { surface.current?.focus(); },
     holdTop: () => {
@@ -487,9 +478,7 @@ export function startSession(opts: SessionOptions): Session {
       if (pos !== null) keeper.carry(pos);
     },
     lockEntries: (keys) => { locked = keys; if (surface.current) lockedNow(surface.current); },
-    open, openHash, takeTabWrite, save, refresh, surfaceMd: currentMd, goto, step, today, copyReference, copyEntryLink, highlight, jump, setView: (md) => surface.switchTo(md), switchView, showWordCount, insertText, markdownLineIsHeading,
-    replacer: () => surface.current?.replace ?? null,
-    get markdownMode() { return surface.md; },
+    open, openHash, takeTabWrite, save, refresh, surfaceMd: currentMd, goto, step, today, copyReference, copyEntryLink, highlight, jump, setView: (md) => surface.switchTo(md), switchView, showWordCount, insertText,
     get hashDeferred() { return hashDeferred; },
     refreshFolds,
     movePlace: keeper.move,

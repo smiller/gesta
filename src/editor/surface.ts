@@ -1,4 +1,7 @@
 import type { Node } from "prosemirror-model";
+import type { EditorView } from "prosemirror-view";
+import type { HtmlMode } from "./htmlMode.ts";
+import { headingLineAt } from "./markdownKeys.ts";
 import type { Flat } from "../model/flatten.ts";
 import { parseMarkdown } from "../model/parse.ts";
 import { fenceRefusals } from "../model/fenceRefusals.ts";
@@ -54,6 +57,18 @@ export interface ReplacePort {
   /* the caret at `pos`, clamped to the text, the window left where it is */
   place(pos: number): void;
 }
+
+/* the entry as a reader sees it: nothing while no entry is on screen */
+export type Shown = { mode: "html"; view: EditorView } | { mode: "markdown"; replace: ReplacePort; lineIsHeading(): boolean };
+export function shownOf(current: Surface | null, html: HtmlMode | null): Shown | null {
+  if (current && current === html) return { mode: "html", view: html.view };
+  if (!current?.markdownMode || !current.replace) return null;
+  const s = current;
+  return { mode: "markdown", replace: current.replace, lineIsHeading: () => headingLineAt(s.md(), s.selectionEnd()) };
+}
+export const htmlView = (shown: Shown | null): EditorView | null => (shown?.mode === "html" ? shown.view : null);
+export const replaceOf = (shown: Shown | null): ReplacePort | null => (shown?.mode === "markdown" ? shown.replace : null);
+export const sameShown = (a: Shown | null, b: Shown | null): boolean => a?.mode === b?.mode && htmlView(a) === htmlView(b) && replaceOf(a) === replaceOf(b);
 
 export interface Viewport { y(): number; scrollTo(y: number): void; under(): number }
 export interface PlacePort { carry(pos: number): void; release(): void }

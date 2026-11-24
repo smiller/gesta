@@ -11,6 +11,10 @@ import { journalOf } from "../store/headings.ts";
 import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
 import { entryKey } from "../store/keys.ts";
+import type { EditorView } from "prosemirror-view";
+import type { ReplacePort, Shown } from "../editor/surface.ts";
+
+const REPLACE = {} as ReplacePort;
 
 interface Opts {
   at: [string, string | null];
@@ -56,6 +60,7 @@ function fakeSession(log: string[], s: WorldState, layer: EntryLayerOf): Lifecyc
     open: (date, tag, how) => { log.push("open " + entryKey(date, tag) + (how ? " " + how : "")); s.current = { date, tag }; },
     refresh: () => { log.push("refresh"); return Promise.resolve(); },
     goto: (hash, same) => { log.push("goto " + hash + (same ? " | " + alertWords(same) : "")); },
+    insertText: (text) => { log.push("type " + text); return true; },
   };
 }
 function fakeDialogs(log: string[], asked: string[], answers: (string | null | boolean)[]): Dialogs {
@@ -105,13 +110,11 @@ async function world(o: Opts) {
   if (o.warm !== "no") await layer.warm();
   s.st = EditorState.create({ doc: parseMarkdown(o.md ?? (o.entries ?? {})[here(s)] ?? "") });
   const view = { get state() { return s.st; }, dispatch: (tr: Transaction) => { log.push("edit"); s.st = s.st.apply(tr); } };
-  const markdown = { insertAfter: (text: string) => { log.push("type " + text); }, inHeading: () => !!o.markdownHeading };
   const pics: Record<string, string> = { ...(o.pics ?? {}) };
   const life = lifecycle({
     layer, journal: journalOf(layer.cache),
-    view: () => (o.noView || s.dropped ? null : view),
+    shown: (): Shown | null => (s.dropped ? null : !o.noView ? { mode: "html", view: view as unknown as EditorView } : o.markdown ? { mode: "markdown", replace: REPLACE, lineIsHeading: () => !!o.markdownHeading } : null),
     caretInEntry: () => !o.noCaret,
-    markdown: () => (o.markdown && !s.dropped ? markdown : null),
     session: fakeSession(log, s, layer), dialogs: fakeDialogs(log, asked, answers),
     ...fakePictures(o, log, pics), kept: fakeKept(log), ui: fakeUi(log),
   });
