@@ -11,16 +11,14 @@
 // section to the corner run played with it, or to corner's approved copy
 // where corner was not played; it has no copy of its own to approve.
 // `node tools/helium-approve.ts [--approve] [corner|order|bridge|reader ...]`
-import { spawn, spawnSync } from "node:child_process";
-import { existsSync, readFileSync, rmSync, readdirSync, writeFileSync, mkdirSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { existsSync, readFileSync, readdirSync, writeFileSync, mkdirSync } from "node:fs";
 import { relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { tmpdir } from "node:os";
 import { fingerprint, readByDrivers, DRIVERS } from "./heliumStamp.ts";
 import { compared, ledger, readOtherwise, scrub, type Compared } from "./heliumVerdict.ts";
-import { merged } from "./heliumShards.ts";
+import { built, clearProfile, playDealt, playEnv, playOne, profileOf, windowNames } from "./heliumPlay.ts";
 
-const profileOf = (name: string): string => resolve(tmpdir(), "gesta-helium-" + name + "-profile");
 interface Tool { script: string; args?: string[]; env?: Record<string, string>; heldTo?: string; dealt?: boolean }
 const TOOLS: Record<string, Tool> = {
   corner: { script: "tools/helium-corner.ts", dealt: true },
@@ -38,8 +36,7 @@ const run = names.length ? names : Object.keys(TOOLS);
 
 /* the verdict reads the page at its own speed: a throttled page is a
    tool for finding a step that waits on a clock */
-const { THROTTLE: _throttle, ...unthrottled } = process.env;
-const env = { ...unthrottled, NODE_OPTIONS: "" };
+const env = playEnv(process.env, {}, 1);
 /* WHAT A RUN READS, fingerprinted after the build: the pages (every line of
    the app and its libraries), the fixtures the steps seed, the code its
    drivers reach through their imports, the approved copy, and the browser,
@@ -64,10 +61,7 @@ function inputsFor(name: string) {
 }
 let failed = 0;
 const outputs: string[] = [];
-for (const script of ["build", "build:reader"]) {
-  const build = spawnSync("npm", ["run", script], { env, encoding: "utf8" });
-  if (build.status !== 0) { console.error(build.stdout, build.stderr); process.exit(1); }
-}
+built(["build", "build:reader"], env);
 
 function approveOne(name: string): void {
   if (TOOLS[name].heldTo) { if (names.includes(name)) { failed++; console.log(name + ": nothing to approve — a section reading otherwise in another order is given its own setup"); } return; }
@@ -82,30 +76,11 @@ function approveOne(name: string): void {
    in 4, 74-82 in 5, 100 in 6 on ten cores, and 8 read one section
    otherwise */
 const WINDOWS = Math.max(1, +(process.env.WINDOWS ?? 5));
-const windowsOf = (name: string): string[] => (TOOLS[name].dealt && WINDOWS > 1 ? [...Array(WINDOWS).keys()].map((k) => name + "-" + k) : [name]);
-/* the last run's browser may still be exiting: kill, then retry the
-   delete for a few seconds rather than fail on a held directory */
-function clearProfile(name: string): void {
-  spawnSync("pkill", ["-f", "gesta-helium-" + name + "-profile"]);
-  for (let i = 0; i < 20; i++) { try { rmSync(profileOf(name), { recursive: true, force: true }); break; } catch { spawnSync("sleep", ["0.5"]); } }
-}
-interface Printed { out: string; tail: string }
-function playOne(tool: Tool, args: string[], more: Record<string, string>): Promise<Printed> {
-  return new Promise((done) => {
-    let out = "", err = "", settled = false;
-    const finish = (tail: string): void => { if (!settled) { settled = true; done({ out, tail }); } };
-    const child = spawn("node", [tool.script, ...args], { env: { ...env, ...tool.env, ...more } });
-    child.stdout.on("data", (b) => { out += b; });
-    child.stderr.on("data", (b) => { err += b; });
-    child.on("error", (e) => finish("\nEXIT " + e.message + "\n"));
-    child.on("close", (code, signal) => { const bad = code || signal; finish(bad ? "\nEXIT " + bad + "\n" + err : ""); });
-  });
-}
+const windowsOf = (name: string): string[] => windowNames(name, TOOLS[name].dealt ? WINDOWS : 1);
 async function play(name: string): Promise<string> {
-  const tool = TOOLS[name], ws = windowsOf(name);
-  if (ws.length === 1) { const p = await playOne(tool, tool.args ?? [], {}); return scrub(p.out + p.tail); }
-  const ps = await Promise.all(ws.map((w, k) => playOne(tool, [profileOf(w)], { SHARD: k + "/" + ws.length })));
-  return scrub(merged(ps.map((p) => p.out)) + ps.map((p) => p.tail).join(""));
+  const tool = TOOLS[name], runEnv = { ...env, ...tool.env };
+  if (!tool.dealt || WINDOWS === 1) { const p = await playOne(tool.script, tool.args ?? [], runEnv); return scrub(p.out + p.tail); }
+  return playDealt({ name, script: tool.script, windows: WINDOWS, env: runEnv });
 }
 function said(name: string, c: Exclude<Compared, { pass: true }>): string {
   if ("failed" in c) return name + ": FAILED — " + c.failed;

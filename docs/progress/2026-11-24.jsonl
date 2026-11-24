@@ -50,3 +50,4 @@
 {"at":"2026-11-24T12:48","ev":"start","id":"A26.1.3"}
 {"at":"2026-11-24T12:51","ev":"done","id":"A26.1.3","commits":["5830574"]}
 {"at":"2026-11-24T12:51","ev":"done","id":"A26.1","note":"1, 2 and 6 built; 3, 4, 5 kept on W (W3-W5); 171,639 tokens"}
+{"at":"2026-11-24T13:41","ev":"start","id":"W5","note":"asked 13:10: the Ws built in order of likely usefulness against flakes; W5 first"}

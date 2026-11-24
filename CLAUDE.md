@@ -398,7 +398,9 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
     window count and section), `heliumThrottle.ts` (the corner's steps
     with every page's CPU n times slower, `THROTTLE=n`, and the sections
     that read otherwise: a step that waits on a clock), `heliumShards.ts` (the sections dealt over windows and
-    their prints merged back as one window's),
+    their prints merged back as one window's), `heliumPlay.ts` (a driver played,
+    over one window or dealt over several: the profiles, the builds, a
+    crashed window's tail, the throttle rate given, never the shell's),
     `heliumStamp.ts`, `heliumOrder.ts`, `helium-probe.ts`,
     `helium-mock.ts` with `mockPage.ts` (a design's mock: `node
     tools/helium-mock.ts <spec>`, a spec under `tools/out/mocks/` naming
