@@ -63,7 +63,7 @@ async function importRefusedFilesOnly(): Promise<void> {
   await rest(page);
   await page.evaluate(() => { const P = IDBObjectStore.prototype; window.__idb = [P.put, P.add]; const full = () => { throw new DOMException("full", "QuotaExceededError"); }; P.put = full; P.add = full; });
   await R.pastePng(page);
-  await page.waitForFunction(() => /storage full/.test(window.__corner() || ""), null, { timeout: 1500 }).catch(() => {});
+  await page.waitForFunction(() => /storage full/.test(window.__said() || ""), null, { timeout: 1500 }).catch(() => {});
   await page.evaluate(() => { const P = IDBObjectStore.prototype; [P.put, P.add] = window.__idb; });
   await log("a picture whose write fails", { corner: await corner() });
   await dismiss();
@@ -223,7 +223,7 @@ async function bookmarkLinkInMarkdownView(): Promise<void> {
 }
 /* a slowed launch's warm, and the page held still after it */
 const warmed = async (p: typeof page): Promise<void> => { await A.waitWarm(p).catch(() => {}); await settled(p); };
-const corner = () => page.evaluate(() => window.__corner() || "");
+const corner = () => page.evaluate(() => window.__said() || "");
 const dismiss = () => page.click(S.corner, { timeout: 1000 }).catch(() => {});
 const stored = async () => ((await A.stored(page)) ?? "").replace(/\n+$/, "");
 const picked = (tree: Tree) => page.evaluate((tree) => {

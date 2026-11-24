@@ -47,7 +47,7 @@ export interface Alerts {
 }
 /* what each kind holds while it is live, for the headless tools to read
    without waiting on what is drawn (pin: alertLedger.test › each kind present only while live) */
-export type Live = Partial<Record<Kind, string>> & { latest?: Fading };
+export type Live = Partial<Record<Kind, string>> & { latest?: Fading; last?: Kind };
 export function liveAlerts(state: AlertState): Live {
   const live: Live = {};
   for (const kind of ["error", "warning", "info", "success"] as const) if (state[kind].shown) live[kind] = state[kind].text;
@@ -85,6 +85,7 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
   }
   function say(kind: Kind, text: string): void {
     state.said[kind] = text;
+    state.said.last = kind;
     if (kind === "info" || kind === "success") state.said.latest = kind;
   }
   function show(place: Fading, text: string): void {

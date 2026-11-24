@@ -1,4 +1,4 @@
-import { section, caretAt, view, write, page, A, R, S, log, go, cornerText, wheelTo, TODAY, landed, searchFor, rest, settled, jump, keep } from "./kit.ts";
+import { section, caretAt, view, write, page, A, R, S, log, go, saidText, wheelTo, TODAY, landed, searchFor, rest, settled, jump, keep } from "./kit.ts";
 
 section("where the keys go", async () => {
   /* the caret or the focus that went nowhere: a panel's chord pressed again, a row closed by its label, the bookmarks panel's link, Tab outside a list, a code block's Tab and ⌘A, Escape after a jump, ⌃⌘M and an arrival under an open row, Tab out of a panel, held keys, a caret under the masthead, a line below a table, a picture landing while Search is typed in */
@@ -77,12 +77,12 @@ async function bookmarkLinkPressed(): Promise<void> {
   await clickWord("one");
   await page.keyboard.press("Tab");
   await rest(page);
-  await log("Tab in prose", { corner: await cornerText() });
+  await log("Tab in prose", { corner: await saidText() });
   await R.selectBetween(page, "one", "two");
   await rest(page);
   await page.keyboard.press("Tab");
   await rest(page);
-  await log("Tab over two paragraphs", { corner: await cornerText() });
+  await log("Tab over two paragraphs", { corner: await saidText() });
   await clickWord("x = 1");
   await page.keyboard.press("Tab");
   await rest(page);

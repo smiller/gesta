@@ -1,4 +1,4 @@
-import { section, laid, page, ctx, A, R, S, log, go, winY, inView, cornerText, wheelTo, setAnswer, MARGIN_SEEDS, rest, settled, keep, seed, landed, jump } from "./kit.ts";
+import { section, laid, page, ctx, A, R, S, log, go, winY, inView, saidText, wheelTo, setAnswer, MARGIN_SEEDS, rest, settled, keep, seed, landed, jump } from "./kit.ts";
 
 section("places", async () => {
   /* every entry returns to where it was left: Pippa scrolled down and left to settle, Horace followed, then Back, Forward, Back and a reload — the browser's own restore on Back and Forward ran against the entry being left and saved the other's offset for it */
@@ -80,7 +80,7 @@ async function backPlaceClosedSection(): Promise<void> {
 }
 async function contentsLinkBeforeWarm(): Promise<void> {
   await A.waitEntry(page, "bookshelf/Boethius/Consolatio/3pr1", 5000).catch(() => {});
-  await log("a contents link clicked before the warm", { entry: await A.entry(page), refused: /no such/.test(await cornerText()) });
+  await log("a contents link clicked before the warm", { entry: await A.entry(page), refused: /no such/.test(await saidText()) });
   await A.waitWarm(page).catch(() => {});
   /* the source read down to text a closed section hides, then back to the rendered view: the section opens */
   await go("bookshelf/Boethius/Consolatio");
@@ -244,11 +244,11 @@ async function copyWithClipboardRefused(): Promise<void> {
   await page.evaluate(() => { const c = navigator.clipboard; window.__clip = [c.write, c.writeText, document.execCommand]; c.write = () => Promise.reject(new Error("refused")); c.writeText = () => Promise.reject(new Error("refused")); document.execCommand = () => false; });
   await page.keyboard.press("Control+Meta+c");
   await rest(page);
-  await log("⌃⌘C with the clipboard refused", { corner: await cornerText() });
+  await log("⌃⌘C with the clipboard refused", { corner: await saidText() });
   await page.evaluate(() => { const c = navigator.clipboard, [a, b, x] = window.__clip; c.write = a; c.writeText = b; document.execCommand = x; });
   await page.keyboard.press("Control+Meta+c");
   await rest(page);
-  await log("⌃⌘C again, the clipboard back", { corner: await cornerText() });
+  await log("⌃⌘C again, the clipboard back", { corner: await saidText() });
   const blocked = await ctx.newPage();
   await blocked.addInitScript(() => { Object.defineProperty(window, "localStorage", { get() { throw new DOMException("site data blocked", "SecurityError"); } }); });
   await blocked.goto(A.url("commonplace/Horace"));
@@ -343,7 +343,7 @@ async function secondWindow(): Promise<void> {
   await page.click(S.editor);
   await page.keyboard.type("typed in the first");
   await landed(page, 2500);
-  await log("its row's commonplace typed into from the first", { entry: await A.entry(page), stored: await A.stored(page, "commonplace/Made Elsewhere"), corner: await R.cornerText(page) });
+  await log("its row's commonplace typed into from the first", { entry: await A.entry(page), stored: await A.stored(page, "commonplace/Made Elsewhere"), corner: await R.saidText(page) });
 }
 async function pageOpenFirstSaved(): Promise<void> {
   const again = await page.context().newPage();
@@ -362,7 +362,7 @@ async function pageOpenFirstSaved(): Promise<void> {
   await page.keyboard.type(", the first unsaved");
   await A.foreignWrite(again, "commonplace/Made Elsewhere", "rewritten in the second");
   await landed(page, 2500);
-  await log("typed in the first as the second saves", { textEnd: await textEnd(), stored: await A.stored(page, "commonplace/Made Elsewhere"), corner: await R.cornerText(page) });
+  await log("typed in the first as the second saves", { textEnd: await textEnd(), stored: await A.stored(page, "commonplace/Made Elsewhere"), corner: await R.saidText(page) });
   await A.foreignWrite(again, "commonplace/Refused Fence", "::: versey\nline\n:::");
   await go("commonplace/Refused%20Fence");
   await log("an entry with a refused fence opened over the save error", { corner: await R.standingText(page) });
@@ -377,11 +377,11 @@ async function pageOpenFirstSaved(): Promise<void> {
   await landed(page, 1500);
   await A.foreignWrite(again, "commonplace/Deleted Elsewhere", null);
   await page.waitForTimeout(500);
-  await log("the commonplace open in the first, deleted in the second", { entry: await A.entry(page), textEnd: await textEnd(), corner: await R.cornerText(page) });
+  await log("the commonplace open in the first, deleted in the second", { entry: await A.entry(page), textEnd: await textEnd(), corner: await R.saidText(page) });
   await page.click(S.editor);
   await page.keyboard.type(", typed after");
   await landed(page, 1500);
-  await log("typed into the commonplace deleted in the second", { stored: await A.stored(page, "commonplace/Deleted Elsewhere"), corner: await R.cornerText(page) });
+  await log("typed into the commonplace deleted in the second", { stored: await A.stored(page, "commonplace/Deleted Elsewhere"), corner: await R.saidText(page) });
   await go("2026-09-06");
   await log("the deleted commonplace left for the day", { corner: await R.standingText(page) });
   await go("commonplace/Deleted%20Elsewhere");

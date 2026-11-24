@@ -340,16 +340,16 @@ describe("the live alerts", () => {
 });
 
 describe("what each kind last said", () => {
-  it("nothing said at rest; each kind's last words, and which of info and success spoke last, kept after they fade", () => {
+  it("nothing said at rest; each kind's last words, which of info and success spoke last, and which kind of all spoke last, kept after they fade", () => {
     expect(saidAlerts(n.state)).toEqual({});
     n.raise("entriesStored", { n: 1 });
     n.raise("noLineNumbers");
     vi.advanceTimersByTime(WARNING_MS);
     expect(liveAlerts(n.state)).toEqual({});
-    expect(saidAlerts(n.state)).toEqual({ info: "1 entry stored", warning: "no line numbers here", latest: "info" });
+    expect(saidAlerts(n.state)).toEqual({ info: "1 entry stored", warning: "no line numbers here", latest: "info", last: "warning" });
     n.raise("notSaved", { copy: "detail" });
     n.raise("saved");
-    expect(saidAlerts(n.state)).toEqual({ info: "1 entry stored", warning: "no line numbers here", error: "not saved", success: "saved", latest: "success" });
+    expect(saidAlerts(n.state)).toEqual({ info: "1 entry stored", warning: "no line numbers here", error: "not saved", success: "saved", latest: "success", last: "success" });
   });
   it("a progress line says each step; an info held back by it says nothing", () => {
     const p = n.progress("importing");

@@ -10,7 +10,7 @@ section("shortcuts", async () => {
   await page.fill(S.shortcutsEditor, "sig: Sean Miller\nmd: markdown");
   await page.click(S.shortcutsSave);
   await rest(page);
-  await log("saved", { ...(await R.shortcuts(page)), corner: await R.cornerText(page) });
+  await log("saved", { ...(await R.shortcuts(page)), corner: await R.saidText(page) });
   await page.click(S.shortcutsInput);
   await page.keyboard.type("m");
   await rest(page);
@@ -48,7 +48,7 @@ section("bookmarks", async () => {
   await log("f typed", { lit: await R.bookmarksLit(page) });
   await page.keyboard.press("b");
   await rest(page);
-  await log("b typed, already here", { panel: await R.bookmarks(page), corner: await R.cornerText(page) });
+  await log("b typed, already here", { panel: await R.bookmarks(page), corner: await R.saidText(page) });
   /* the same press over a selection: the focus back, the selection as it stood */
   await R.selectBetween(page, "food", "love");
   /* the format toolbar shown before the chord: two frames after the selection, under
@@ -58,7 +58,7 @@ section("bookmarks", async () => {
   await rest(page);
   await page.keyboard.type("fb");
   await rest(page);
-  await log("fb over a selection, already here", { corner: await R.cornerText(page) });
+  await log("fb over a selection, already here", { corner: await R.saidText(page) });
   await page.keyboard.press("Control+Meta+b");
   await rest(page);
   await page.click(S.bookmarkDel);
@@ -78,7 +78,7 @@ section("bookmarks damaged", async () => {
   await log("⌃⌘B over a damaged list", await R.bookmarks(page));
   await page.keyboard.press("a");
   await rest(page);
-  await log("A over a damaged list", { panel: await R.bookmarks(page), corner: await R.cornerText(page), stored: await page.evaluate((k) => localStorage.getItem(k), A.bookmarksKey) });
+  await log("A over a damaged list", { panel: await R.bookmarks(page), corner: await R.saidText(page), stored: await page.evaluate((k) => localStorage.getItem(k), A.bookmarksKey) });
   await page.keyboard.press("Escape");
   await page.evaluate((k) => localStorage.setItem(k, '["2026-09-06"]'), A.bookmarksKey);
   await page.keyboard.press("Control+Meta+b");
@@ -86,7 +86,7 @@ section("bookmarks damaged", async () => {
   await log("⌃⌘B over the list repaired", await R.bookmarks(page));
   await page.keyboard.press("a");
   await rest(page);
-  await log("A over the list repaired", { panel: await R.bookmarks(page), corner: await R.cornerText(page) });
+  await log("A over the list repaired", { panel: await R.bookmarks(page), standing: (await R.standingText(page)) ?? "none" });
   await page.keyboard.press("Escape");
   await page.reload();
   await A.waitEntry(page, "commonplace/Horace").catch(() => {});

@@ -47,7 +47,7 @@ async function afterWarm(): Promise<void> {
   await page.click(S.editorLink("#commonplace/Links"));
   /* the editor takes a click's caret a tick after the click */
   await page.waitForFunction(() => { const s = getSelection(); return !!s.rangeCount && s.anchorOffset > 0; }, null, { timeout: 1000 }).catch(() => {});
-  await log("a link to itself", { entry: await A.entry(page), ...(await R.corner(page)) });
+  await log("a link to itself", { entry: await A.entry(page), text: await R.saidText(page) });
 }
 async function plainClickExternalLink(): Promise<void> {
   await page.click(S.editorLink("https://example.org/"));
@@ -71,7 +71,7 @@ async function followedByKey(): Promise<void> {
     await caretAt(needle, offset);
     await page.keyboard.press("Control+Meta+Enter");
     await rest(page);
-    await log(label, { entry: await A.entry(page), ...(said ? { said: (await R.corner(page)).text } : {}) });
+    await log(label, { entry: await A.entry(page), ...(said ? { said: await R.saidText(page) } : {}) });
   };
   await followed("⌃⌘Enter inside a link", "Horace", 3);
   await followed("⌃⌘Enter just after a link", "Horace", 6);
@@ -163,7 +163,7 @@ section("quote tab", async () => {
   await page.keyboard.press("Shift+Tab");
   await page.keyboard.press("Shift+Tab");
   await rest(page);
-  await log("Shift-Tab twice", { md: await A.stored(page), corner: await R.cornerText(page) });
+  await log("Shift-Tab twice", { md: await A.stored(page), corner: await R.saidText(page) });
   await go("commonplace/Horace");
   await page.keyboard.press("Control+Meta+l");
   await rest(page);

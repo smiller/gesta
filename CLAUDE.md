@@ -405,6 +405,8 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
     hook's check: a Conventional Commits subject, 72 characters at most);
     `chordSpelling.test.ts` (a ⌃⌘ key under src/ spelt "Ctrl-Meta-",
     never with "Mod", which is Ctrl off macOS);
+    `saidReadings.test.ts` (a Helium reading of what the page said reads
+    `__said`; the corner only where its showing is the point);
     `alertsPage.ts` (writes `docs/alerts.md` from `src/model/alertText.ts`;
     its test fails when the page is not what the table writes);
     `sourceSpans.ts` (a source file's comments, strings and template

@@ -265,7 +265,7 @@ section("scripture's Verse box", async () => {
     await page.keyboard.type("99");
     await page.keyboard.press("Enter");
     await rest(page);
-    await log("⌃⌘G 99 in " + root, { said: await page.evaluate(() => window.__corner() ?? null) });
+    await log("⌃⌘G 99 in " + root, { said: await page.evaluate(() => window.__said() ?? null) });
     await page.keyboard.press("Escape");
     await rest(page);
   }
@@ -302,12 +302,12 @@ async function gotoToolbarOnWorkByParagraph(): Promise<void> {
   await page.keyboard.type("61x");
   await page.keyboard.press("Enter");
   await rest(page);
-  await log("⌃⌘G 61x on a work by paragraph", { said: await page.evaluate(() => window.__corner() ?? null) });
+  await log("⌃⌘G 61x on a work by paragraph", { said: await page.evaluate(() => window.__said() ?? null) });
   await page.keyboard.press("Meta+a");
   await page.keyboard.type("99");
   await page.keyboard.press("Enter");
   await rest(page);
-  await log("⌃⌘G 99 on a work by paragraph", { landedOn: await landed(), said: await page.evaluate(() => window.__corner() ?? null) });
+  await log("⌃⌘G 99 on a work by paragraph", { landedOn: await landed(), said: await page.evaluate(() => window.__said() ?? null) });
   await page.keyboard.press("Escape");
   await rest(page);
 }

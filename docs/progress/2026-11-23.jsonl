@@ -143,3 +143,5 @@
 {"at":"2026-11-23T19:17","ev":"add","id":"F5","list":"F","title":"The order run read \"grid\" otherwise once: the corner said nothing where it says saved","detail":"Asked: found 19:16 (not asked), the verdict over A23's fixes: the order run read 'the line made a card, switched back' with corner \"\" where the approved run has \"saved\"; the next play passed. The change under test does not touch the grid section. Why: the reading takes the corner's words, which a run's timing decides. Done when: woken, its kept print read (tools/out/helium-failed/order-2026-11-23-191616.txt is the first) and the reading held; or the reader closes it."}
 {"at":"2026-11-23T19:17","ev":"watch","id":"F5","text":"section read otherwise — grid"}
 {"at":"2026-11-23T19:17","ev":"stop","id":"F5","note":"paused: wakes on 'section read otherwise — grid', its print kept under tools/out/helium-failed"}
+{"at":"2026-11-23T19:18","ev":"done","id":"A23","commits":["50479c1"]}
+{"at":"2026-11-23T19:35","ev":"start","id":"F5"}

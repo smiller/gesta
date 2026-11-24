@@ -16,10 +16,10 @@ export async function installAlertReaders(ctx: BrowserContext): Promise<void> {
     const live = () => JSON.parse(document.documentElement.dataset.alerts || "{}");
     const said = () => JSON.parse(document.documentElement.dataset.said || "{}");
     window.__corner = () => ((f) => [f.error, f.warning].filter(Boolean).join(" · ") || f[f.latest])(live());
-    /* the corner with the newer of info and success as last said, not as
-       still shown: its time on screen is the clock's, which a run's load can
-       outlast */
-    window.__said = () => ((f, s) => [f.error, f.warning].filter(Boolean).join(" · ") || s[s.latest])(live(), said());
+    /* what the page said last, of any kind, whether or not it still shows:
+       an alert's time on screen is the clock's, which a run's load can
+       outlast; an error or warning standing comes first */
+    window.__said = () => ((f, s) => [f.error, f.warning].filter(Boolean).join(" · ") || s[s.last])(live(), said());
     window.__alerts = () => ((f) => [f.error, f.warning, f.info, f.success].filter(Boolean).join(" · "))(live());
     /* where the page shows from, as the page publishes it */
     window.__pageTop = () => parseFloat(document.documentElement.style.getPropertyValue("--alert-area-bottom")) || 0;

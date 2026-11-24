@@ -159,7 +159,7 @@ export const storedWith = async (text: string) => { for (let i = 0; i < 40; i++)
 /* the window, a paragraph by its first words, the corner's text */
 export const winY = () => page.evaluate(() => Math.round(scrollY));
 export const inView = (start: string) => page.evaluate(([s, t]) => { const p = [...document.querySelectorAll(s + " p")].find((x) => x.textContent.startsWith(t)); if (!p) return null; const r = p.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; }, [S.editor, start]);
-export const cornerText = () => page.evaluate(() => window.__corner() || "");
+export const saidText = () => page.evaluate(() => window.__said() || "");
 /* a scroll BY A READER'S HAND, a wheel over the page: a script's
    scrollTo is no reader, and an arrival holds the entry's remembered
    place until a wheel, key, pointer or touch — the toolbar step's

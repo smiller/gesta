@@ -1,4 +1,4 @@
-import { section, laid, settled, page, A, R, S, log, go, write, winY, cornerText, wheelTo, setAnswer, STANZA_SEEDS, searchFor, rest, openGotoRow, seed } from "./kit.ts";
+import { section, laid, settled, page, A, R, S, log, go, write, winY, saidText, wheelTo, setAnswer, STANZA_SEEDS, searchFor, rest, openGotoRow, seed } from "./kit.ts";
 
 section("source view", async () => {
   /* the source view: ⌃⌘M over the day, the caret carried across by its count, an edit in the source landing */
@@ -71,14 +71,14 @@ async function switchViews(): Promise<void> {
   await log("⌃⌘M back, still scrolled away", { stayed: Math.abs((await winY()) - away) < 60 });
   await page.keyboard.press("Control+Meta+w");
   await rest(page);
-  await log("⌃⌘W rendered", { corner: await cornerText() });
+  await log("⌃⌘W rendered", { corner: await saidText() });
   await page.keyboard.press("Control+Meta+m");
 }
 async function wordCountInSourceView(): Promise<void> {
   await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
   await page.keyboard.press("Control+Meta+w");
   await rest(page);
-  await log("⌃⌘W in the source view", { corner: await cornerText() });
+  await log("⌃⌘W in the source view", { corner: await saidText() });
   /* the search row closed in the source view: the keys go back to the text */
   await page.keyboard.press("Control+Meta+k");
   await rest(page);
@@ -130,7 +130,7 @@ section("sub-entries", async () => {
   await A.act.create(page);
   await A.waitEntry(page, "2026-09-06/Ideas", 5000);
   const onLeaf = await A.act.createOnLeaf(page);
-  await log("⌃⌘N on the tagged entry", onLeaf || await R.corner(page));
+  await log("⌃⌘N on the tagged entry", onLeaf || { text: await R.saidText(page) });
   await log("⌃⌘N, Ideas typed", { entry: await A.entry(page), crumb: await R.crumb(page), tools: await R.tools(page) });
   await go("2026-09-06", 5000);
   await log("the day's body ends with the link, its tag bar lists it", { link: await R.lastLink(page), tags: await R.tags(page) });
@@ -173,7 +173,7 @@ section("list", async () => {
   await page.keyboard.type("after the block");
   await rest(page);
   await log("a code block typed, Enter twice out of it", { md: await A.stored(page) });
-  await log("a list typed: bullet, Enter, Tab, Enter, Shift-Tab twice", { md: await A.stored(page), ...(await R.corner(page)) });
+  await log("a list typed: bullet, Enter, Tab, Enter, Shift-Tab twice", { md: await A.stored(page), text: await R.saidText(page) });
   await log("the gap between the two outer items, and a line's height", await laid(R.listGaps));
 });
 section("search", async () => {

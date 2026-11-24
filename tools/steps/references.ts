@@ -1,5 +1,5 @@
 import { appendFileSync, mkdirSync } from "node:fs";
-import { section, laid, storedWith, page, A, R, S, log, go, cornerText, landed, rest, settled, write, caretAt, view, writeAll, jump } from "./kit.ts";
+import { section, laid, storedWith, page, A, R, S, log, go, saidText, landed, rest, settled, write, caretAt, view, writeAll, jump } from "./kit.ts";
 import { inPage } from "../adapters/inPage.ts";
 
 section("reference copy", async () => {
@@ -167,7 +167,7 @@ section("grid", async () => {
   await R.setSource(page, "::: grid\n::: card-light-blue\nalpha\n:::\nloose\n:::");
   await page.keyboard.press("Control+Meta+m");
   await page.waitForTimeout(400);
-  await log("a stray line in a grid, switched back", { corner: await R.gridCorner(page) });
+  await log("a stray line in a grid, switched back", { corner: await R.saidTextOrEmpty(page) });
   /* the open path forces source over the stored fault (away and back, once the save has landed); a refused ⌃⌘M leaves it forced, so the next entry opens rendered */
   for (let i = 0; i < 12 && !(await A.stored(page) || "").includes("loose"); i++);   /* the store holds the stray line before the navigation, or the open path has nothing to refuse */
   await go("commonplace/Carded");
@@ -175,7 +175,7 @@ section("grid", async () => {
   await rest(page);
   await go("commonplace/Gridded");
   await rest(page);
-  await log("the faulty entry opened", { source: await R.inSource(page), corner: await R.gridCorner(page) });
+  await log("the faulty entry opened", { source: await R.inSource(page), corner: await R.saidTextOrEmpty(page) });
   await page.keyboard.press("Control+Meta+m");
   await rest(page);
   await go("commonplace/Carded");
@@ -185,9 +185,8 @@ section("grid", async () => {
   /* the line fixed and the view restored: the error resolved, the grid drawn */
   await R.setSource(page, "::: grid\n::: card-light-blue\nalpha\n:::\n\n::: card-red\nloose\n:::\n:::");
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForTimeout(400);
-  await R.waitCorner(page, "saved");   /* read after the switch's save: at 400ms alone it was there one run in two */
-  await log("the line made a card, switched back", { corner: await R.gridCorner(page), ...(await laid(R.gridLayout)) });
+  await page.waitForFunction(() => !JSON.parse(document.documentElement.dataset.alerts || "{}").error, null, { timeout: 5000 }).catch(() => {});
+  await log("the line made a card, switched back", { standing: (await R.standingText(page)) ?? "none", ...(await laid(R.gridLayout)) });
 });
 section("told on open", async () => {
   /* a refused fence line and a directive no page reads, raised as an error when the entry opens: told only on the switch back from the source, a reader who never opened it there never saw them */
@@ -197,10 +196,10 @@ section("told on open", async () => {
   });
   await go("2026-09-02/gesta-wrangling");
   await rest(page);
-  await log("a journal day with a refused fence line, opened", { corner: await R.gridCorner(page) });
+  await log("a journal day with a refused fence line, opened", { corner: await R.saidTextOrEmpty(page) });
   await go("bookshelf/Chaucer,%20Geoffrey");
   await rest(page);
-  await log("an author with directives no page reads there, opened", { corner: await R.gridCorner(page) });
+  await log("an author with directives no page reads there, opened", { corner: await R.saidTextOrEmpty(page) });
 });
 section("paired card", async () => {
   /* a card's and a note's paired verse split by their own widest lines: equal halves wrapped four lines of a card whose translation needed a third of it */
@@ -279,8 +278,8 @@ async function picturePastedAnotherEntry(): Promise<void> {
   await R.pastePng(page);
   await page.evaluate(() => { location.hash = "#commonplace/Horace"; });
   await A.waitEntry(page, "commonplace/Horace", 5000).catch(() => {});
-  await page.waitForFunction(() => /nowhere to land/.test(window.__corner() || ""), null, { timeout: 1500 }).catch(() => {});
-  await log("a picture pasted, then another entry at once", { entry: await A.entry(page), picturesHere: await page.evaluate((s) => document.querySelectorAll(s).length, S.editorImg), corner: await cornerText(), aimedAtHasOne: /!\[/.test((await A.stored(page, "commonplace/Pictured Away")) || "") });
+  await page.waitForFunction(() => /nowhere to land/.test(window.__said() || ""), null, { timeout: 1500 }).catch(() => {});
+  await log("a picture pasted, then another entry at once", { entry: await A.entry(page), picturesHere: await page.evaluate((s) => document.querySelectorAll(s).length, S.editorImg), corner: await saidText(), aimedAtHasOne: /!\[/.test((await A.stored(page, "commonplace/Pictured Away")) || "") });
   await page.click(S.corner).catch(() => {});
 }
 section("a terminal's copy pasted", async () => {
