@@ -234,8 +234,8 @@ function boxesOf(doc: Node | null, c: Asked): ToolbarLabels {
 }
 /* the toolbar as this entry asks it: which boxes, their labels, what is said
    where nothing can be asked, and where there is no document to ask */
-export function toolbarFor(doc: Node | null, c: Asked): ToolbarLabels & { none: Said; inSource: Said } {
-  return { ...boxesOf(doc, c), none: wordsFor(c).none, inSource: said("switchToGo", { what: wordsFor(c).askedFor }) };
+export function toolbarFor(doc: Node | null, c: Asked): ToolbarLabels & { none: Said; inMarkdown: Said } {
+  return { ...boxesOf(doc, c), none: wordsFor(c).none, inMarkdown: said("switchToGo", { what: wordsFor(c).askedFor }) };
 }
 export interface Standing { pos: number | null; asked: number | string }
 export type Answer = { pos: number; asked: number | string; said: Said | null } | { said: Said };

@@ -7,7 +7,7 @@ import { type Raise } from "../model/alertText.ts";
 
 export interface ReplaceDeps {
   rb: Screen["replace"];
-  session: Pick<Session, "locked" | "mdView" | "replacer" | "setView">;
+  session: Pick<Session, "locked" | "markdownMode" | "replacer" | "setView">;
   raise: Raise;
   opened(): void;
   focusBar(): void;
@@ -18,9 +18,9 @@ export interface ReplaceToolbar {
 }
 export function replaceActs(d: ReplaceDeps): ReplaceToolbar {
   const { rb, session, raise, opened, focusBar } = d;
-  /* FIND AND REPLACE, on the markdown: ⌃⌘E in the rendered view switches
-     to the source view first, and closing the toolbar switches back */
-  let hits: number[] = [], at = -1, fromRendered = false, unwatch: (() => void) | null = null, editing = false, counting = 0;
+  /* FIND AND REPLACE, on the markdown: ⌃⌘E in HTML mode switches
+     to markdown mode first, and closing the toolbar switches back */
+  let hits: number[] = [], at = -1, fromHtml = false, unwatch: (() => void) | null = null, editing = false, counting = 0;
   /* THE BAR HOLDS THE VIEW IT OPENED ON: the offsets are that text's, and
      a save from another window rebuilt the view under them, so a Replace
      wrote at the old offsets into the new text
@@ -57,7 +57,7 @@ export function replaceActs(d: ReplaceDeps): ReplaceToolbar {
     dismiss();
     return null;
   };
-  const dismiss = () => { dismissReplace(); fromRendered = false; };
+  const dismiss = () => { dismissReplace(); fromHtml = false; };
   /* a rebuilt view's caret sits at its end: put back at the match the toolbar
      stood on (pin: replace › the entry saved in another window, the toolbar open) */
   const freeOrInBar = (a: Element | null): boolean => !a || a === document.body || !!a.closest(".replace-toolbar");
@@ -66,27 +66,27 @@ export function replaceActs(d: ReplaceDeps): ReplaceToolbar {
     const was = at >= 0 ? hits[at] : 0;
     if (port()) return;
     const a = document.activeElement;
-    if (session.mdView && freeOrInBar(a)) session.replacer()?.place(was);
+    if (session.markdownMode && freeOrInBar(a)) session.replacer()?.place(was);
   };
   /* every close switches back to the view the toolbar was opened from, but a
      navigation or a rebuilt view, which only closes it
      (pin: replace › ⌃⌘H over the toolbar). A switch back the parse refuses
-     leaves the source view open and the cursor in its text, not in the
+     leaves markdown mode open and the cursor in its text, not in the
      hidden Find box (pin: replace › Escape, the switch back refused) */
   const closeBack = (focus: boolean): void => {
     if (!port()) return;
-    const back = fromRendered;
+    const back = fromHtml;
     dismiss();
     const wanted = focus || !!document.activeElement?.closest(".replace-toolbar");
     if (back) session.setView(false);
-    if (session.mdView && wanted) session.replacer()?.focus();
+    if (session.markdownMode && wanted) session.replacer()?.focus();
   };
   const close = () => closeBack(true);
   const closeOver = () => closeBack(false);
-  const intoSource = (): "there" | "switched" | "refused" => {
-    if (session.mdView) return "there";
+  const intoMarkdown = (): "there" | "switched" | "refused" => {
+    if (session.markdownMode) return "there";
     session.setView(true);
-    if (!session.mdView) return "refused";
+    if (!session.markdownMode) return "refused";
     raise("toReplace");
     return "switched";
   };
@@ -100,12 +100,12 @@ export function replaceActs(d: ReplaceDeps): ReplaceToolbar {
   const open = () => {
     if (rb.open && port()) { focusBar(); return; }
     opened();
-    const how = intoSource();
+    const how = intoMarkdown();
     const p = how === "refused" ? null : session.replacer();
     if (!p) return;
     rb.open = true;
     barPort = p;
-    fromRendered = how === "switched";
+    fromHtml = how === "switched";
     unwatch = watchPort(p);
     seek(p, p.start(pageTop()));
     setTimeout(() => focusBar(), 0);

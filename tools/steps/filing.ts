@@ -26,18 +26,18 @@ async function newAuthorSeanMiller(): Promise<void> {
   await A.act.create(page);
   await waitForSaid(/heading/, 3000);
   await log("+ book with the caret in the heading", { corner: await saidText(), stored: await A.stored(page, "bookshelf/Miller, Sean"), book: await A.stored(page, "bookshelf/Miller, Sean/Odes") });
-  /* the same in the markdown view, the caret on the heading's line */
+  /* the same in markdown mode, the caret on the heading's line */
   await page.keyboard.press("Control+Meta+m");
-  await waitShown(page, { name: "source view", ms: 3000 }, S.source);
+  await waitShown(page, { name: "markdown mode", ms: 3000 }, S.markdown);
 }
 async function bookCaretHeadingS(): Promise<void> {
-  await page.evaluate((s) => { const ta = document.querySelector(s); ta.focus(); ta.setSelectionRange(3, 3); }, S.source);
+  await page.evaluate((s) => { const ta = document.querySelector(s); ta.focus(); ta.setSelectionRange(3, 3); }, S.markdown);
   setAnswer("Odes");
   await A.act.create(page);
   await waitForSaid(/heading/, 3000);
-  await log("+ book with the caret on the heading's line, markdown view", { corner: await saidText(), stored: await A.stored(page, "bookshelf/Miller, Sean"), book: await A.stored(page, "bookshelf/Miller, Sean/Odes") });
+  await log("+ book with the caret on the heading's line, markdown mode", { corner: await saidText(), stored: await A.stored(page, "bookshelf/Miller, Sean"), book: await A.stored(page, "bookshelf/Miller, Sean/Odes") });
   await page.keyboard.press("Control+Meta+m");
-  await waitShown(page, { name: "rendered view", ms: 3000 }, S.source, "detached");
+  await waitShown(page, { name: "HTML mode", ms: 3000 }, S.markdown, "detached");
   await R.selectFrom(page, ["Sean Miller", 11], ["Sean Miller", 11]);
   await page.keyboard.press("Enter");
   setAnswer("Odes");
@@ -69,26 +69,26 @@ async function reFiledBookPicture(): Promise<void> {
   await log("the re-filed book, its picture", { entry: await A.entry(page), md: await A.stored(page, "bookshelf/Sean Miller/Odes"), missing: await page.evaluate(() => document.querySelector("#editor img")?.dataset.missing || null), ...(await R.picture(page).catch(() => ({}))) });
 }
 section("replace", async () => {
-  /* find and replace: ⌃⌘E in the rendered view switches to the source view and opens the replace toolbar, an info showing; Enter in Find steps on, Enter in Replace with replaces the outlined match and moves on, Skip moves on leaving it, Replace All replaces the rest, ⌘Z in the text undoes the All in one step, Escape closes and switches back; opened in the source view it stays there */
-  await replaceInRenderedView();
-  await replaceInSourceView();
+  /* find and replace: ⌃⌘E in HTML mode switches to markdown mode and opens the replace toolbar, an info showing; Enter in Find steps on, Enter in Replace with replaces the outlined match and moves on, Skip moves on leaving it, Replace All replaces the rest, ⌘Z in the text undoes the All in one step, Escape closes and switches back; opened in markdown mode it stays there */
+  await replaceInHtmlMode();
+  await replaceInMarkdownMode();
   await escapeSwitchBackRefused();
   await entrySavedAnotherWindow();
   await savedElsewhereFollowing();
 });
-async function replaceInRenderedView(): Promise<void> {
+async function replaceInHtmlMode(): Promise<void> {
   await go("commonplace/Replaced");
   await page.click(S.editor);
   await page.keyboard.press("Control+Meta+m");
-  await waitShown(page, { name: "source view", ms: 5000 }, S.source);
-  await R.setSource(page, "One*-*two *-*three, and *,* four.\n\nFive*-*six.\n");
+  await waitShown(page, { name: "markdown mode", ms: 5000 }, S.markdown);
+  await R.setMarkdown(page, "One*-*two *-*three, and *,* four.\n\nFive*-*six.\n");
   await landed(page, 1500);
   await page.keyboard.press("Control+Meta+m");
-  await waitShown(page, { name: "rendered view", ms: 5000 }, S.editor);
+  await waitShown(page, { name: "HTML mode", ms: 5000 }, S.editor);
   await rest(page);
   await page.keyboard.press("Control+Meta+e");
   await rest(page);
-  await log("⌃⌘E in the rendered view", { ...(await R.replaceToolbar(page)), corner: await saidText() });
+  await log("⌃⌘E in HTML mode", { ...(await R.replaceToolbar(page)), corner: await saidText() });
   await page.keyboard.type("*-*");
   await rest(page);
   await log("*-* typed into Find", await R.replaceToolbar(page));
@@ -106,25 +106,25 @@ async function replaceInRenderedView(): Promise<void> {
   await page.click(S.replaceAll, { timeout: 2000 }).catch(() => {});
   await rest(page);
   await log("Replace All, the rest replaced", { ...(await R.replaceToolbar(page)), stored: await A.stored(page) });
-  await page.click(S.source, { timeout: 2000 }).catch(() => {});
+  await page.click(S.markdown, { timeout: 2000 }).catch(() => {});
   await page.keyboard.press("Meta+z");
   await rest(page);
   await log("⌘Z in the text", { ...(await R.replaceToolbar(page)), stored: await A.stored(page) });
   await page.keyboard.press("Escape");
   await rest(page);
-  await log("Escape, opened in the rendered view", await R.replaceToolbar(page));
+  await log("Escape, opened in HTML mode", await R.replaceToolbar(page));
   await page.keyboard.press("Control+Meta+m");
 }
-async function replaceInSourceView(): Promise<void> {
-  await waitShown(page, { name: "source view", ms: 5000 }, S.source);
+async function replaceInMarkdownMode(): Promise<void> {
+  await waitShown(page, { name: "markdown mode", ms: 5000 }, S.markdown);
   await page.keyboard.press("Control+Meta+e");
   await rest(page);
-  await log("⌃⌘E in the source view", await R.replaceToolbar(page));
+  await log("⌃⌘E in markdown mode", await R.replaceToolbar(page));
   await page.keyboard.press("Escape");
   await rest(page);
-  await log("Escape, opened in the source view", await R.replaceToolbar(page));
+  await log("Escape, opened in markdown mode", await R.replaceToolbar(page));
   /* a long entry: the layer the matches are drawn on keeps the text's line pitch to its last line, where 27.54px set it 79px low over 2,706 lines of Paradise Lost */
-  await R.setSource(page, Array.from({ length: 1500 }, (_, i) => "Line " + i + " of a long entry, with *-* in it and more words after it to wrap.").join("\n\n"));
+  await R.setMarkdown(page, Array.from({ length: 1500 }, (_, i) => "Line " + i + " of a long entry, with *-* in it and more words after it to wrap.").join("\n\n"));
   await page.keyboard.press("Control+Meta+e");
   await rest(page);
   await log("a long entry's matches", await R.replaceDrift(page));
@@ -132,7 +132,7 @@ async function replaceInSourceView(): Promise<void> {
   { const y = await winY(); await page.click(S.replaceAll, { timeout: 2000 }).catch(() => {}); await rest(page); await log("Replace All in a long entry", { count: (await R.replaceToolbar(page)).count, kept: Math.abs((await winY()) - y) < 60 }); }
   await page.keyboard.press("Escape");
   /* a replacement holding the find: the rest are counted, not "none" */
-  await R.setSource(page, "cat and cat\n");
+  await R.setMarkdown(page, "cat and cat\n");
   await page.keyboard.press("Control+Meta+e");
   await rest(page);
   await page.fill("#replacefind", "cat").catch(() => {});
@@ -142,12 +142,12 @@ async function replaceInSourceView(): Promise<void> {
   await log("Replace All, the replacement holding the find", await R.replaceToolbar(page));
   await page.keyboard.press("Escape");
   /* a switch back the parse refuses: the cursor goes back to the text, not into the hidden Find box */
-  await R.setSource(page, "::: grid 2\n::: card-red\nx\n:::\n:::\n");
+  await R.setMarkdown(page, "::: grid 2\n::: card-red\nx\n:::\n:::\n");
   await landed(page, 1500);
   await page.keyboard.press("Control+Meta+m");
 }
 async function escapeSwitchBackRefused(): Promise<void> {
-  await waitShown(page, { name: "rendered view", ms: 5000 }, S.editor);
+  await waitShown(page, { name: "HTML mode", ms: 5000 }, S.editor);
   await page.keyboard.press("Control+Meta+e");
   await rest(page);
   await page.fill("#replacefind", "::: card-red").catch(() => {});
@@ -157,10 +157,10 @@ async function escapeSwitchBackRefused(): Promise<void> {
   await page.keyboard.press("Escape");
   await rest(page);
   await log("Escape, the switch back refused", await R.replaceToolbar(page));
-  await R.setSource(page, "One*-*two.\n");
+  await R.setMarkdown(page, "One*-*two.\n");
   await landed(page, 1500);
   await page.keyboard.press("Control+Meta+m");
-  await waitShown(page, { name: "rendered view", ms: 5000 }, S.editor);
+  await waitShown(page, { name: "HTML mode", ms: 5000 }, S.editor);
   /* a panel opened over the replace toolbar closes it, and switches back as Escape does */
   await page.keyboard.press("Control+Meta+e");
   await rest(page);
@@ -169,7 +169,7 @@ async function escapeSwitchBackRefused(): Promise<void> {
   await log("⌃⌘H over the toolbar", { ...(await R.replaceToolbar(page)), help: (await R.helpOpen(page)).help });
   await page.keyboard.press("Escape");
   await rest(page);
-  /* the same entry saved in another window rebuilds the source view under the replace toolbar: the toolbar closes, its offsets belonging to the text it was opened on, and the caret goes back to the match it stood on, not to the text's end */
+  /* the same entry saved in another window rebuilds markdown mode under the replace toolbar: the toolbar closes, its offsets belonging to the text it was opened on, and the caret goes back to the match it stood on, not to the text's end */
   await page.keyboard.press("Control+Meta+e");
   await rest(page);
   await page.fill("#replacefind", "*-*").catch(() => {});
@@ -182,14 +182,14 @@ async function entrySavedAnotherWindow(): Promise<void> {
     await other.click(S.editor); await other.keyboard.press("End"); await other.keyboard.type(" Seven*-*eight.");
     await landed(other, 1500);
     /* the landed write reaches this window by its tab message: waited for, so a reading never races it */
-    await waitState(page, { name: "text", ms: 5000 }, () => /Seven/.test(document.querySelector("textarea.source")?.value || document.querySelector("#editor")?.textContent || ""));
+    await waitState(page, { name: "text", ms: 5000 }, () => /Seven/.test(document.querySelector("textarea.markdown")?.value || document.querySelector("#editor")?.textContent || ""));
     await rest(page);
-    await log("the entry saved in another window, the toolbar open", { ...(await R.replaceToolbar(page)), text: await page.evaluate(() => document.querySelector("textarea.source")?.value ?? null), caret: await page.evaluate(() => document.querySelector("textarea.source")?.selectionStart ?? null) });
+    await log("the entry saved in another window, the toolbar open", { ...(await R.replaceToolbar(page)), text: await page.evaluate(() => document.querySelector("textarea.markdown")?.value ?? null), caret: await page.evaluate(() => document.querySelector("textarea.markdown")?.selectionStart ?? null) });
     await other.close(); }
 }
 async function savedElsewhereFollowing(): Promise<void> {
   await page.keyboard.press("Escape");
-  if (await R.inSource(page)) { await page.keyboard.press("Control+Meta+m"); await waitShown(page, { name: "rendered view", ms: 5000 }, S.editor); }
+  if (await R.inMarkdown(page)) { await page.keyboard.press("Control+Meta+m"); await waitShown(page, { name: "HTML mode", ms: 5000 }, S.editor); }
 }
 section("losing nothing", async () => {
   /* what was lost and is kept now: a fence's words after its language, a picture under the code button, a selection under a paste of line breaks, page markers in a copy, a second export's report, a store that never answers */
@@ -203,13 +203,13 @@ async function fenceWordsBothViews(): Promise<void> {
   await go("commonplace/Kept");
   await page.click(S.editor);
   await page.keyboard.press("Control+Meta+m");
-  await waitShown(page, { name: "source view", ms: 5000 }, S.source);
-  await R.setSource(page, "```not code\nx = 1\n```\n\ncap ![](x.png) tion\n\n::: note\nin her degree ⟨8⟩ and on\n:::\n");
+  await waitShown(page, { name: "markdown mode", ms: 5000 }, S.markdown);
+  await R.setMarkdown(page, "```not code\nx = 1\n```\n\ncap ![](x.png) tion\n\n::: note\nin her degree ⟨8⟩ and on\n:::\n");
   await page.keyboard.press("Control+Meta+m");
   await rest(page);
   await page.keyboard.press("Control+Meta+m");
-  await waitShown(page, { name: "source view", ms: 5000 }, S.source);
-  await log("a fence's words after the language, through both views", { fence: await page.evaluate((s) => document.querySelector(s)?.value.split("\n")[0] ?? null, S.source) });
+  await waitShown(page, { name: "markdown mode", ms: 5000 }, S.markdown);
+  await log("a fence's words after the language, through both views", { fence: await page.evaluate((s) => document.querySelector(s)?.value.split("\n")[0] ?? null, S.markdown) });
   await page.keyboard.press("Control+Meta+m");
   await rest(page);
   await landed(page, 1500);

@@ -49,8 +49,8 @@ Red. Something went wrong; it stays until what caused it is resolved or it is cl
 | `two files here are the same entry (… and …) — remove one and import again` | An import with two files spelling one entry; a click copies the second. |
 | `Couldn’t copy the reference` | ⌃⌘R the clipboard refused. A click copies the reference; the next copy that lands resolves it. |
 | `Couldn’t copy the link` | A link copy the clipboard refused. A click copies the link; the next copy that lands resolves it. |
-| `cannot render … — …; shown as source` | An entry the editor cannot draw (a grid holding a stray line, say): its key and why. It opens in the markdown view, and goes once it parses on the switch back. |
-| `… fences stayed paragraphs` | An entry opened, or switched back to from the markdown view, with fences Gesta does not know or reference directives it cannot read: one line each. An error, so the block’s form can still be copied after ten seconds. |
+| `cannot render … — …; shown in markdown mode` | An entry the editor cannot draw (a grid holding a stray line, say): its key and why. It opens in markdown mode, and goes once it parses on the switch back. |
+| `… fences stayed paragraphs` | An entry opened, or switched back to from markdown mode, with fences Gesta does not know or reference directives it cannot read: one line each. An error, so the block’s form can still be copied after ten seconds. |
 | `… — …` | A move, rename or re-file refused once under way, or failed: why. The old entry is opened again. |
 | `… — copies left: …` | A move whose copies failed and could not all be taken back: the copies left. |
 | `… — nothing was moved` | A move whose copies failed and were all taken back. |
@@ -77,13 +77,13 @@ Amber. Why an act just tried did nothing. It fades after ten seconds, or goes wh
 | `already on today` | ⌃⌘T on today’s entry. |
 | `no such …` | An address naming an entry that does not exist: “no such book”, “no such commonplace”, or a sub-entry’s noun. |
 | `… fences stayed paragraphs` | A paste holding fences Gesta does not know: one line each, with why. |
-| `no spaces to remove` | Shift+Tab in a code block or the markdown view over lines with no spaces to remove. |
-| `nothing to indent — those lines are empty` | Tab in a code block or the markdown view over empty lines. |
+| `no spaces to remove` | Shift+Tab in a code block or markdown mode over lines with no spaces to remove. |
+| `nothing to indent — those lines are empty` | Tab in a code block or markdown mode over empty lines. |
 | `can’t indent the first item in a list` | Tab on a list’s first item. |
 | `can’t indent an item more than one deeper than its parent` | Tab on an item already one deeper than the one above. |
 | `at the outer level: switch to markdown (⌃⌘M) to remove` | Shift+Tab at a list’s or a quote’s outer level. |
-| `a grid’s cards are joined in the source view (⌃⌘M)` | Backspace at a card’s start or Delete at its end. |
-| `Reference style is edited in the markdown view (⌃⌘M)` | A click on a reference in the rendered view. |
+| `a grid’s cards are joined in markdown mode (⌃⌘M)` | Backspace at a card’s start or Delete at its end. |
+| `Reference style is edited in markdown mode (⌃⌘M)` | A click on a reference in HTML mode. |
 | `can’t make a code block from that` | The code button over a picture or a page label. |
 | `an entry can’t move under itself` | A move or rename into a place under the entry itself. |
 | `nothing at … to move it under` | A move or rename under an entry that does not exist. |
@@ -109,8 +109,8 @@ Amber. Why an act just tried did nothing. It fades after ten seconds, or goes wh
 | `no later entry` | ⌃⌘. at the last entry. |
 | `still loading — try that again in a moment` | An act tried before the journal is read, or ⌃⌘R before the entry is drawn. |
 | `couldn’t load entries — reload first` | An act tried once the journal’s read has failed. |
-| `switch to the rendered view (⌃⌘M) to copy a reference` | ⌃⌘R in the markdown view. |
-| `no markdown view here` | ⌃⌘M in the reader. |
+| `switch to HTML mode (⌃⌘M) to copy a reference` | ⌃⌘R in markdown mode. |
+| `no markdown mode here` | ⌃⌘M in the reader. |
 | `picture not pasted — one at a time; paste it again` | A picture pasted while the last one is still being read. |
 | `place your cursor in the entry` | A shortcut, or a bookmark’s link, chosen with no cursor in the entry. |
 | `no shortcut to insert` | Enter in the shortcuts panel with no row matching. |
@@ -138,7 +138,7 @@ Amber. Why an act just tried did nothing. It fades after ten seconds, or goes wh
 | `type a stanza, or stanza.line` | A link to a page in stanzas that names no stanza. |
 | `… is not a stanza or stanza.line, like 2.1` | A link to a page in stanzas whose number is not a stanza or stanza.line. |
 | `no … numbers here` | ⌃⌘G on an entry with nothing numbered; or a paragraph asked for, by ⌃⌘G or a link, on a page of a work referenced by paragraph that holds no `::: prose` block. |
-| `Switch to the rendered view to go to …` | ⌃⌘G in the markdown view. |
+| `Switch to HTML mode to go to …` | ⌃⌘G in markdown mode. |
 | `finish the key` | Enter on a bookmark key typed part-way that more than one key starts with. |
 | `no bookmark …` | A number typed in the bookmarks panel with no row, or a key typed that no bookmark has. |
 | `Nothing to copy` | The copy button over a block that has gone. |
@@ -164,7 +164,7 @@ Blue. A count, a progress line or a note, telling of no outcome. It fades on its
 | `… — … of …` | ⌃⌘G landing on a number found in more than one block: the block it landed in. |
 | `… is omitted in this edition — … of …` | ⌃⌘G, or a link to a line, landing on a line the edition omits; with its block where the number is in several. |
 | `… entries stored` | The journal read at launch. |
-| `Source view, to replace` | ⌃⌘E in the rendered view, switching to the markdown view. |
+| `Markdown mode, to replace` | ⌃⌘E in HTML mode, switching to markdown mode. |
 | `indexing…` | Search before its index is built. |
 | `exporting…` | An export running. |
 | `importing…` | An import running. |

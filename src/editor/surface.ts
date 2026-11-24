@@ -8,9 +8,9 @@ import { splitKey } from "../store/keys.ts";
 import { countBefore, positionAt, arrivingCount, crossViewOffset, type Hold } from "../ui/viewCarets.ts";
 
 export interface Surface {
-  /* the source stream holds every fence line the rendered one lacks: a count
+  /* markdown mode's stream holds every fence line HTML mode's lacks: a count
      crosses between the two, never carried over as equal */
-  readonly source: boolean;
+  readonly markdownMode: boolean;
   md(): string;
   flat(): Flat;
   caret(): number;
@@ -58,7 +58,7 @@ export interface ReplacePort {
 export interface Viewport { y(): number; scrollTo(y: number): void; under(): number }
 export interface PlacePort { carry(pos: number): void; release(): void }
 export interface SurfaceOptions {
-  build: { rendered(doc: Node): Surface; source(md: string): Surface };
+  build: { html(doc: Node): Surface; markdown(md: string): Surface };
   window: Viewport;
   places: PlacePort;
   /* the entry's own error: a fence refused, a directive's trouble, an entry that cannot render */
@@ -79,13 +79,13 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
   const { build, window: win, places } = opts;
   let cur: Surface | null = null;
   let ekey = "";
-  let mdView = false;
-  /* a stored text the model refuses FORCES the source view for that entry
+  let markdownMode = false;
+  /* a stored text the model refuses FORCES markdown mode for that entry
      only; a reader's own choice is put back on the next show
      (pin: grid › the next entry after a refused switch)
-     (pin: surface.test › shown, forces the source view) */
+     (pin: surface.test › shown, forces markdown mode) */
   let forced = false, readerView = false;
-  const carets: { rendered: Hold | null; source: Hold | null } = { rendered: null, source: null };
+  const carets: { html: Hold | null; markdown: Hold | null } = { html: null, markdown: null };
   let placedAt: number | null = null;
   const dropFenceError = (): void => opts.fenceError.resolve();
   const mount = (make: () => Surface): void => {
@@ -97,7 +97,7 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
   const refusedError = (err: unknown, beneath = false): void => opts.fenceError.raise(said("cannotRender", { key: ekey, why: (err as Error).message }), { beneath });
   /* the entry's refused fences and its directives' trouble, raised as an
      error when it is drawn: told only on the switch back, they were never seen by a
-     reader who did not edit the source (pin: surface.test › an entry opened
+     reader who did not edit in markdown mode (pin: surface.test › an entry opened
      raises its refused fences). On opening it goes beneath an error
      standing: on top it hid a "not saved" (pin: surface.test › the error on
      open goes beneath) */
@@ -111,13 +111,13 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
   function arrived(key: string, keepView: boolean): boolean {
     /* the release is told, as the force was: told only of the force, a
        view shown forced stayed shown after it ended (pin: grid › the next entry after a refused switch) */
-    if (forced) { mdView = readerView; forced = false; opts.onView(mdView); }
-    /* the rendered view is the default: another entry opens in it, the same
+    if (forced) { markdownMode = readerView; forced = false; opts.onView(markdownMode); }
+    /* HTML mode is the default: another entry opens in it, the same
        entry drawn again or renamed keeps the view chosen
-       (pin: surface.test › a show of another entry is in the rendered view)
+       (pin: surface.test › a show of another entry is in HTML mode)
        (pin: surface.test › a renamed entry) */
     const fresh = key !== ekey, another = fresh && !keepView;
-    if (another && mdView) { mdView = false; opts.onView(false); }
+    if (another && markdownMode) { markdownMode = false; opts.onView(false); }
     ekey = key;
     return fresh;
   }
@@ -127,17 +127,17 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
        (pin: surface.test › a show resolves the entry left's fence error); a
        redraw of the entry on screen keeps its error, and raises it no more
        (pin: surface.test › a redraw of the entry on screen) */
-    carets.rendered = carets.source = null; placedAt = null;
+    carets.html = carets.markdown = null; placedAt = null;
     if (fresh) dropFenceError();
-    if (mdView) { mount(() => build.source(md)); return; }
+    if (markdownMode) { mount(() => build.markdown(md)); return; }
     let doc;
     try { doc = parseMarkdown(md); }
     catch (err) { shownForced(md, err); return; }
-    mount(() => build.rendered(doc));
+    mount(() => build.html(doc));
     if (fresh) raiseTold(doc, true);
   }
   /* not edited as a document — an editor over a lossy parse would save
-     the loss — but as source: the switch back parses it again
+     the loss — but in markdown mode: the switch back parses it again
      (pin: grid › the faulty entry opened) */
   function shownForced(md: string, err: unknown): void {
     console.error("cannot render", ekey, (err as Error).message);   /* the message, not the stack: minified names churn per build (pin: console › cannot render commonplace/Gridded) */
@@ -146,13 +146,13 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
        beneath an error standing, as the told lines go (pin: surface.test ›
        an entry that cannot render, opened) */
     refusedError(err, true);
-    readerView = mdView; forced = true;
-    mdView = true;
-    mount(() => build.source(md));
+    readerView = markdownMode; forced = true;
+    markdownMode = true;
+    mount(() => build.markdown(md));
     opts.onView(true);
   }
   /* a MOVED caret retires the other view's hold
-     (pin: source view › the caret moved in the source, ⌃⌘M back)
+     (pin: markdown mode › the caret moved in markdown mode, ⌃⌘M back)
      (pin: surface.test › a caret unmoved since it arrived) */
   function holdCaret(): void {
     let hold: Hold | null = null;
@@ -161,8 +161,8 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
       const at = countBefore(flat, cur.caret());
       hold = { at, text: flat.text, tail: at >= flat.text.length, seen: cur.caretSeen() };
     }
-    if (hold && hold.at !== placedAt) carets[mdView ? "rendered" : "source"] = null;
-    carets[mdView ? "source" : "rendered"] = hold;
+    if (hold && hold.at !== placedAt) carets[markdownMode ? "html" : "markdown"] = null;
+    carets[markdownMode ? "markdown" : "html"] = hold;
   }
   function topCount(): { at: number; text: string } | null {
     if (!cur) return null;
@@ -180,48 +180,48 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
      (pin: surface.test › carries the top by the crossing) */
   function alignTop(from: { at: number; text: string }): void {
     if (!cur) return;
-    const flat = cur.flat(), count = crossViewOffset(from.text, flat.text, from.at, { toSource: cur.source, pastTail: false });
+    const flat = cur.flat(), count = crossViewOffset(from.text, flat.text, from.at, { toMarkdown: cur.markdownMode, pastTail: false });
     if (count === 0) { win.scrollTo(0); return; }
     const pos = Math.min(positionAt(flat, count) ?? cur.end(), cur.end());
-    if (cur.source) cur.scrollToPos(pos, win.under());
+    if (cur.markdownMode) cur.scrollToPos(pos, win.under());
     else places.carry(pos);
   }
   function placeCaret(): void {
     if (!cur) return;
-    const [here, other] = mdView ? (["source", "rendered"] as const) : (["rendered", "source"] as const);
+    const [here, other] = markdownMode ? (["markdown", "html"] as const) : (["html", "markdown"] as const);
     const flat = cur.flat(), end = cur.end();
-    const arriving = arrivingCount(carets[here], carets[other], flat.text, cur.source);
+    const arriving = arrivingCount(carets[here], carets[other], flat.text, cur.markdownMode);
     placedAt = arriving?.at ?? null;
     const pos = arriving ? (positionAt(flat, arriving.at) ?? end) : null;
     /* KEEP THE CARET AS VISIBLE AS IT WAS: a reader who scrolled away from
        the caret stays where they scrolled; a miss scrolls, having no bit to
-       follow (pin: source view › ⌃⌘M scrolled away from the caret). A seen
-       caret wins over the switch's held place in the rendered view
+       follow (pin: markdown mode › ⌃⌘M scrolled away from the caret). A seen
+       caret wins over the switch's held place in HTML mode
        (pin: surface.test › a caret seen on leaving) */
     const scroll = !arriving || arriving.seen;
-    if (!cur.source && scroll) places.release();
+    if (!cur.markdownMode && scroll) places.release();
     cur.placeCaret(pos, scroll);
   }
-  function rendered(text: string, wasForced: boolean): boolean {
+  function htmlShown(text: string, wasForced: boolean): boolean {
     let doc;
     try { doc = parseMarkdown(text); }
     catch (err) {
-      /* AN ERROR, in the show path's words: the writer stays in source to fix
+      /* AN ERROR, in the show path's words: the writer stays in markdown mode to fix
          the line the message quotes, and an info faded before a slow
          reader found it; resolved by the clean parse below
          (pin: grid › a stray line in a grid, switched back) */
       refusedError(err);
-      forced = wasForced;   /* a forced source view stays forced, so the next show renders (pin: grid › the next entry after a refused switch) */
+      forced = wasForced;   /* a forced markdown mode stays forced, so the next show renders (pin: grid › the next entry after a refused switch) */
       return false;
     }
-    mdView = false;
-    mount(() => build.rendered(doc));
+    markdownMode = false;
+    mount(() => build.html(doc));
     dropFenceError();
     raiseTold(doc, false);
     return true;
   }
   function switchTo(md: boolean): void {
-    if (md === mdView) return;
+    if (md === markdownMode) return;
     /* an arrival's hold is let go here, not left to the gesture that asked
        for the switch (pin: surface.test › a switch to the view already open) */
     places.release();
@@ -235,23 +235,23 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
        placed, so a caret that was seen still scrolls into view and one that
        was not leaves a reader where they were reading.
        (pin: the switch carries the text › a long canto switched at its middle)
-       (pin: source view › ⌃⌘M scrolled away from the caret)
+       (pin: markdown mode › ⌃⌘M scrolled away from the caret)
        (pin: surface.test › holds the caret, reads the top) */
     const y = win.y(), top = y > 0 ? topCount() : null;
     const text = cur ? cur.md() : "";
     if (md) {
-      mdView = true;
-      mount(() => build.source(text));
-    } else if (!rendered(text, wasForced)) return;
+      markdownMode = true;
+      mount(() => build.markdown(text));
+    } else if (!htmlShown(text, wasForced)) return;
     win.scrollTo(y);
     if (top !== null) alignTop(top);
-    opts.onView(mdView);
+    opts.onView(markdownMode);
     opts.switched();
     placeCaret();
   }
   return {
     get current() { return cur; },
-    get md() { return mdView; },
+    get md() { return markdownMode; },
     get forced() { return forced; },
     show, switchTo,
   };

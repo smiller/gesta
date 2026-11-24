@@ -83,35 +83,35 @@ async function contentsLinkBeforeWarm(): Promise<void> {
   await A.waitEntry(page, "bookshelf/Boethius/Consolatio/3pr1", 5000);
   await log("a contents link clicked before the warm", { entry: await A.entry(page), refused: /no such/.test(await saidText()) });
   await A.waitWarm(page);
-  /* the source read down to text a closed section hides, then back to the rendered view: the section opens */
+  /* markdown mode read down to text a closed section hides, then back to HTML mode: the section opens */
   await go("bookshelf/Boethius/Consolatio");
   await rest(page);
   for (const b of (await R.folds(page)).open) await R.clickFoldTriangle(page, b.trim().split(":")[0]);
   await page.keyboard.press("Control+Meta+m");
-  await waitShown(page, { name: "source view", ms: 5000 }, S.source);
-  await R.sourceScrollTo(page, "Filler 3.4");
+  await waitShown(page, { name: "markdown mode", ms: 5000 }, S.markdown);
+  await R.markdownScrollTo(page, "Filler 3.4");
   await rest(page);
   await page.keyboard.press("Control+Meta+m");
-  await waitShown(page, { name: "rendered view", ms: 5000 }, S.editor);
+  await waitShown(page, { name: "HTML mode", ms: 5000 }, S.editor);
   await page.waitForTimeout(400);
   await log("a closed section's text switched to", { open: (await R.folds(page)).open, fillerInView: await inView("Filler 3.4") });
   /* a forced entry: refused on the open path, scrolled, left and returned to */
   await go("commonplace/Forced%20Long");
   await page.click(S.editor);
   await page.keyboard.press("Control+Meta+m");
-  await waitShown(page, { name: "source view", ms: 5000 }, S.source);
+  await waitShown(page, { name: "markdown mode", ms: 5000 }, S.markdown);
 }
 async function forcedEntryLeftScrolled(): Promise<void> {
   await forcedEntryReturned();
-  await heldPlaceRenderedView();
+  await heldPlaceHtmlMode();
 }
 async function forcedEntryReturned(): Promise<void> {
-  await R.setSource(page, Array.from({ length: 90 }, (_, i) => "Line " + (i + 1) + " of a long refused entry.").join("\n\n") + "\n\n::: grid\n::: card-light-blue\nalpha\n:::\nloose\n:::\n");
+  await R.setMarkdown(page, Array.from({ length: 90 }, (_, i) => "Line " + (i + 1) + " of a long refused entry.").join("\n\n") + "\n\n::: grid\n::: card-light-blue\nalpha\n:::\nloose\n:::\n");
   await page.keyboard.press("Control+Meta+m");
   await page.waitForTimeout(400);
   for (let i = 0; i < 12 && !((await A.stored(page, "commonplace/Forced Long")) || "").includes("loose"); i++);
   await go("commonplace/Horace");
-  if (await R.inSource(page)) { await page.keyboard.press("Control+Meta+m"); await rest(page); }
+  if (await R.inMarkdown(page)) { await page.keyboard.press("Control+Meta+m"); await rest(page); }
   await go("commonplace/Forced%20Long");
   await rest(page);
   await wheelTo(900);
@@ -120,15 +120,15 @@ async function forcedEntryReturned(): Promise<void> {
   await go("commonplace/Horace");
   await go("commonplace/Forced%20Long");
   await rest(page);
-  await log("a forced entry left scrolled, returned to", { source: await R.inSource(page), stayed: Math.abs((await winY()) - leftAt) < 3 });
+  await log("a forced entry left scrolled, returned to", { markdown: await R.inMarkdown(page), stayed: Math.abs((await winY()) - leftAt) < 3 });
   /* the masthead changing height under a held place, as it does when the
      entry arrived from had a taller one: the place is set again, in the
-     source view by its offset and in the rendered one by its text */
+     markdown mode by its offset and in HTML mode by its text */
   await log("a held place, the masthead shrinking under it", await shrunk(async () => ({ stayed: Math.abs((await winY()) - leftAt) < 3 })));
   await go("commonplace/Horace");
 }
-async function heldPlaceRenderedView(): Promise<void> {
-  if (await R.inSource(page)) { await page.keyboard.press("Control+Meta+m"); await rest(page); }
+async function heldPlaceHtmlMode(): Promise<void> {
+  if (await R.inMarkdown(page)) { await page.keyboard.press("Control+Meta+m"); await rest(page); }
   await go("bookshelf/Browning%2C%20Robert/Pippa%20Passes");
   await rest(page);
   await wheelTo(2600);
@@ -139,7 +139,7 @@ async function heldPlaceRenderedView(): Promise<void> {
   /* the row under the masthead, read mid-column: 40px in is the gutter */
   const heldLine = await rowUnderHead();
   /* the line's own words left out: which line tops the page is the alert area's height, a second alert's or not */
-  await log("a held place in the rendered view, the masthead shrinking under it", await shrunk(async () => ({ sameText: (await rowUnderHead()) === heldLine })));
+  await log("a held place in HTML mode, the masthead shrinking under it", await shrunk(async () => ({ sameText: (await rowUnderHead()) === heldLine })));
   /* a scroll the page did not make and no hand did — the browser's find —
      is a reader moving: the hold lets go */
   await page.evaluate(() => window.scrollTo(0, window.scrollY + 400));
@@ -160,13 +160,13 @@ const shrunk = async (fn: () => Promise<unknown>) => {
 const rowUnderHead = () => page.evaluate(() => { const top = window.__pageTop() + 6; const box = document.querySelector("#editor .ProseMirror").getBoundingClientRect(); const el = document.elementFromPoint(box.left + box.width / 2, top); return (el?.closest(".vrow, p, li, h1, h2, h3") || el)?.textContent.trim().slice(0, 32) || null; });
 async function backToInlineCodeLines(): Promise<void> {
   await go("commonplace/Horace");
-  if (await R.inSource(page)) { await page.keyboard.press("Control+Meta+m"); await rest(page); }
+  if (await R.inMarkdown(page)) { await page.keyboard.press("Control+Meta+m"); await rest(page); }
   /* a place held on lines that open on inline code, one paragraph so the window's top always falls on text: the caret at the line's start, the code run no stop on the way */
   await go("commonplace/Coded%20Lines");
   await page.click(S.editor);
   await page.keyboard.press("Control+Meta+m");
-  await waitShown(page, { name: "source view", ms: 5000 }, S.source);
-  await R.setSource(page, Array.from({ length: 60 }, (_, i) => "I `go` and the sea, line " + (i + 1) + ".").join("\n"));
+  await waitShown(page, { name: "markdown mode", ms: 5000 }, S.markdown);
+  await R.setMarkdown(page, Array.from({ length: 60 }, (_, i) => "I `go` and the sea, line " + (i + 1) + ".").join("\n"));
   await page.keyboard.press("Control+Meta+m");
   await landed(page, 1500);
   await wheelTo(1200);
@@ -174,13 +174,13 @@ async function backToInlineCodeLines(): Promise<void> {
   await go("commonplace/Horace");
   await go("commonplace/Coded%20Lines");
   await rest(page);
-  await log("back to lines opening on inline code", { source: await R.inSource(page) });
-  /* a place held in the source mid-way down one long paragraph, the entry forced into the source by a stray line in a grid (another entry otherwise opens rendered): the caret on the line on screen, so a key typed leaves the window where it is */
+  await log("back to lines opening on inline code", { markdown: await R.inMarkdown(page) });
+  /* a place held in markdown mode mid-way down one long paragraph, the entry forced into markdown mode by a stray line in a grid (another entry otherwise opens in HTML mode): the caret on the line on screen, so a key typed leaves the window where it is */
   await go("commonplace/Long%20Paragraph");
   await page.click(S.editor);
   await page.keyboard.press("Control+Meta+m");
-  await waitShown(page, { name: "source view", ms: 5000 }, S.source);
-  await R.setSource(page, Array.from({ length: 300 }, (_, i) => "Sentence " + (i + 1) + " of one long paragraph.").join(" ") + "\n\n::: grid\n::: card-light-blue\nalpha\n:::\nloose\n:::\n");
+  await waitShown(page, { name: "markdown mode", ms: 5000 }, S.markdown);
+  await R.setMarkdown(page, Array.from({ length: 300 }, (_, i) => "Sentence " + (i + 1) + " of one long paragraph.").join(" ") + "\n\n::: grid\n::: card-light-blue\nalpha\n:::\nloose\n:::\n");
   await page.keyboard.press("Control+Meta+m");
   await landed(page, 1500);
   await wheelTo(1200);
@@ -199,10 +199,10 @@ async function backToInlineCodeLines(): Promise<void> {
     const top = (k: number) => { const r = document.createRange(); r.setStart(t, k); r.setEnd(t, k + 1); return r.getBoundingClientRect().top; };
     const i = ta.selectionStart, at = i === 0 || top(i - 1) < top(i) - 2;
     d.remove(); return at;
-  }, S.source);
+  }, S.markdown);
   await page.keyboard.type("Z");
   await rest(page);
-  await log("typed at the place in a long paragraph's source", { source: await R.inSource(page), lineOnScreen: onScreenStart, stayed: Math.abs((await winY()) - before) < 3 });
+  await log("typed at the place in a long paragraph, in markdown mode", { markdown: await R.inMarkdown(page), lineOnScreen: onScreenStart, stayed: Math.abs((await winY()) - before) < 3 });
 }
 section("entries left and renamed", async () => {
   /* what leaving, renaming and deleting do to an entry, a clipboard that refuses, and a page whose site data is blocked */

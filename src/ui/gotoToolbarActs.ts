@@ -9,7 +9,7 @@ import type { Landing } from "./landingActs.ts";
 
 export interface GotoToolbarDeps {
   lb: Screen["gotoToolbar"];
-  session: Pick<Session, "current" | "view" | "mdView">;
+  session: Pick<Session, "current" | "view" | "markdownMode">;
   journal: Journal;
   raise: Raise;
   opened(): void;
@@ -55,7 +55,7 @@ export function gotoToolbarActs(d: GotoToolbarDeps): GotoToolbar {
   };
   const toggleBar = () => {
     if (lb.open) { putLineCaret(); return; }
-    if (session.mdView) { raise(toolbarFor(null, conventions()).inSource); return; }
+    if (session.markdownMode) { raise(toolbarFor(null, conventions()).inMarkdown); return; }
     const view = session.view;
     if (!view) return;
     const b = toolbarFor(view.state.doc, conventions());
@@ -101,7 +101,7 @@ export function gotoToolbarActs(d: GotoToolbarDeps): GotoToolbar {
   };
   const enterBar = (kind: "line" | "page" | "stanza", v: string, repeat: boolean): void => {
     if (repeat) return;
-    if (session.mdView || !session.view) return;
+    if (session.markdownMode || !session.view) return;
     landing.answer(wordsOf(kind, v), "toolbar");
   };
   const closeBar = putLineCaret;

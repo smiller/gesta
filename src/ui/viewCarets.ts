@@ -1,5 +1,5 @@
 /* The two views are different
-   documents — the source differs from the rendered text by every syntax
+   documents — the markdown differs from the text HTML mode shows by every syntax
    character — so a held position cannot survive the flip. What survives
    is a COUNT: how many flat characters precede the caret, held per view
    on the way out with the flat TEXT beside it as the staleness test, and
@@ -7,8 +7,8 @@
    paragraph's end shares an index with the next paragraph's first
    character and must not be handed back a paragraph down. THE ONE
    APPROXIMATE THING is the alignment between the views: markdown only
-   ADDS characters to what you can read, so the rendered stream is a
-   subsequence of the source stream, and one greedy walk aligns them in
+   ADDS characters to what you can read, so the stream HTML mode shows is
+   a subsequence of the markdown's, and one greedy walk aligns them in
    either direction. A hold is exact; the map is the fallback, and a
    MOVED caret retires the other view's hold, or a reader who moved on in
    one view arrives back where the other's older hold pointed (pin:
@@ -35,22 +35,22 @@ export function positionAt(flat: Flat, at: number): number | null {
   const i = lastMapped(flat, at);
   return i >= 0 ? flat.pos[i]! + 1 : null;
 }
-/* the count in the other view's stream. Coming to the rendered side the
-   extra characters simply never advance the count. Going to the source,
-   everything the source has and the rendered does not sits between the
+/* the count in the other view's stream. Coming to HTML mode the extra
+   characters simply never advance the count. Going to markdown mode,
+   everything the markdown has and HTML mode does not sits between the
    boundary after the last match and the caret's own character, and which
    side a reader belongs on depends on the run: a picture's marker or a
    table's divider are separate TOKENS and the caret goes after them; a
    link's `[` or bold's `**` is glued to the word and the caret belongs
    before it, or typing corrupts markup. Crossing WHITESPACE tells the two
    apart. The probe is several characters, since a run can CONTAIN the
-   one the caret sits on (pin: viewCarets.test › to the source, glued syntax
-   stays ahead of the caret). Past the last rendered character the rest is
-   source-only, and belongs behind a reader who was below it all (pin:
-   viewCarets.test › past the last rendered character) */
-function walked(sub: string, sup: string, at: number, toSource: boolean): { i: number; j: number } {
+   one the caret sits on (pin: viewCarets.test › to markdown mode, glued
+   syntax stays ahead of the caret). Past the last character HTML mode shows,
+   the rest is markdown alone, and belongs behind a reader who was below it
+   all (pin: viewCarets.test › past the last character HTML mode shows) */
+function walked(sub: string, sup: string, at: number, toMarkdown: boolean): { i: number; j: number } {
   let i = 0, j = 0;
-  while (j < sup.length && (toSource ? i < at : j < at)) {
+  while (j < sup.length && (toMarkdown ? i < at : j < at)) {
     if (sub.charAt(i) === sup.charAt(j)) i++;
     j++;
   }
@@ -68,32 +68,32 @@ function probeSpan(sup: string, probe: string, j: number): { first: number; last
 }
 /* the probe taken only where its characters next appear in order, markup
    between them allowed: unbounded, a probe split by markup (" **Chr")
-   matched the same letters a paragraph down (pin: viewCarets.test › to the
-   source, the next words found only where they next appear) */
+   matched the same letters a paragraph down (pin: viewCarets.test › to
+   markdown mode, the next words found only where they next appear) */
 function afterProbe(sup: string, probe: string, j: number): number {
   const { first, last } = probeSpan(sup, probe, j), after = sup.indexOf(probe, j);
   if (after >= 0 && after <= last) return after;
   return first < 0 ? sup.length : first;
 }
-function intoSource(w: { sub: string; sup: string; j: number }, at: number, pastTail: boolean): number {
+function intoMarkdown(w: { sub: string; sup: string; j: number }, at: number, pastTail: boolean): number {
   if (at >= w.sub.length) return pastTail ? w.sup.length : w.j;
   const after = afterProbe(w.sup, w.sub.substr(at, 4), w.j);
   return /\s/.test(w.sup.slice(w.j, after)) ? after : w.j;
 }
-export function crossViewOffset(from: string, to: string, at: number, { toSource, pastTail = false }: { toSource: boolean; pastTail?: boolean }): number {
-  const [sub, sup] = toSource ? [from, to] : [to, from];
-  const { i, j } = walked(sub, sup, at, toSource);
-  return toSource ? intoSource({ sub, sup, j }, at, pastTail) : i;
+export function crossViewOffset(from: string, to: string, at: number, { toMarkdown, pastTail = false }: { toMarkdown: boolean; pastTail?: boolean }): number {
+  const [sub, sup] = toMarkdown ? [from, to] : [to, from];
+  const { i, j } = walked(sub, sup, at, toMarkdown);
+  return toMarkdown ? intoMarkdown({ sub, sup, j }, at, pastTail) : i;
 }
 /* THE VISIBILITY BIT IS THE LEAVING VIEW'S, whichever count is used: an
    exact hold remembers where this view's caret WAS, but whether a reader
    was looking at the caret is a fact about the view just left, written on
    every toggle — MEASURED, a reader scrolled to the bottom was pulled back
-   to the top by a hold whose own bit was older than the scroll (pin: source
-   view › ⌃⌘M back, still scrolled away) */
-export function arrivingCount(held: Hold | null, left: Hold | null, text: string, toSource: boolean): { at: number; tail: boolean; seen: boolean } | null {
+   to the top by a hold whose own bit was older than the scroll (pin: markdown
+   mode › ⌃⌘M back, still scrolled away) */
+export function arrivingCount(held: Hold | null, left: Hold | null, text: string, toMarkdown: boolean): { at: number; tail: boolean; seen: boolean } | null {
   if (held?.text === text) return { at: held.at, tail: held.tail, seen: (left ?? held).seen };
-  if (left) return { at: crossViewOffset(left.text, text, left.at, { toSource: toSource, pastTail: left.tail }), tail: left.tail, seen: left.seen };
+  if (left) return { at: crossViewOffset(left.text, text, left.at, { toMarkdown: toMarkdown, pastTail: left.tail }), tail: left.tail, seen: left.seen };
   return null;
 }
 /* one view's count across its own text changed under it: the edit is

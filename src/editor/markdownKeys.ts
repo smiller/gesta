@@ -7,9 +7,9 @@
    to two spaces back off — small, and honest about being small — and
    with none to take is LEFT ALONE rather than swallowed: there the press
    is plausibly "get me out of here", and focus moving is a real answer.
-   A selection that moved nothing says why (pin: sourceKeys.test › a
-   collapsed Tab inserts two spaces) (pin: sourceKeys.test › a selection
-   shifts every line it touches) (pin: sourceKeys.test › an empty line gains
+   A selection that moved nothing says why (pin: markdownKeys.test › a
+   collapsed Tab inserts two spaces) (pin: markdownKeys.test › a selection
+   shifts every line it touches) (pin: markdownKeys.test › an empty line gains
    nothing) */
 import { curlChar } from "./typing.ts";
 import { FENCE_LINE, HEADING_LINE } from "../model/grammar.ts";
@@ -34,7 +34,7 @@ function stepLine(line: string, shift: boolean): [string, number] {
   const lead = /^ {1,2}/.exec(line);
   return lead ? [line.slice(lead[0].length), -lead[0].length] : [line, 0];
 }
-export function sourceTab(value: string, start: number, end: number, shift: boolean): TabResult {
+export function markdownTab(value: string, start: number, end: number, shift: boolean): TabResult {
   if (start === end) return caretTab(value, start, shift);
   const [open, close] = lineSpan(value, start, end);
   const stepped = value.slice(open, close).split("\n").map((line) => stepLine(line, shift));
@@ -46,7 +46,7 @@ export function sourceTab(value: string, start: number, end: number, shift: bool
    a dash, a straight quote curled, a second quote stepping the curl — never
    inside a fenced block or an inline code span, where the characters are
    the code, nor inside a link's address and title or a bare address, where
-   a curl changes the target (pin: sourceKeys.test › sourceTyped) */
+   a curl changes the target (pin: markdownKeys.test › markdownTyped) */
 const URL_TOKEN = /(?:^|\s)(?:https?:\/\/|www\.)\S*$/i;
 const openAngleAddress = (line: string, angle: number): boolean => line.indexOf(">", angle) < 0 && /^<(?:https?:\/\/|www\.|#)/i.test(line.slice(angle));
 function inAddress(line: string): boolean {
@@ -67,7 +67,7 @@ function curled(value: string, caret: number, ch: string): Typed {
   const step = QUOTE_STEPS.get(prev + ch);
   return step === undefined ? { from: caret - 1, to: caret, text: curlChar(ch, prev) } : { from: caret - 2, to: caret, text: step };
 }
-export function sourceTyped(value: string, caret: number): Typed | null {
+export function markdownTyped(value: string, caret: number): Typed | null {
   const ch = value[caret - 1], before = value.slice(0, caret);
   const lineStart = before.lastIndexOf("\n") + 1;
   if (inCode(before, lineStart) || inAddress(before.slice(lineStart))) return null;
@@ -77,7 +77,7 @@ export function sourceTyped(value: string, caret: number): Typed | null {
 }
 
 /* whether the line holding `pos` is a heading's, a fence's lines being
-   code (pin: sourceKeys.test › a heading's line) */
+   code (pin: markdownKeys.test › a heading's line) */
 export function headingLineAt(text: string, pos: number): boolean {
   const start = pos === 0 ? 0 : text.lastIndexOf("\n", pos - 1) + 1;
   const end = text.indexOf("\n", start);

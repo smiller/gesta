@@ -2,7 +2,7 @@ import type { Command, EditorState, Plugin } from "prosemirror-state";
 import { TextSelection } from "prosemirror-state";
 import { keymap } from "prosemirror-keymap";
 import { schema } from "../model/schema.ts";
-import { sourceTab } from "./sourceKeys.ts";
+import { markdownTab } from "./markdownKeys.ts";
 import type { Said } from "../model/alertText.ts";
 
 export const exitCodeBlock: Command = (state, dispatch) => {
@@ -32,7 +32,7 @@ export const codeTab = (shift: boolean, raise?: (s: Said) => void): Command => (
   const block = codeBlockAt(state);
   if (!block) return false;
   const { from, to } = state.selection;
-  const out = sourceTab(block.text, from - block.start, to - block.start, shift);
+  const out = markdownTab(block.text, from - block.start, to - block.start, shift);
   if (!out) return false;
   if ("refuse" in out) { raise?.(out.refuse); return true; }
   if (dispatch) {

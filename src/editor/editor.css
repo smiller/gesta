@@ -479,9 +479,9 @@ main { max-width: 760px; margin: 0 auto; padding: 0 24px 24px; }
 }
 .page.versepage .ln.stage { color: var(--muted); }
 
-/* THE SOURCE VIEW: the markdown in a textarea sized to its text, on the
+/* MARKDOWN MODE: the markdown in a textarea sized to its text, on the
    page's own ground with no box of its own */
-.source {
+.markdown {
   display: block;
   width: 100%;
   min-height: 60vh;
@@ -503,11 +503,11 @@ main { max-width: 760px; margin: 0 auto; padding: 0 24px 24px; }
   margin: 0;
   caret-color: var(--accent);
 }
-.source { position: relative; z-index: 1; }
-.source-marks { position: absolute; z-index: 0; pointer-events: none; color: transparent; white-space: pre-wrap; }
-.source-marks[hidden] { display: none; }
-.source-marks mark { color: transparent; background: rgba(245, 215, 110, 0.35); border-radius: 2px; }
-.source-marks mark.now { background: var(--glow); box-shadow: 0 0 0 2px #d9a400; }
+.markdown { position: relative; z-index: 1; }
+.markdown-marks { position: absolute; z-index: 0; pointer-events: none; color: transparent; white-space: pre-wrap; }
+.markdown-marks[hidden] { display: none; }
+.markdown-marks mark { color: transparent; background: rgba(245, 215, 110, 0.35); border-radius: 2px; }
+.markdown-marks mark.now { background: var(--glow); box-shadow: 0 0 0 2px #d9a400; }
 
 
 /* ---------- a work's contents, folding under its headings ---------- */

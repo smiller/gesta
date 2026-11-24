@@ -4,7 +4,7 @@ import { parsePlaces, placeOf, withPlace, movedPlace, movedPlaces, PLACES_CAP } 
 test("an absent or damaged store reads as empty; an entry never left has no place", () => {
   for (const raw of [null, "", "nope", "{}", '[{"k": 3}]']) expect(placeOf(parsePlaces(raw), "bookshelf/S/W/1.6")).toBe(null);
 });
-test("a place round-trips: the text position in the rendered view, the offset in the source", () => {
+test("a place round-trips: the text position in HTML mode, the offset in markdown mode", () => {
   const s = withPlace(parsePlaces(null), "bookshelf/S/W/1.6", { pos: 812, y: 1450 });
   expect(placeOf(parsePlaces(JSON.stringify(s)), "bookshelf/S/W/1.6")).toEqual({ pos: 812, y: 1450 });
 });

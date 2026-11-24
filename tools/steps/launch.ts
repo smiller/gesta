@@ -92,12 +92,12 @@ async function followedByKey(): Promise<void> {
   await log("an external link's new tab", { newTab: await newTab });
   await go("commonplace/Links");
   await view(true);
-  const source = () => page.evaluate(() => document.querySelector<HTMLTextAreaElement>("#editor textarea")?.value ?? null);
+  const markdownText = () => page.evaluate(() => document.querySelector<HTMLTextAreaElement>("#editor textarea")?.value ?? null);
   await page.evaluate(() => { const ta = document.querySelector<HTMLTextAreaElement>("#editor textarea")!; const at = ta.value.indexOf("Horace") + 3; ta.focus(); ta.setSelectionRange(at, at); });
-  const before = await source();
+  const before = await markdownText();
   await page.keyboard.press("Control+Meta+Enter");
   await rest(page);
-  await log("⌃⌘Enter in the source view", { entry: await A.entry(page), sourceKept: (await source()) === before });
+  await log("⌃⌘Enter in markdown mode", { entry: await A.entry(page), markdownKept: (await markdownText()) === before });
   await view(false);
   await writeAll({ "commonplace/Script Link": "A [script](javascript:void(0)) link.\n" });
   await go("commonplace/Script%20Link");
@@ -139,7 +139,7 @@ section("fence", async () => {
   await log("a fence pasted as text mid-paragraph", { md: await A.stored(page) });
 });
 section("verse copy", async () => {
-  /* a verse block copied inside the rendered view with ⌘C and pasted into a fresh page with ⌘V comes back as the block */
+  /* a verse block copied inside HTML mode with ⌘C and pasted into a fresh page with ⌘V comes back as the block */
   await go("commonplace/Horace");
   await R.selectAll(page, S.editorVerse);
   await rest(page);
@@ -151,22 +151,22 @@ section("verse copy", async () => {
   { const md = await A.stored(page); console.log("a verse block copied and pasted:", JSON.stringify({ fence: md.startsWith("::: verse"), pairs: await R.pairs(page), head: md.split("\n").slice(0, 3) })); }
 });
 section("refused fence", async () => {
-  /* a refused fence named on the switch back: "::: versey" typed in the source stays a paragraph and the corner says why; a clean switch releases it */
+  /* a refused fence named on the switch back: "::: versey" typed in markdown mode stays a paragraph and the corner says why; a clean switch releases it */
   await go("commonplace/Fenced");
   await page.click(S.editor);
   await page.keyboard.press("Control+Meta+m");
-  await waitShown(page, { name: "source view", ms: 30000 }, S.source);
+  await waitShown(page, { name: "markdown mode", ms: 30000 }, S.markdown);
   await page.keyboard.type("::: versey\nline\n:::");
   await page.keyboard.press("Control+Meta+m");
-  await waitShown(page, { name: "rendered view", ms: 30000 }, S.editor);
+  await waitShown(page, { name: "HTML mode", ms: 30000 }, S.editor);
   await rest(page);
   await log("a refused fence", await R.refusedFence(page));
   await page.keyboard.press("Control+Meta+m");
-  await waitShown(page, { name: "source view", ms: 30000 }, S.source);
+  await waitShown(page, { name: "markdown mode", ms: 30000 }, S.markdown);
   await page.keyboard.press("Meta+a");
   await page.keyboard.type("::: verse\nline\n:::");
   await page.keyboard.press("Control+Meta+m");
-  await waitShown(page, { name: "rendered view", ms: 30000 }, S.editor);
+  await waitShown(page, { name: "HTML mode", ms: 30000 }, S.editor);
   await rest(page);
   await log("a clean switch", await R.cleanSwitch(page));
 });

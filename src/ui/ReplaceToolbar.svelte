@@ -69,7 +69,7 @@
   }
   .replace-toolbar[hidden] { display: none; }
   /* ONE GRID for both rows, so the two boxes share their left and right
-     edges (pin: replace › ⌃⌘E in the rendered view) */
+     edges (pin: replace › ⌃⌘E in HTML mode) */
   .rows { display: grid; grid-template-columns: auto 13rem auto; align-items: center; gap: 4px 8px; }
   .after { display: flex; align-items: center; gap: 8px; }
   input {

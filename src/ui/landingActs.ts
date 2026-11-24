@@ -24,7 +24,7 @@ export const windowHand: Hand = {
   },
 };
 export interface LandingDeps {
-  session: Pick<Session, "current" | "view" | "mdView">;
+  session: Pick<Session, "current" | "view" | "markdownMode">;
   conventions(): Conventions;
   raise: Raise;
   warmed(): boolean;
@@ -54,7 +54,7 @@ export function landingActs(d: LandingDeps): Landing {
     const top = page.top();
     page.scrollBy((rect.top + rect.bottom) / 2 - (top + (page.height() - top) / 2));
   }
-  const drawnView = (): View | null => (session.mdView ? null : session.view);
+  const drawnView = (): View | null => (session.markdownMode ? null : session.view);
   function centreSelection(): void {
     const view = drawnView();
     if (!view || view.state.selection.empty) return;

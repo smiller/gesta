@@ -1,5 +1,5 @@
 export type Closer = "opened" | "search" | "goto" | "gotoToolbar" | "gotoToolbarCaret" | "lines" | "replace" | "replaceBack";
-export type Opening = "search" | "goto" | "gotoToolbar" | "lines" | "replace" | "help" | "bookmarks" | "shortcuts" | "backups" | "menu" | "navigated" | "view" | "sourceView" | "here" | "escape";
+export type Opening = "search" | "goto" | "gotoToolbar" | "lines" | "replace" | "help" | "bookmarks" | "shortcuts" | "backups" | "menu" | "navigated" | "view" | "markdownMode" | "here" | "escape";
 
 /* ONE THING OPEN AT A TIME: each opening closes every other open thing —
    a menu or panel every masthead row, a masthead row the open menu or
@@ -27,7 +27,7 @@ export const CLOSES: Record<Opening, readonly Closer[]> = {
   menu: ROWS,
   navigated: others(null),
   view: ["opened", "search", "gotoToolbar"],
-  sourceView: ["gotoToolbar"],
+  markdownMode: ["gotoToolbar"],
   here: ["opened", "search", "gotoToolbar"],
   escape: ["opened", "gotoToolbarCaret", "search", "goto", "lines", "replaceBack"],
 };

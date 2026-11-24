@@ -96,7 +96,7 @@
     </span>
   </nav>
   <div class="site-tools">
-    <span class="mode" title="⌃⌘M toggles the markdown source view" hidden={!screen.mdView}>markdown</span>
+    <span class="mode" title="⌃⌘M toggles markdown mode" hidden={!screen.markdownMode}>markdown</span>
     <button class="toolbtn" type="button" title="Go to today" hidden={!screen.masthead.showToday} onclick={onToday}>today</button>
     {#if reader}
       <span class="held">{screen.held}</span>

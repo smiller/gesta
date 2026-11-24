@@ -172,7 +172,7 @@ const ROLES: [RegExp, string[]][] = [
   [/\bthe masthead['’]s\b/, ["src/ui/masthead", "src/ui/mastheadmodel"]],
   [/\bthe landing['’]s\b/, ["src/editor/landing"]],
   [/\bthe clipboard['’]s\b/, ["src/ui/clipboard"]],
-  [/\bthe source['’]s\b/, ["src/editor/sourceview"]],
+  [/\bthe source['’]s\b/, ["src/editor/markdownmode"]],
   [/\bthe surface['’]s\b/, ["src/editor/surface"]],
   [/\bthe keeper['’]s\b/, ["src/editor/placekeeper"]],
   [/\bthe UI['’]s\b/, ["src/ui/"]],

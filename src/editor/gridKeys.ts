@@ -1,5 +1,5 @@
 /* Joining two cards under Backspace at a card's start or Delete at its end
-   is refused with a warning: a grid's shape is the source view's (pin:
+   is refused with a warning: a grid's shape is markdown mode's (pin:
    gridKeys.test › Backspace at a card's start and Delete at its end inside
    a grid are the refused edges). The one way out: Enter on the empty last
    line of the LAST card places a paragraph after the grid, there being no

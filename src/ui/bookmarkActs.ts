@@ -13,7 +13,7 @@ export type BookmarkAct = "jump" | "del" | "key" | "link";
 export interface BookmarkPanelDeps {
   bm: Screen["bookmarks"];
   marks: ReturnType<typeof bookmarkStore>;
-  session: Pick<Session, "current" | "goto" | "focusText" | "view" | "mdView" | "insertText" | "save">;
+  session: Pick<Session, "current" | "goto" | "focusText" | "view" | "markdownMode" | "insertText" | "save">;
   journal: Journal;
   /* why an act did nothing */
   raise: Raise;
@@ -127,13 +127,13 @@ export function bookmarkActs(d: BookmarkPanelDeps): BookmarkPanel {
     bm.buf = ""; bm.editing = b.key; bm.draft = b.alias; bm.opening = 1;
     renderBookmarks();
   };
-  const nowhereToType = (view: typeof session.view): boolean => !view && !session.mdView;
+  const nowhereToType = (view: typeof session.view): boolean => !view && !session.markdownMode;
   /* the link after the caret the panel opened on; every way it cannot
      land says why, nothing is appended at the end, and the keys go back
      to the text either way (pin: editing › a
-     bookmark's link pressed in inline code); in the markdown view it is
+     bookmark's link pressed in inline code); in markdown mode it is
      typed there as markdown (pin: alerts and surfaces › a bookmark's link in
-     the markdown view) */
+     markdown mode) */
   const bookmarkLink = (key: string): void => {
     if (warmBlock()) return;
     closeOpened();

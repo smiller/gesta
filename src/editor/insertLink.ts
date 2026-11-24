@@ -28,7 +28,7 @@ export function cutsHeading(state: EditorState): boolean {
   const heading = schema.nodes.heading;
   return ($from.parent.type === heading && $from.parentOffset > 0) || ($to.parent.type === heading && $to.parentOffset < $to.parent.content.size);
 }
-/* the same link as markdown, for the markdown view: spelled by the
+/* the same link as markdown, for markdown mode: spelled by the
    serializer, so both views write one text (pin: insertLink.test ›
    linkMarkdown) */
 export function linkMarkdown(href: string, label: string): string {

@@ -22,11 +22,11 @@ A link's text; for a reference, the work and the passage's place in it.
 
 **Reference directive**:
 A line in a `::: reference` block standing at the top level of a root's or
-a work's page, inside no other block, naming a convention its references follow, the whole of its line. On a
-root's page: `by chapter and verse`, `by title alone`, `by innermost title
-alone`; on a work's page, for the entries below it: `prose by paragraph,
+a book's entry, inside no other block, naming a convention its references follow, the whole of its line. On a
+root's entry: `by chapter and verse`, `by title alone`, `by innermost title
+alone`; on a book's entry, for the entries below it: `prose by paragraph,
 verse by line`, `by book, chapter, and paragraph`, `part titles in roman`;
-`by half-line` on any page, for it and every page below.
+`by half-line` on any entry, for it and every entry below.
 _Avoid_: setting, option, flag.
 
 **Terminal copy**:
@@ -41,6 +41,11 @@ A named entry that belongs to no day and no author: Books, Birthdays,
 Verdour. The paper icon lists them; "New commonplace…" makes one, and
 "+ sub-entry" one beneath it. Its address is `#commonplace/Name`.
 _Avoid_: page (the printed page's word), note (a block in an entry).
+
+**Book**:
+What stands below an author on the bookshelf, as an entry of its own: a
+poem, a play, a volume of prose, or the contents of one holding parts.
+_Avoid_: work, title.
 
 **Page**:
 A printed page of a book, begun in its text by a page label, `⟨138⟩`.
@@ -116,7 +121,7 @@ _Avoid_: hits; menu.
 **Toolbar**:
 One of three that work on the entry in front of you: the Go to toolbar
 (⌃⌘G), the format toolbar, over a selection, and the replace toolbar (⌃⌘E,
-in the source view).
+in markdown mode).
 _Avoid_: bar; control, every button's word and the ⌃ key's name; the
 retired words `tools/vocabulary.ts` lists, a panel popping up too.
 
@@ -131,6 +136,17 @@ One of four the masthead opens over the page, to read or pick from: help
 (⌃⌘H), backups, bookmarks (⌃⌘B) and shortcuts (⌃⌘S).
 _Avoid_: card, which is a `::: card` box in an entry; the retired words
 `tools/vocabulary.ts` lists.
+
+**HTML mode**:
+An entry shown formatted, as it reads, and edited so; every entry opens in
+it. ⌃⌘M switches to markdown mode and back.
+_Avoid_: the retired words `tools/vocabulary.ts` lists.
+
+**Markdown mode**:
+An entry shown as its markdown, the text it is stored as, and edited so;
+the masthead says "markdown" while it is on. It lasts while the entry stays
+open.
+_Avoid_: source; the retired words `tools/vocabulary.ts` lists.
 
 **Landing**:
 Where ⌃⌘G or a link to a line puts the reader: the line centred in the band

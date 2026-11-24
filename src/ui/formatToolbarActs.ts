@@ -13,7 +13,7 @@ type Command = (state: EditorState, dispatch?: (tr: Transaction) => void) => boo
 export interface FormatToolbarDeps {
   toolbar: Screen["formatToolbar"];
   buttons: () => Screen["masthead"]["buttons"];
-  session: Pick<Session, "view" | "mdView" | "copyReference" | "showWordCount">;
+  session: Pick<Session, "view" | "markdownMode" | "copyReference" | "showWordCount">;
   raise: Raise;
   extract(): void;
   mountEl: HTMLElement;
@@ -45,13 +45,13 @@ export function formatToolbar(d: FormatToolbarDeps): FormatToolbar {
   const { toolbar, buttons, session, raise, extract, mountEl, head } = d;
   /* THE FORMAT TOOLBAR: placed over the selection on every selection change
      (a frame later) and scroll, clamped under the masthead; hidden in the
-     source view and over a search jump's selection until a reader next
+     markdown mode and over a search jump's selection until a reader next
      touches the page — the toolbar is for text a reader chose to format (pin:
      format toolbar › a word double-clicked) */
   let barSuppressed = false;
   const barView = (): Session["view"] => {
     const view = session.view;
-    if (!view || session.mdView) return null;
+    if (!view || session.markdownMode) return null;
     return barSuppressed ? null : view;
   };
   /* the text moves only when a gesture settles, a button or a key let go:

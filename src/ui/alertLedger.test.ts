@@ -146,7 +146,7 @@ describe("an error", () => {
     fence.raise("cannotRender", { key: "commonplace/A", why: "x" });
     other.raise("bookmarksNotSaved");
     fence.raise("cannotRender", { key: "commonplace/A", why: "y" });
-    expect(n.state.error.text).toBe("cannot render commonplace/A — y; shown as source");
+    expect(n.state.error.text).toBe("cannot render commonplace/A — y; shown in markdown mode");
     n.dismiss("error");
     fence.resolve();
     expect(n.state.error.text).toBe("bookmarks not saved");

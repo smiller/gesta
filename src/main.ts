@@ -278,7 +278,7 @@ const session = startSession({
   mount: mountEl, layer, images, interval: screen.interval, raise,
   owner: () => alerts.owner(),
   onShow: (stored, ekey) => entryShown(stored, ekey),
-  onView: (md) => { dropStaleCopy(); screen.mdView = md; if (md) overlay.open("sourceView"); else acts.replace.dismiss(); },
+  onView: (md) => { dropStaleCopy(); screen.markdownMode = md; if (md) overlay.open("markdownMode"); else acts.replace.dismiss(); },
   onSwitch: () => overlay.open("view"),
   onHere: () => overlay.open("here"),
   onSelect: () => requestAnimationFrame(() => fmt.place()),
@@ -359,7 +359,7 @@ const showEditor = (on: boolean): void => {
    entry inserts nothing (pin: alerts and surfaces › a shortcut chosen with
    no cursor in the entry) */
 const caretInEntry = (): boolean => { const a = document.getSelection()?.anchorNode; return !!a && mountEl.contains(a); };
-const sourcePort = { insertAfter: (text: string) => { session.insertText(text, true); }, inHeading: () => session.sourceLineIsHeading() };
+const markdownPort = { insertAfter: (text: string) => { session.insertText(text, true); }, inHeading: () => session.markdownLineIsHeading() };
 let cardCaret = false;
 const openShortcuts = (): void => {
   cardCaret = caretInEntry();
@@ -451,7 +451,7 @@ const life = lifecycle({
   layer, journal, session,
   view: () => session.view,
   caretInEntry,
-  source: () => session.mdView ? sourcePort : null,
+  markdown: () => session.markdownMode ? markdownPort : null,
   dialogs: { prompt: (text, value) => prompt(text, value), confirm: (text) => confirm(text), alert: (text) => alert(text) },
   kept,
   ...pictureMoves(images),

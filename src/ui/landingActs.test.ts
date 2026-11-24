@@ -9,7 +9,7 @@ const VERSE = "::: verse\nOne\nTwo\nThree\n:::";
 function world(md = VERSE) {
   let state = EditorState.create({ doc: parseMarkdown(md), plugins: [landingMark()] });
   const view = { get state() { return state; }, dispatch(tr: Transaction) { state = state.apply(tr); }, coordsAtPos: () => ({ top: 500, bottom: 520, left: 0, right: 0 }), focus() {} };
-  const session = { current: { date: "commonplace", tag: "Verse" as string | null }, view, mdView: false };
+  const session = { current: { date: "commonplace", tag: "Verse" as string | null }, view, markdownMode: false };
   const scrolled: number[] = [], said: unknown[] = [];
   let warm = true, click: (() => void) | null = null, key: ((e: { key: string; metaKey: boolean }) => void) | null = null;
   const acts = landingActs({

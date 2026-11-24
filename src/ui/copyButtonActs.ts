@@ -12,7 +12,7 @@ import { type Raise } from "../model/alertText.ts";
 
 export interface CopyDeps {
   cp: Screen["copy"];
-  session: Pick<Session, "view" | "mdView">;
+  session: Pick<Session, "view" | "markdownMode">;
   raise: Raise;
 }
 export function copyButton(d: CopyDeps): { copyBlock(): void; dropStale(): void } {
@@ -93,17 +93,17 @@ export function copyButton(d: CopyDeps): { copyBlock(): void; dropStale(): void 
     return null;
   };
   const quoteInQuote = (el: HTMLElement | null): el is HTMLElement => !!el?.parentElement && el.tagName === "BLOCKQUOTE" && el.parentElement.tagName === "BLOCKQUOTE";
-  const shownBlock = (el: HTMLElement | null): el is HTMLElement => !!el && !!session.view?.dom.contains(el) && !session.mdView;
+  const shownBlock = (el: HTMLElement | null): el is HTMLElement => !!el && !!session.view?.dom.contains(el) && !session.markdownMode;
   const blockUnder = (t: Element): HTMLElement | null => {
     let target = t.closest(BLOCKS) as HTMLElement | null;
     while (quoteInQuote(target)) target = target.parentElement;
     return shownBlock(target) ? target : null;
   };
   const point = (e: MouseEvent, t: Element): void => {
-    const target = (session.view && !session.mdView && bandGrid(e.clientX, e.clientY)) || blockUnder(t);
+    const target = (session.view && !session.markdownMode && bandGrid(e.clientX, e.clientY)) || blockUnder(t);
     if (target) { if (target !== copyTarget) showCopy(target); } else hideCopy();
   };
-  const gridsShown = (): boolean => !!session.view && !session.mdView && session.view.dom.getElementsByClassName("grid").length > 0;
+  const gridsShown = (): boolean => !!session.view && !session.markdownMode && session.view.dom.getElementsByClassName("grid").length > 0;
   document.addEventListener("mouseover", (e) => {
     const t = e.target as Element | null;
     if (!t?.closest || t.closest(".copybtn")) return;

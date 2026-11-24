@@ -94,7 +94,7 @@ describe("what is a menu, and the focus it gives back", () => {
 
 describe("a menu closed by something opened", () => {
   it("is closed by Escape as Escape, by a navigation, a view switched or an arrival as a navigation, by anything else as displaced", () => {
-    expect((["escape", "navigated", "view", "sourceView", "here", "search", "help", "gotoToolbar"] as const).map(reasonOpened)).toEqual(["escape", "navigated", "navigated", "navigated", "navigated", "displaced", "displaced", "displaced"]);
+    expect((["escape", "navigated", "view", "markdownMode", "here", "search", "help", "gotoToolbar"] as const).map(reasonOpened)).toEqual(["escape", "navigated", "navigated", "navigated", "navigated", "displaced", "displaced", "displaced"]);
   });
 });
 

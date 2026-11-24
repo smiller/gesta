@@ -45,7 +45,7 @@ describe("the pins", () => {
   const sources: PinSources = {
     steps: [
       'import { section, log } from "./kit.ts";\n\nsection("walk", async () => {\n  await log("⌃⌘. from 3pr1 over an index", 1);\n  await walkOn();\n});\nasync function walkOn() {\n  await log("⌃⌘, back", 4);\n}\n',
-      'import { section, log } from "./kit.ts";\nconst ahead = "⌃⌘W rendered";\n\nsection("source view", async () => {\n  await log("⌃⌘W rendered", 2);\n  await log("never run", 3);\n});\n',
+      'import { section, log } from "./kit.ts";\nconst ahead = "⌃⌘W rendered";\n\nsection("markdown mode", async () => {\n  await log("⌃⌘W rendered", 2);\n  await log("never run", 3);\n});\n',
     ],
     corner: '⌃⌘. from 3pr1 over an index: {"entry":"x"}\n⌃⌘, back: {}\n⌃⌘W rendered: {}\nconsole: error: cannot render page/Gridded a grid\nwarning: a later line\n',
     bridge: 'log("an unknown book is refused", o);\n',
@@ -55,12 +55,12 @@ describe("the pins", () => {
   };
   const why = (body: string): (string | null)[] => pins(body).map((p) => unresolved(p, sources));
   test("a pin split across a block's lines is read whole; two groups are two pins", () => {
-    const b = commentBlocks("a.ts", "/* x (pin: walk › ⌃⌘. from 3pr1 over\n   an index) (pin: source view › ⌃⌘W rendered) */")[0];
+    const b = commentBlocks("a.ts", "/* x (pin: walk › ⌃⌘. from 3pr1 over\n   an index) (pin: markdown mode › ⌃⌘W rendered) */")[0];
     expect(why(b.body)).toEqual([null, null]);
   });
   test("a Helium pin names its section and the whole reading label", () => {
     expect(why("(pin: walk › ⌃⌘. from 3pr1)")[0]).toBe('no reading "⌃⌘. from 3pr1" in the section "walk"');
-    expect(why("(pin: source view › ⌃⌘. from 3pr1 over an index)")[0]).toBe('no reading "⌃⌘. from 3pr1 over an index" in the section "source view"');
+    expect(why("(pin: markdown mode › ⌃⌘. from 3pr1 over an index)")[0]).toBe('no reading "⌃⌘. from 3pr1 over an index" in the section "markdown mode"');
     expect(why("(pin: stanza › ⌃⌘W rendered)")[0]).toBe('no section "stanza" in tools/steps/');
   });
   test("a section's readings run to the next section in its file, a helper written after it among them; never into the next file", () => {
@@ -68,7 +68,7 @@ describe("the pins", () => {
     expect(why("(pin: walk › ⌃⌘W rendered)")[0]).toBe('no reading "⌃⌘W rendered" in the section "walk"');
   });
   test("a reading in the steps but not in the approved run does not resolve", () => {
-    expect(why("(pin: source view › never run)")[0]).toBe('no reading "never run" in tools/expected/corner.approved.txt');
+    expect(why("(pin: markdown mode › never run)")[0]).toBe('no reading "never run" in tools/expected/corner.approved.txt');
   });
   test("a Vitest pin is a title prefix in the named test file", () => {
     expect(why("(pin: nav.test › hashParts: a commonplace routes)")).toEqual([null]);
@@ -114,7 +114,7 @@ const KNOWN_BAD: { at: string; file: string; caught: string[]; raw: string }[] =
   { at: "e81e417^:1", file: "src/editor/folds.ts", caught: ["foldsContents", "store/contents.ts", "the session's"], raw: `/* A WORK'S CONTENTS FOLD under its \`##\` headings (2026-09-28, the
    contents-folds plan, its look settled over a mockup with the reader):
    the page closes to its headings, a closed one showing its count. Drawn
-   as decorations — the text is never touched, the source view shows it
+   as decorations — the text is never touched, markdown mode shows it
    whole. The section is the heading and everything under it down to the
    next heading of level 1 or 2; content before the first \`##\` never
    folds. Which entries fold is the session's to say (store/contents.ts,
@@ -147,7 +147,7 @@ const KNOWN_BAD: { at: string; file: string; caught: string[]; raw: string }[] =
    map from entry key to a page record — a per-browser convenience, never
    in the text or a backup. Parsing forgives anything:
    a damaged store is an empty one. */` },
-  { at: "fabb19b:25", file: "src/editor/renderedView.ts", caught: ["the source's"], raw: `    /* the first line whose top is at or below the masthead, as the source's
+  { at: "fabb19b:25", file: "src/editor/htmlMode.ts", caught: ["the source's"], raw: `    /* the first line whose top is at or below the masthead, as the source's
        twin reads it: a point in the gap between stanzas resolved to the end
        of the stanza above, one stanza early
        (pin: the switch carries the text › a long canto switched at its middle) */` },

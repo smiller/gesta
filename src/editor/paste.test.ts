@@ -2,7 +2,7 @@ import { test, expect } from "vitest";
 import { EditorState, TextSelection } from "prosemirror-state";
 import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
-import { pasted, pasteProps, sourcePasted, keepsSpaces, type Clipboard } from "./paste.ts";
+import { pasted, pasteProps, markdownPasted, keepsSpaces, type Clipboard } from "./paste.ts";
 import { COPY_MARK } from "./copy.ts";
 import { Slice } from "prosemirror-model";
 import { schema } from "../model/schema.ts";
@@ -222,11 +222,11 @@ test("spaces at a selection's edges stay outside the link; a selection of spaces
 
 const GHOSTTY = '<div style="font-family: monospace; white-space: pre;"><div style="display: inline;color: rgb(177, 185, 249);">git log</div> ran, and\n  <div style="display: inline;font-weight: bold;">bold</div> words.</div>';
 
-test("the markdown view's paste: a file is a file, a terminal's copy its text, anything else the browser's", () => {
+test("markdown mode's paste: a file is a file, a terminal's copy its text, anything else the browser's", () => {
   const file = new File(["x"], "x.png", { type: "image/png" });
-  expect(sourcePasted({ plain: "", html: "", types: ["Files"], file })).toEqual({ file });
-  expect(sourcePasted(clip("Every one passed\n  npm run verify.", GHOSTTY))).toEqual({ text: "Every one passed npm run verify." });
-  expect(sourcePasted(clip("a", "<p>a</p>"))).toBeNull();
+  expect(markdownPasted({ plain: "", html: "", types: ["Files"], file })).toEqual({ file });
+  expect(markdownPasted(clip("Every one passed\n  npm run verify.", GHOSTTY))).toEqual({ text: "Every one passed npm run verify." });
+  expect(markdownPasted(clip("a", "<p>a</p>"))).toBeNull();
 });
 test("a terminal's copy that is not blocks is pasted as plain text is: one node set in whole, the transaction marked as a paste", () => {
   const r = pasted(at("- item", "item"), clip(" one line", GHOSTTY), PAGE);

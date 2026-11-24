@@ -11,7 +11,7 @@ const chord = (key: string, act: Chord["act"], help: string, inReader = true): C
    for exchange; the menus share ⌃⌘J with the Go to row, B being
    bookmarks. Each chord here is one Helium lets through
    (pin: walk › ⌃⌘. from 3pr1 over an index of 3pr1, 3m1, 3pr2)
-   (pin: source view › ⌃⌘W rendered)
+   (pin: markdown mode › ⌃⌘W in HTML mode)
    (pin: launch, menus, the corner, links › ⌃⌘Enter inside a link) */
 export const CHORDS: readonly Chord[] = [
   chord(",", "previous", "go to the previous entry"),
@@ -29,7 +29,7 @@ export const CHORDS: readonly Chord[] = [
   chord("r", "reference", "copy a reference to the selected passage"),
   chord("c", "entryLink", "copy a link to this entry"),
   chord("enter", "editor", "follow the link your cursor is on"),
-  chord("m", "view", "switch between rendered text and markdown source"),
+  chord("m", "view", "switch between HTML mode and markdown mode"),
   chord("e", "replace", "find and replace in this entry’s markdown", false),
   chord("h", "help", "help — open this panel", false),
 ];

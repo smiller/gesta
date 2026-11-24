@@ -32,7 +32,7 @@ test("insertLinkAfter: the caret stands after the link it placed, outside it", (
 test("linkRefusal: inline code refuses as a code block does", () => {
   expect(linkRefusal(at("see `code here` now", "co"))).toEqual(said("noLinkInCode"));
 });
-test("linkMarkdown: the link as the rendered view's own link saves, escaped the same way", () => {
+test("linkMarkdown: the link as HTML mode's own link saves, escaped the same way", () => {
   for (const [label, href] of [["Notes\\", "#commonplace/Notes"], ["a*b_c", "#commonplace/A"], ["a)", "#2026-10-12/a)"], ["plain", "#commonplace/Plain"]]) {
     const doc = schema.nodes.doc.create(null, schema.nodes.paragraph.create(null, schema.text(label, [schema.marks.link.create({ href })])));
     expect(linkMarkdown(href, label)).toBe(serializeMarkdown(doc));

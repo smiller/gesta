@@ -21,11 +21,11 @@ interface Opts {
   failDel?: string | string[];
   noView?: boolean;
   noCaret?: boolean;
-  source?: boolean;
+  markdown?: boolean;
   pics?: Record<string, string>;
   failPic?: string;
   failClash?: boolean;
-  sourceHeading?: boolean;
+  markdownHeading?: boolean;
 }
 type EntryLayerOf = ReturnType<typeof entryLayer>;
 interface WorldState { current: { date: string; tag: string | null }; st: EditorState; typed: string | null; dropped: boolean; onFlush: (() => void) | null; onSet: ((key: string) => void) | null }
@@ -105,13 +105,13 @@ async function world(o: Opts) {
   if (o.warm !== "no") await layer.warm();
   s.st = EditorState.create({ doc: parseMarkdown(o.md ?? (o.entries ?? {})[here(s)] ?? "") });
   const view = { get state() { return s.st; }, dispatch: (tr: Transaction) => { log.push("edit"); s.st = s.st.apply(tr); } };
-  const source = { insertAfter: (text: string) => { log.push("type " + text); }, inHeading: () => !!o.sourceHeading };
+  const markdown = { insertAfter: (text: string) => { log.push("type " + text); }, inHeading: () => !!o.markdownHeading };
   const pics: Record<string, string> = { ...(o.pics ?? {}) };
   const life = lifecycle({
     layer, journal: journalOf(layer.cache),
     view: () => (o.noView || s.dropped ? null : view),
     caretInEntry: () => !o.noCaret,
-    source: () => (o.source && !s.dropped ? source : null),
+    markdown: () => (o.markdown && !s.dropped ? markdown : null),
     session: fakeSession(log, s, layer), dialogs: fakeDialogs(log, asked, answers),
     ...fakePictures(o, log, pics), kept: fakeKept(log), ui: fakeUi(log),
   });
@@ -201,13 +201,13 @@ describe("create", () => {
     await w.life.create();
     expect(w.log.slice(1)).toEqual(["goto #commonplace/A/C | already here"]);
   });
-  it("in the markdown view the link is typed after the caret, inside code too", async () => {
-    const w = await world({ at: ["commonplace", "A"], entries: { "commonplace/A": "hello\n" }, noView: true, source: true });
+  it("in markdown mode the link is typed after the caret, inside code too", async () => {
+    const w = await world({ at: ["commonplace", "A"], entries: { "commonplace/A": "hello\n" }, noView: true, markdown: true });
     w.answer("B");
     await w.life.create();
     expect(w.log).toEqual(["set commonplace/A/B", "type [B](#commonplace/A/B)", "save", "set commonplace/A", "redraw", "goto #commonplace/A/B"]);
-    /* another entry shown in the markdown view while the write ran takes no link */
-    const moved = await world({ at: ["commonplace", "A"], entries: { "commonplace/A": "hello\n", "commonplace/C": "c\n" }, noView: true, source: true });
+    /* another entry shown in markdown mode while the write ran takes no link */
+    const moved = await world({ at: ["commonplace", "A"], entries: { "commonplace/A": "hello\n", "commonplace/C": "c\n" }, noView: true, markdown: true });
     moved.onSet((k) => { if (k === "commonplace/A/B") moved.leave("commonplace", "C"); });
     moved.answer("B");
     await moved.life.create();
@@ -242,8 +242,8 @@ describe("create", () => {
 });
 
 describe("create in a heading", () => {
-  it("in the markdown view, a caret on a heading's line refuses too", async () => {
-    const w = await world({ at: ["bookshelf", "Author, Test"], entries: { "bookshelf/Author, Test": "# Test Author\n" }, noView: true, source: true, sourceHeading: true });
+  it("in markdown mode, a caret on a heading's line refuses too", async () => {
+    const w = await world({ at: ["bookshelf", "Author, Test"], entries: { "bookshelf/Author, Test": "# Test Author\n" }, noView: true, markdown: true, markdownHeading: true });
     w.answer("Pictures");
     await w.life.create();
     expect(w.log).toEqual(["warn no link inside a heading — place your cursor below it"]);

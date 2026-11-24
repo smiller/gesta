@@ -40,12 +40,12 @@ tools' switches. `tools/claudeLayout.test.ts` fails on a module under
   - ⌃⌘G: `goto.ts` (`ask` and `toolbarFor`: the Go to toolbar and a link to a line alike,
     a stanza page by its Stanza and Line boxes), `landing.ts` (the landing
     mark). ⌃⌘E: `replace.ts`.
-  - THE SURFACE, `surface.ts`: what the rendered view (`renderedView.ts`)
-    and the source view (`sourceView.ts`) share, and the switch, ⌃⌘M; no
+  - THE SURFACE, `surface.ts`: what HTML mode (`htmlMode.ts`)
+    and markdown mode (`markdownMode.ts`) share, and the switch, ⌃⌘M; no
     DOM, tested over fake views. `placeKeeper.ts`: where an entry was left
     and the arrival back; no DOM.
   - Keys and acts: `typing.ts` (markdown as you type), `format.ts` (the
-    format toolbar's acts), `sourceKeys.ts`, `codeKeys.ts`, `quoteKeys.ts`,
+    format toolbar's acts), `markdownKeys.ts`, `codeKeys.ts`, `quoteKeys.ts`,
     `gridKeys.ts`, `tableKeys.ts` (Enter a cell down, out from the last
     row), `listKeys.ts`, `links.ts` (a click on a link, and the link at
     the caret, which ⌃⌘Enter follows), `insertLink.ts`,

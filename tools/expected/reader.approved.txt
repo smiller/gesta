@@ -10,7 +10,7 @@ Line numbering clicked under a redraw: {"open":true}
 a search row clicked, of 1: {"entry":"commonplace/Witchcraft","editable":"false","hit":"rumoured Goetia","crumb":"Witchcraft","scrolled":true}
 Escape after the hit: {"entry":"commonplace/Witchcraft","editable":"false","hit":"","crumb":"Witchcraft"}
 a line clicked, xyz, Enter and Backspace typed: {"entry":"commonplace/Witchcraft","editable":"false","hit":"","crumb":"Witchcraft","changed":false,"focus":"BODY"}
-⌃⌘M: {"entry":"commonplace/Witchcraft","editable":"false","corner":"no markdown view here","hit":"","crumb":"Witchcraft"}
+⌃⌘M: {"entry":"commonplace/Witchcraft","editable":"false","corner":"no markdown mode here","hit":"","crumb":"Witchcraft"}
 ⌃⌘H, B, S, N and E: {"entry":"commonplace/Witchcraft","editable":"false","hit":"","crumb":"Witchcraft","open":[]}
 a day with a picture: {"entry":"2026-09-10","editable":"false","hit":"","crumb":"Past — Thursday, 10 September 2026","pictures":[1]}
 › clicked on the day: {"entry":"2026-09-11","editable":"false","hit":"","crumb":"Past — Friday, 11 September 2026"}

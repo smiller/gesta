@@ -60,7 +60,7 @@ async function bookmarkLinkPressed(): Promise<void> {
   await go("commonplace/Keys");
   await tap(S.editor);
   await view(true);
-  await R.setSource(page, "one\n\ntwo\n\n```\nx = 1\ny = 2\n```\n\n| a | b |\n| --- | --- |\n| 1 | 2 |\n");
+  await R.setMarkdown(page, "one\n\ntwo\n\n```\nx = 1\ny = 2\n```\n\n| a | b |\n| --- | --- |\n| 1 | 2 |\n");
   await view(false);
   await landed(page, 1500);
   await landed(page, 1500);   /* every save landed first: an alert of theirs stood over Tab's */
@@ -167,7 +167,7 @@ async function enterHeldShortcut(): Promise<void> {
   await page.keyboard.type(" then.");
   await log("Enter held on a shortcut", { md: await A.stored(page) });
   await view(true);
-  await R.setSource(page, "> quoted\n");
+  await R.setMarkdown(page, "> quoted\n");
   await view(false);
   await caretIn("quoted");
   await hold("Tab", 3);
@@ -200,7 +200,7 @@ async function digitHeldBookmarksPanel(): Promise<void> {
   /* a refused entry redrawn by another tab's write: Search, open over it, stays */
   await go("commonplace/Refused");
   await view(true);
-  await R.setSource(page, "::: grid\nloose\n:::\n");
+  await R.setMarkdown(page, "::: grid\nloose\n:::\n");
   for (let i = 0; i < 12 && !((await A.stored(page)) || "").includes("loose"); i++);
   await go("commonplace/Held");
   await go("commonplace/Refused");
@@ -211,7 +211,7 @@ async function digitHeldBookmarksPanel(): Promise<void> {
   await page.waitForTimeout(800);
 }
 async function refusedEntryRedrawnUnder(): Promise<void> {
-  await log("a refused entry redrawn under Search", { source: await R.inSource(page), query: await page.evaluate(() => document.querySelector(".search-input")?.value ?? null) });
+  await log("a refused entry redrawn under Search", { markdown: await R.inMarkdown(page), query: await page.evaluate(() => document.querySelector(".search-input")?.value ?? null) });
   await page.keyboard.press("Escape");
   /* the picture's preparation held 800ms, so it lands after the keys are in Search */
   await go("commonplace/Pictured%20Late");

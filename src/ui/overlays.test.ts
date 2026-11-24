@@ -24,10 +24,10 @@ describe("one thing open at a time", () => {
   it("a menu or panel, opened, closes every masthead row; it replaces any other by itself", () => {
     for (const p of ["help", "backups", "bookmarks", "shortcuts", "menu"] as const) expect(closes(p)).toEqual(["search", "goto", "gotoToolbar", "lines", "replace"]);
   });
-  it("a navigation closes everything; ⌃⌘M and an arrival where it already is close what stands over the entry, Go to and Line numbering kept; any switch to the source closes the Go to toolbar", () => {
+  it("a navigation closes everything; ⌃⌘M and an arrival where it already is close what stands over the entry, Go to and Line numbering kept; any switch to markdown mode closes the Go to toolbar", () => {
     expect(closes("navigated")).toEqual(["opened", "search", "goto", "gotoToolbar", "lines", "replace"]);
     expect(closes("view")).toEqual(["opened", "search", "gotoToolbar"]);
-    expect(closes("sourceView")).toEqual(["gotoToolbar"]);
+    expect(closes("markdownMode")).toEqual(["gotoToolbar"]);
     expect(closes("here")).toEqual(["opened", "search", "gotoToolbar"]);
   });
   it("Escape closes everything, the Go to toolbar handing its caret back BEFORE search or Go to moves the focus", () => {

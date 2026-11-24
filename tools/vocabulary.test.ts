@@ -1,7 +1,7 @@
 import { test, expect } from "vitest";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { retiredWord, retiredAlertSense, headerForMasthead, toolbarByOldName, menuOrPanelByOldName, menuAreaByOldName } from "./vocabulary.ts";
+import { retiredWord, retiredAlertSense, headerForMasthead, toolbarByOldName, menuOrPanelByOldName, menuAreaByOldName, viewByOldName } from "./vocabulary.ts";
 
 test("retiredWord: the noun, the verb and an identifier built on either; never a word that only contains the letters", () => {
   for (const bad of ["a citation", "Citations", "it cites both", "cited by", "citing", "re-cited", "citesLocator", "citationAnchorHTML", "referenceCitation", "A CITATION", "const CITATION = 1", "CitationAnchor", "citeRange", "CITED_LINES", "cite_x", "type CitesLocator", "_citation", "uncited", "miscited"]) expect(retiredWord(bad), bad).toBe(true);
@@ -48,6 +48,11 @@ test("menuAreaByOldName: the menu area by its names before; never room in its pl
   for (const good of ["the menu area", "makes room for one more bookmark", "--menu-area-w", "a roomy menu"]) expect(menuAreaByOldName(good), good).toBe(false);
 });
 
+test("viewByOldName: the two views by their names before, in prose, an identifier or a file; never a reference's source, a line's or a view's rendering", () => {
+  for (const bad of ["in the source view", "Source view, to replace", "source-view", "sourceView.ts", "SourceView", "SOURCE_VIEW", "replaceInSourceView", "the rendered view", "renderedView", "heldPlaceRenderedView", "between rendered text and", "the reading view", "the markdown view", "its markdown source", "screen.mdView", "MdView", "THE SOURCE VIEW: the markdown", "IN THE MARKDOWN VIEW ONLY"]) expect(viewByOldName(bad), bad).toBe(true);
+  for (const good of ["in markdown mode", "HTML mode", "htmlMode", "markdownMode", "a source line", "the source named the way a reader would", "renders as a table", "Wikisource", "sourceSpans", "the markdown it carries", "markdown sources"]) expect(viewByOldName(good), good).toBe(false);
+});
+
 // Milton's own preface to Samson Agonistes uses the verb.
 const QUOTES_A_BOOK = new Set(["one-offs/miltonSamsonRun.ts", "tools/vocabulary.ts", "tools/vocabulary.test.ts"]);
 const ALERT_SENSE_KEPT: Record<string, string> = {
@@ -62,9 +67,9 @@ function walk(dir: string): string[] {
     return statSync(p).isDirectory() ? walk(p) : [p];
   });
 }
-test("the app, its tools, its one-off scripts, CLAUDE.md, the layout, the reviews' page and the glossary say reference, alert, masthead, toolbar, menu, menu area and panel: no retired word anywhere", () => {
+test("the app, its tools, its one-off scripts, CLAUDE.md, the layout, the reviews' page and the glossary say reference, alert, masthead, toolbar, menu, menu area, panel, markdown mode and HTML mode: no retired word anywhere", () => {
   const files = [...walk("src"), ...walk("tools"), ...walk("one-offs"), "CLAUDE.md", "docs/LAYOUT.md", "docs/REVIEWS.md", "GLOSSARY.md", "index.html"].filter((f) => !QUOTES_A_BOOK.has(f) && /\.(ts|mjs|svelte|html|css|sh|txt|md)$/.test(f));
-  const rules = [retiredWord, headerForMasthead, toolbarByOldName, menuOrPanelByOldName, menuAreaByOldName];
+  const rules = [retiredWord, headerForMasthead, toolbarByOldName, menuOrPanelByOldName, menuAreaByOldName, viewByOldName];
   const retired = (f: string) => (t: string): boolean => rules.some((rule) => rule(t)) || (!(f in ALERT_SENSE_KEPT) && retiredAlertSense(t));
   const found = files.flatMap((f) => readFileSync(f, "utf8").split("\n").flatMap((t, i) => (retired(f)(t) ? [f + ":" + (i + 1)] : [])));
   expect(found).toEqual([]);

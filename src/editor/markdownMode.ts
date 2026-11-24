@@ -1,12 +1,12 @@
 import { flattenText } from "../model/flatten.ts";
 import { parseMarkdown } from "../model/parse.ts";
-import { clipboardOf, sourcePasted } from "./paste.ts";
-import { sourceTab, sourceTyped } from "./sourceKeys.ts";
+import { clipboardOf, markdownPasted } from "./paste.ts";
+import { markdownTab, markdownTyped } from "./markdownKeys.ts";
 import { wordCount, wordsOf } from "./format.ts";
 import type { Surface, ReplacePort } from "./surface.ts";
 import type { Said } from "../model/alertText.ts";
 
-export interface SourceOptions {
+export interface MarkdownOptions {
   onChange: () => void;
   onPasteFile: (file: File) => void;
   raise: (s: Said) => void;
@@ -17,9 +17,9 @@ const mirror = (from: HTMLElement, to: HTMLElement): void => { const cs = getCom
 
 const typedOne = (ie: InputEvent, ta: HTMLTextAreaElement): boolean =>
   ie.inputType === "insertText" && !ie.isComposing && ie.data?.length === 1 && ta.selectionStart === ta.selectionEnd;
-export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions): Surface {
+export function markdownMode(mount: HTMLElement, md: string, opts: MarkdownOptions): Surface {
   const ta = document.createElement("textarea");
-  ta.className = "source";
+  ta.className = "markdown";
   ta.spellcheck = false;
   ta.value = md;
   /* through the textarea's own editing, so ⌘Z takes it back; where the
@@ -32,14 +32,14 @@ export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions):
   ta.addEventListener("input", (e) => {
     const ie = e as InputEvent;
     if (!replacing && typedOne(ie, ta)) {
-      const caret = ta.selectionStart, r = sourceTyped(ta.value, caret);
+      const caret = ta.selectionStart, r = markdownTyped(ta.value, caret);
       if (r) {
         /* through the browser's own insert, so ⌘Z takes the curl back first;
            the caret back after the character typed, which the dash's
            replacement stands before (MEASURED: the next letter went in
            front of the space). That insert raises its own input event,
            which must not curl the straight quote it puts back (pin:
-           editing › -- and quotes typed in the markdown view) */
+           editing › -- and quotes typed in markdown mode) */
         replacing = true;
         try { typeInto(r.text, r.from, r.to); } finally { replacing = false; }
         const at = caret - (r.to - r.from) + r.text.length;
@@ -50,9 +50,9 @@ export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions):
     opts.onChange();
   });
   /* through the browser's own insert, so ⌘Z takes it back (pin: a
-     terminal's copy pasted › a terminal's copy pasted in the source view) */
+     terminal's copy pasted › a terminal's copy pasted in markdown mode) */
   ta.addEventListener("paste", (e) => {
-    const r = sourcePasted(clipboardOf(e.clipboardData));
+    const r = markdownPasted(clipboardOf(e.clipboardData));
     if (!r) return;
     e.preventDefault();
     if ("file" in r) opts.onPasteFile(r.file);
@@ -61,7 +61,7 @@ export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions):
   ta.addEventListener("keydown", (e) => {
     if (e.key !== "Tab" || ta.readOnly) return;
     if (e.repeat && ta.selectionStart !== ta.selectionEnd) { e.preventDefault(); return; }
-    const r = sourceTab(ta.value, ta.selectionStart, ta.selectionEnd, e.shiftKey);
+    const r = markdownTab(ta.value, ta.selectionStart, ta.selectionEnd, e.shiftKey);
     if (r === null) return;
     e.preventDefault();
     if ("refuse" in r) { if (!e.repeat) opts.raise(r.refuse); return; }
@@ -71,7 +71,7 @@ export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions):
   });
   mount.appendChild(ta);
   const marks = document.createElement("div");
-  marks.className = "source-marks";
+  marks.className = "markdown-marks";
   marks.hidden = true;
   mount.insertBefore(marks, ta);
   /* where a character of the textarea stands on screen, measured on a
@@ -155,7 +155,7 @@ export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions):
     place: (pos) => { const at = Math.min(pos, ta.value.length); ta.setSelectionRange(at, at); ta.focus({ preventScroll: true }); },
   };
   /* `after`: typed at the selection's end, the caret after it (pin: alerts
-     and surfaces › a bookmark's link in the markdown view) */
+     and surfaces › a bookmark's link in markdown mode) */
   const insertText = (text: string, after = false): void => {
     if (ta.readOnly) return;
     ta.focus({ preventScroll: true });
@@ -163,13 +163,13 @@ export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions):
     typeInto(text, after ? end : ta.selectionStart, end);
   };
   return {
-    source: true,
+    markdownMode: true,
     md: () => ta.value,
     flat: () => flattenText(ta.value),
     caret: () => ta.selectionStart,
     selectionEnd: () => ta.selectionEnd,
     /* reported seen always, the switch back jumped to a caret a reader had
-       scrolled away from (pin: source view › ⌃⌘M back, still scrolled away) */
+       scrolled away from (pin: markdown mode › ⌃⌘M back, still scrolled away) */
     caretSeen: () => {
       const t = twin(), top = t.topOf(ta.selectionStart);
       t.done();
@@ -190,14 +190,14 @@ export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions):
     placeCaret: (pos, scroll) => {
       const at = pos ?? ta.value.length;
       /* the caret BEFORE the focus: a fresh textarea's selection sits at
-         its end, and focusing scrolls that into view (pin: source view › ⌃⌘M from the top) */
+         its end, and focusing scrolls that into view (pin: markdown mode › ⌃⌘M from the top) */
       ta.setSelectionRange(at, at);
       ta.focus({ preventScroll: !scroll });
     },
     insertText,
     insertPicture: (name) => insertText("![](" + name + ")"),
     /* the markdown is parsed first, so syntax never counts as words and both
-       views report one number (pin: source view › ⌃⌘W in the source view) */
+       views report one number (pin: markdown mode › ⌃⌘W in markdown mode) */
     words: () => {
       const a = ta.selectionStart, b = ta.selectionEnd;
       const text = a === b ? ta.value : ta.value.slice(a, b);

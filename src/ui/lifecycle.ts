@@ -25,7 +25,7 @@ import type { KeptState } from "./keptState.ts";
 import { said, alertWords, type Raise, type Said } from "../model/alertText.ts";
 
 export type EditorPort = Pick<EditorView, "state" | "dispatch">;
-export interface SourcePort { insertAfter(text: string): void; inHeading(): boolean }
+export interface MarkdownPort { insertAfter(text: string): void; inHeading(): boolean }
 export type SessionPort = Pick<Session, "current" | "save" | "open" | "refresh" | "goto">;
 export interface Dialogs {
   prompt(text: string, value?: string): string | null;
@@ -45,8 +45,8 @@ export interface LifecycleDeps {
   view(): EditorPort | null;
   /* read as an act begins, before a prompt takes the focus */
   caretInEntry(): boolean;
-  /* the markdown view, where it is the one showing */
-  source(): SourcePort | null;
+  /* markdown mode, where it is the one showing */
+  markdown(): MarkdownPort | null;
   session: SessionPort;
   dialogs: Dialogs;
   ui: UiPort;
@@ -126,29 +126,29 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     if (!nsOf(c.date) && c.tag) return said("taggedHostsNothing");
     return onShelves(c.date, c.tag) ? SHELVES_EMPTY : null;
   }
-  const nowhere = (view: EditorPort | null, source: SourcePort | null): boolean => !view && !source;
-  function placeRefusal(inEntry: boolean, view: EditorPort | null, source: SourcePort | null): Said | null {
-    if (!inEntry || nowhere(view, source)) return said("placeCursor");
+  const nowhere = (view: EditorPort | null, markdown: MarkdownPort | null): boolean => !view && !markdown;
+  function placeRefusal(inEntry: boolean, view: EditorPort | null, markdown: MarkdownPort | null): Said | null {
+    if (!inEntry || nowhere(view, markdown)) return said("placeCursor");
     if (view) return linkRefusal(view.state) ?? headingRefusal(view.state);
-    return source!.inHeading() ? said("noLinkInHeading") : null;
+    return markdown!.inHeading() ? said("noLinkInHeading") : null;
   }
-  interface Placing { c: Current; spec: Spec; view: EditorPort | null; source: SourcePort | null }
+  interface Placing { c: Current; spec: Spec; view: EditorPort | null; markdown: MarkdownPort | null }
   const placeMoved = (p: Placing): boolean =>
-    (p.view ? p.view !== deps.view() : p.source !== deps.source() || entryKey(session.current.date, session.current.tag) !== entryKey(p.c.date, p.c.tag));
+    (p.view ? p.view !== deps.view() : p.markdown !== deps.markdown() || entryKey(session.current.date, session.current.tag) !== entryKey(p.c.date, p.c.tag));
   function linkPlaced(p: Placing, landed: boolean): Promise<void> | void {
     if (!landed) { ui.raise("entryNotCreated"); return; }
     if (placeMoved(p)) { ui.raise("linkNotPlaced"); return; }
     const label = mdLabel(p.spec.tag, "entry");
     if (p.view) insertLinkAfter(p.view, p.spec.href, label);
-    else p.source!.insertAfter(linkMarkdown(p.spec.href, label));
+    else p.markdown!.insertAfter(linkMarkdown(p.spec.href, label));
     return session.save.now().then(() => { ui.redraw(); session.goto(p.spec.href); });
   }
 
   /* A NEW NAME'S LINK GOES AFTER THE CARET THE ACT BEGAN WITH: none in the
      entry refuses before anything is minted, and an existing name just
      opens (pin: lifecycle.test › a new name with the caret outside the
-     entry refuses); in the markdown view it is typed there as markdown,
-     anywhere (pin: lifecycle.test › in the markdown view the link is typed) */
+     entry refuses); in markdown mode it is typed there as markdown,
+     anywhere (pin: lifecycle.test › in markdown mode the link is typed) */
   function create(): Promise<void> {
     if (cold()) return done;
     const inEntry = deps.caretInEntry(), c = session.current;
@@ -157,13 +157,13 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     const spec = askSpec(c);
     if (!spec) return done;
     if (registered(keysNow(), c.date, spec.full)) { session.goto(spec.href, said("alreadyHere")); return done; }
-    const view = deps.view(), source = view ? null : deps.source();
-    const why = placeRefusal(inEntry, view, source);
+    const view = deps.view(), markdown = view ? null : deps.markdown();
+    const why = placeRefusal(inEntry, view, markdown);
     if (why) return refused(why);
     /* the entry FIRST, the link once it has landed: linked first, a write
        that failed left the host saved with a link to nothing
        (pin: lifecycle.test › says a registration that did not land) */
-    return layer.setEntry(entryKey(c.date, spec.full), "").then((landed) => linkPlaced({ c, spec, view, source }, landed));
+    return layer.setEntry(entryKey(c.date, spec.full), "").then((landed) => linkPlaced({ c, spec, view, markdown }, landed));
   }
 
   function cutToEntry(view: EditorPort, c: Current, spec: Spec): Promise<void> {

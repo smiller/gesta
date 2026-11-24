@@ -10,15 +10,15 @@ import { openFoldAt } from "./folds.ts";
 import { caretNear } from "./rowKeys.ts";
 import type { Surface } from "./surface.ts";
 
-export interface RenderedView extends Surface { readonly view: EditorView }
+export interface HtmlMode extends Surface { readonly view: EditorView }
 
 const within = (y: number, r: { top: number; bottom: number }): boolean => y > r.top && y < r.bottom;
 const focusElsewhere = (at: Element | null, dom: Element): boolean => !!at && at !== document.body && !dom.contains(at);
-export function renderedView(mount: HTMLElement, doc: Node, opts: EditorOptions): RenderedView {
+export function htmlMode(mount: HTMLElement, doc: Node, opts: EditorOptions): HtmlMode {
   const view = createEditor(mount, doc, opts);
   view.setProps({ editable: (state) => !lockKey.getState(state) });
   return {
-    source: false,
+    markdownMode: false,
     view,
     md: () => serializeMarkdown(view.state.doc),
     flat: () => flattenDoc(view.state.doc),

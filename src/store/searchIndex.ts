@@ -78,10 +78,10 @@ export function searchIndex(cache: Record<string, string>, flatten: (md: string)
     if (!md || !md.trim()) return null;
     const m = memo[key];
     if (m && m.md === md) return m;
-    /* a text the model refuses is indexed as its source: the build never
+    /* a text the model refuses is indexed as its markdown: the build never
        stops on one entry, and the entry is still found by its words (pin:
        searchIndex.test › an entry whose flatten throws is indexed as its
-       raw source) */
+       raw markdown) */
     let text: string;
     const sig = (parser ? parser + ":" : "") + fingerprint(md), kept = known[key];
     if (kept && kept.sig === sig) text = kept.text;

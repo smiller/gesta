@@ -84,10 +84,10 @@ const lineBelow = new Plugin({
   appendTransaction: (trs, _was, state) => trs.some((tr) => tr.docChanged) && endsInTable(state.doc)
     ? state.tr.insert(state.doc.content.size, schema.nodes.paragraph.create()).setMeta("addToHistory", false) : null,
 });
-/* A REFERENCE BLOCK IS EDITED IN THE MARKDOWN VIEW ONLY: in the rendered
-   view a click puts the caret at its start and says so, and no key or
+/* A REFERENCE BLOCK IS EDITED IN MARKDOWN MODE ONLY: in HTML mode a
+   click puts the caret at its start and says so, and no key or
    paste changes it from within (pin: editor.test › a reference block takes
-   no typing in the rendered view); no change reaches into it from outside
+   no typing in HTML mode); no change reaches into it from outside
    either, a join, a cut or a drop, while a change taking the block whole
    lands (pin: editor.test › no change from outside a reference block
    reaches into it) */

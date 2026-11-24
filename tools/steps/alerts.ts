@@ -182,14 +182,14 @@ async function bookmarkLinkInMarkdownView(): Promise<void> {
   await page.keyboard.press("Escape");
   await write("commonplace/Source Link", "x\n");
   await view(true);
-  await R.sourceCaretTo(page, "x");
+  await R.markdownCaretTo(page, "x");
   await page.keyboard.press("End");
   await keep("bookmarks", '["2026-09-06","commonplace/Horace","commonplace/Links"]');
   await page.keyboard.press("Control+Meta+b");
   await rest(page);
   await page.click(".bookmark-link[aria-label='Link to Links']", { timeout: 2000 }).catch(() => {});
   await page.waitForTimeout(400);
-  await log("a bookmark's link in the markdown view", { md: (await stored()).replace(/\(#[^)]*\)/, "(…)") });
+  await log("a bookmark's link in markdown mode", { md: (await stored()).replace(/\(#[^)]*\)/, "(…)") });
   await view(false);
   const slow = await ctx.newPage();
   await slow.goto(A.url("commonplace/Horace", "warm=slow"));
@@ -386,7 +386,7 @@ section("the entry's top", async () => {
   await log("an entry opening on a grid", await belowAlerts());
   await write("commonplace/Para", "Some words first.\n\n# Later");
   await view(true);
-  await log("the source view", await belowAlerts());
+  await log("markdown mode", await belowAlerts());
   await view(false);
   await openGotoRow(page);
   await rest(page);
@@ -400,7 +400,7 @@ const belowAlerts = async () => {
     const foot = document.querySelector(".alerts")!.getBoundingClientRect().bottom;
     const first = document.querySelector(src) ?? document.querySelector(".page > :first-child");
     return { below: first ? Math.round(first.getBoundingClientRect().top - foot) : null };
-  }, [S.source]);
+  }, [S.markdown]);
 };
 const barAgainstAlerts = async () => { await settled(page); return page.evaluate(() => {
   const toolbar = document.querySelector(".fmt.show")?.getBoundingClientRect(), foot = document.querySelector(".alerts")!.getBoundingClientRect().bottom;

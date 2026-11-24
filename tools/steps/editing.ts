@@ -114,12 +114,12 @@ async function bookmarkLinkInCode(): Promise<void> {
   await log("a refused fence pasted", { md: await stored(), corner: await corner() });
   await write("commonplace/Source Curl", "x\n");
   await view(true);
-  await R.sourceCaretTo(page, "x");
+  await R.markdownCaretTo(page, "x");
   await page.keyboard.press("End");
   await page.keyboard.type(' a -- "b"" it\'s');
   await rest(page);
   await view(false);
-  await log("-- and quotes typed in the markdown view", { md: await stored() });
+  await log("-- and quotes typed in markdown mode", { md: await stored() });
   await write("commonplace/Bold Italic Row", "::: verse\n**SPEAKER**\n*Stage direction*\n***KING JOHN***\nDeath.\n:::\n");
 }
 async function whollyBoldItalicRow(): Promise<void> {

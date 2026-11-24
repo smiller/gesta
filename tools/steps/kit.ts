@@ -123,7 +123,7 @@ export let stages = "";
    out. The kind, not the text after it: an arrival's place is where the
    window last paused, which moves with the run's timing */
 export const cursor = (): Promise<string> =>
-  page.evaluate(inPageWith([S.editor, S.source], cursorKind, textareaFocused, textareaCaret, textRoot, focusOutside, caretAway, letterBox, aroundCaret, caretInLine));
+  page.evaluate(inPageWith([S.editor, S.markdown], cursorKind, textareaFocused, textareaCaret, textRoot, focusOutside, caretAway, letterBox, aroundCaret, caretInLine));
 /* the cursor's parts, run in the page as one script */
 function textareaFocused(ta: Element | null, a: Element | null): boolean {
   return !!ta && ta.tagName === "TEXTAREA" && a === ta;
@@ -180,7 +180,7 @@ export const log = async (label: string, x: unknown) => { const base = x !== nul
    the wait. No screen: the last section's format toolbar may still be fading */
 export const go = async (hash: string, ms = 15000) => {
   await page.goto(A.url(hash)); await A.waitEntry(page, decodeURIComponent(hash).replace(/%20/g, " "), ms);
-  await waitState(page, { name: "focus", ms: 1000 }, ([ed, src]) => [ed, src].some((q) => document.querySelector(q)?.contains(document.activeElement)), [S.editor, S.source]);
+  await waitState(page, { name: "focus", ms: 1000 }, ([ed, src]) => [ed, src].some((q) => document.querySelector(q)?.contains(document.activeElement)), [S.editor, S.markdown]);
   console.log(current + ": arrived at " + decodeURIComponent(hash) + ":", JSON.stringify({ cursor: await cursor() }));
 };
 /* entries written as another tab would, in turn */
@@ -221,9 +221,9 @@ export const wheelTo = async (y: number) => {
 /* the dialogs, answered by the harness: `answer` is what a prompt gets
    (a list: one per prompt, in turn), a confirm is accepted; `prompts`
    keeps each prompt's text and what it held */
-/* the rendered view (false) or the source view (true), switched to if not showing */
-export const view = async (source: boolean) => { if ((await R.inSource(page)) !== source) { await page.keyboard.press("Control+Meta+m"); await rest(page); } };
-/* another tab's write landed, then the entry opened in the rendered view */
+/* HTML mode (false) or markdown mode (true), switched to if not showing */
+export const view = async (markdown: boolean) => { if ((await R.inMarkdown(page)) !== markdown) { await page.keyboard.press("Control+Meta+m"); await rest(page); } };
+/* another tab's write landed, then the entry opened in HTML mode */
 export const write = async (key: string, text: string | null) => { await A.foreignWrite(page, key, text); await go(key); await view(false); };
 export const caretAt = async (needle: string, offset: number) => { await R.caretAfter(page, needle, offset); await rest(page); };
 let answer: string | (string | null)[] | null = null;

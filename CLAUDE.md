@@ -81,6 +81,8 @@ measured; a rule below names its plan where one exists.
   MENU; the go to, format and replace TOOLBARS work on the entry in front
   of you; help, backups, bookmarks and shortcuts are PANELS; a dropdown is
   a `<select>`.
+  ⌃⌘M switches between MARKDOWN MODE and HTML MODE, the entry's two
+  views; "source" is where a reference or a line comes from.
   `tools/vocabulary.test.ts` fails on a retired word in src/, tools/,
   one-offs/, this file or the glossary; dated plan records keep their words.
 - THE DOMAIN'S WORDS are in `GLOSSARY.md`, the file
@@ -153,7 +155,7 @@ measured; a rule below names its plan where one exists.
   failed run's print is kept under `tools/out/helium-failed/`.
 - REVIEWS, BY BATCH: ONE `/code-review` at HIGH over a commit range when a
   batch touches a DOM seam (main.ts, session.ts, editor.ts, paste.ts,
-  renderedView.ts, sourceView.ts) or closes a phase, never per commit,
+  htmlMode.ts, markdownMode.ts) or closes a phase, never per commit,
   with THE ARCHITECTURE RUN beside it, both after the accept. How each is
   run, its findings fixed and its cost recorded: `docs/REVIEWS.md`, read
   when one is owed.
@@ -204,7 +206,7 @@ measured; a rule below names its plan where one exists.
   and a step's wait never swallows its timeout: the reading carries what
   the corner said, matching or not.
 - The stored text is markdown, the field `md`; a save is serialize and
-  compare; an entry the model refuses is shown as source, never edited as
+  compare; an entry the model refuses is shown in markdown mode, never edited as
   a lossy document.
 - EVERY HELIUM SECTION STARTS FRESH: storage, clipboard and dialog answers
   cleared and the fixtures seeded before each. A section needing an entry,

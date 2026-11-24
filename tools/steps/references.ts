@@ -165,32 +165,32 @@ section("grid", async () => {
   await go("commonplace/Gridded");
   await page.keyboard.press("Control+Meta+m");
   await rest(page);
-  await R.setSource(page, "::: grid\n::: card-light-blue\nalpha\n:::\nloose\n:::");
+  await R.setMarkdown(page, "::: grid\n::: card-light-blue\nalpha\n:::\nloose\n:::");
   await page.keyboard.press("Control+Meta+m");
   await page.waitForTimeout(400);
   await log("a stray line in a grid, switched back", { corner: await saidText() });
-  /* the open path forces source over the stored fault (away and back, once the save has landed); a refused ⌃⌘M leaves it forced, so the next entry opens rendered */
+  /* the open path forces markdown mode over the stored fault (away and back, once the save has landed); a refused ⌃⌘M leaves it forced, so the next entry opens in HTML mode */
   for (let i = 0; i < 12 && !(await A.stored(page) || "").includes("loose"); i++);   /* the store holds the stray line before the navigation, or the open path has nothing to refuse */
   await go("commonplace/Carded");
-  await page.keyboard.press("Control+Meta+m");   /* back to the rendered view on a sound entry, so the faulty one is opened from it */
+  await page.keyboard.press("Control+Meta+m");   /* back to HTML mode on a sound entry, so the faulty one is opened from it */
   await rest(page);
   await go("commonplace/Gridded");
   await rest(page);
-  await log("the faulty entry opened", { source: await R.inSource(page), corner: await saidText() });
+  await log("the faulty entry opened", { markdown: await R.inMarkdown(page), corner: await saidText() });
   await page.keyboard.press("Control+Meta+m");
   await rest(page);
   await go("commonplace/Carded");
-  await log("the next entry after a refused switch", { source: await R.inSource(page) });
+  await log("the next entry after a refused switch", { markdown: await R.inMarkdown(page) });
   await go("commonplace/Gridded");
   await rest(page);
   /* the line fixed and the view restored: the error resolved, the grid drawn */
-  await R.setSource(page, "::: grid\n::: card-light-blue\nalpha\n:::\n\n::: card-red\nloose\n:::\n:::");
+  await R.setMarkdown(page, "::: grid\n::: card-light-blue\nalpha\n:::\n\n::: card-red\nloose\n:::\n:::");
   await page.keyboard.press("Control+Meta+m");
   await waitState(page, { name: "alert", ms: 5000 }, () => !window.__published("alerts").error);
   await log("the line made a card, switched back", { standing: (await R.standingText(page)) ?? "none", ...(await laid(R.gridLayout)) });
 });
 section("told on open", async () => {
-  /* a refused fence line and a directive no page reads, raised as an error when the entry opens: told only on the switch back from the source, a reader who never opened it there never saw them */
+  /* a refused fence line and a directive no page reads, raised as an error when the entry opens: told only on the switch back from markdown mode, a reader who never opened it there never saw them */
   await writeAll({
     "2026-09-02/gesta-wrangling": "# Gesta wrangling\n\n```\nx\n```\n\n::: verse -3\nfealan thalos\n\\:::",
     "bookshelf/Chaucer, Geoffrey": "# Geoffrey Chaucer\n\n::: reference\nroman book and canto\npart titles in roman\n:::",
@@ -333,16 +333,16 @@ section("a terminal's copy pasted", async () => {
   await log("a terminal's command output of several lines pasted", { md: await A.stored(page), drawn: await drawn() });
   await write("commonplace/Terminal Source", "x\n");
   await view(true);
-  await R.sourceCaretTo(page, "x");
+  await R.markdownCaretTo(page, "x");
   await page.keyboard.press("End");
   await page.evaluate(([html, plain]) => {
     const dt = new DataTransfer();
     dt.setData("text/html", html);
     dt.setData("text/plain", plain);
-    document.querySelector("textarea.source").dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true }));
+    document.querySelector("textarea.markdown").dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true }));
   }, [terminal(" passed\n  before it landed."), " passed\n  before it landed."]);
   await landed(page, 1200);
-  await log("a terminal's copy pasted in the source view", { md: await A.stored(page) });
+  await log("a terminal's copy pasted in markdown mode", { md: await A.stored(page) });
   await view(false);
 });
 async function pasteTerminal(html: string, plain: string): Promise<void> {

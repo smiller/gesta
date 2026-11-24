@@ -1,14 +1,14 @@
 import { section, laid, settled, page, A, R, S, log, go, write, winY, saidText, wheelTo, setAnswer, STANZA_SEEDS, searchFor, searchAnswered, rest, openGotoRow, seed, landed } from "./kit.ts";
 import { waitShown, waitState } from "../adapters/waits.ts";
 
-section("source view", async () => {
-  /* the source view: ⌃⌘M over the day, the caret carried across by its count, an edit in the source landing */
-  await sourceViewOpening();
-  await sourceViewFollowing();
+section("markdown mode", async () => {
+  /* markdown mode: ⌃⌘M over the day, the caret carried across by its count, an edit in markdown mode landing */
+  await markdownModeOpening();
+  await markdownModeFollowing();
   await switchViews();
-  await wordCountInSourceView();
+  await wordCountInMarkdownMode();
 });
-async function sourceViewOpening(): Promise<void> {
+async function markdownModeOpening(): Promise<void> {
   await go("2026-09-06");
   /* the editor reads the DOM selection when the browser's selectionchange
      reaches it: waited for, not a fixed beat — a 100 ms beat left the caret
@@ -19,7 +19,7 @@ async function sourceViewOpening(): Promise<void> {
      screen, so it is placed until it stays */
   await waitState(page, { name: "focus", ms: 2000 }, (ed) => document.querySelector(ed)?.contains(document.activeElement), S.editor);
 }
-async function sourceViewFollowing(): Promise<void> {
+async function markdownModeFollowing(): Promise<void> {
   for (let tries = 0; tries < 3; tries++) {
     await A.watchSelection(page);
     await R.caretBefore(page, "food of love");
@@ -31,63 +31,63 @@ async function sourceViewFollowing(): Promise<void> {
 }
 async function switchViews(): Promise<void> {
   await page.keyboard.press("Control+Meta+m");
-  await waitShown(page, { name: "source view", ms: 5000 }, S.source);
-  await log("⌃⌘M", await R.sourceView(page, await A.stored(page)));
+  await waitShown(page, { name: "markdown mode", ms: 5000 }, S.markdown);
+  await log("⌃⌘M", await R.markdownMode(page, await A.stored(page)));
   await page.keyboard.type("FOOD ");
   await page.keyboard.press("Tab");
   await landed(page, 1500);
   await page.keyboard.press("Control+Meta+m");
-  await waitShown(page, { name: "rendered view", ms: 5000 }, S.editor);
-  await log("⌃⌘M back", await R.sourceBack(page));
-  /* the caret moved in the source without an edit: back, it stands where it was moved to, not where it came from */
+  await waitShown(page, { name: "HTML mode", ms: 5000 }, S.editor);
+  await log("⌃⌘M back", await R.markdownBack(page));
+  /* the caret moved in markdown mode without an edit: back, it stands where it was moved to, not where it came from */
   await page.keyboard.press("Control+Meta+m");
-  await waitShown(page, { name: "source view", ms: 5000 }, S.source);
-  await R.sourceCaretTo(page, "play on");
+  await waitShown(page, { name: "markdown mode", ms: 5000 }, S.markdown);
+  await R.markdownCaretTo(page, "play on");
   await page.keyboard.press("ArrowRight");
   await page.keyboard.press("ArrowLeft");
   await page.keyboard.press("Control+Meta+m");
-  await waitShown(page, { name: "rendered view", ms: 5000 }, S.editor);
+  await waitShown(page, { name: "HTML mode", ms: 5000 }, S.editor);
   await rest(page);
-  await log("the caret moved in the source, ⌃⌘M back", await R.sourceBack(page));
+  await log("the caret moved in markdown mode, ⌃⌘M back", await R.markdownBack(page));
   await wheelTo(0);
   await page.click(S.editorFirst);
   await rest(page);   /* the click's caret is read a beat later, as the section's first caret is: a chord at once switched with the caret before the click */
   await page.keyboard.press("Control+Meta+m");
-  await waitShown(page, { name: "source view", ms: 5000 }, S.source);
+  await waitShown(page, { name: "markdown mode", ms: 5000 }, S.markdown);
   await rest(page);
   await log("⌃⌘M from the top", { y: await winY() });
   await page.keyboard.press("Control+Meta+m");
-  await waitShown(page, { name: "rendered view", ms: 5000 }, S.editor);
+  await waitShown(page, { name: "HTML mode", ms: 5000 }, S.editor);
   await page.click(S.editorFirst);
   await wheelTo(600);
   const away = await winY();
   await page.keyboard.press("Control+Meta+m");
-  await waitShown(page, { name: "source view", ms: 5000 }, S.source);
+  await waitShown(page, { name: "markdown mode", ms: 5000 }, S.markdown);
   await rest(page);
   /* within two lines, not to the top or to the caret: the switch carries the text at the window's top, and the pixel offset follows the other view's layout */
   await log("⌃⌘M scrolled away from the caret", { stayed: Math.abs((await winY()) - away) < 60 });
   await page.keyboard.press("Control+Meta+m");
-  await waitShown(page, { name: "rendered view", ms: 5000 }, S.editor);
+  await waitShown(page, { name: "HTML mode", ms: 5000 }, S.editor);
   await rest(page);
   await log("⌃⌘M back, still scrolled away", { stayed: Math.abs((await winY()) - away) < 60 });
   await page.keyboard.press("Control+Meta+w");
   await rest(page);
-  await log("⌃⌘W rendered", { corner: await saidText() });
+  await log("⌃⌘W in HTML mode", { corner: await saidText() });
   await page.keyboard.press("Control+Meta+m");
 }
-async function wordCountInSourceView(): Promise<void> {
-  await waitShown(page, { name: "source view", ms: 5000 }, S.source);
+async function wordCountInMarkdownMode(): Promise<void> {
+  await waitShown(page, { name: "markdown mode", ms: 5000 }, S.markdown);
   await page.keyboard.press("Control+Meta+w");
   await rest(page);
-  await log("⌃⌘W in the source view", { corner: await saidText() });
-  /* the search row closed in the source view: the keys go back to the text */
+  await log("⌃⌘W in markdown mode", { corner: await saidText() });
+  /* the search row closed in markdown mode: the keys go back to the text */
   await page.keyboard.press("Control+Meta+k");
   await rest(page);
   await page.keyboard.press("Escape");
   await rest(page);
-  await log("⌃⌘K, then Escape, in the source view", {});
+  await log("⌃⌘K, then Escape, in markdown mode", {});
   await page.keyboard.press("Control+Meta+m");
-  await waitShown(page, { name: "rendered view", ms: 5000 }, S.editor);
+  await waitShown(page, { name: "HTML mode", ms: 5000 }, S.editor);
 }
 section("go to", async () => {
   /* the Go to row: opened on a day, a year pick refilling the months, a day pick navigating; on a book, the chain and the sentinel */
@@ -215,11 +215,11 @@ section("walk", async () => {
   await A.waitEntry(page, "bookshelf/Boethius/Consolatio/3m1", 5000);
   await log("⌃⌘, back", { entry: await A.entry(page) });
   await page.keyboard.press("Control+Meta+m");
-  await waitShown(page, { name: "source view", ms: 5000 }, S.source);
+  await waitShown(page, { name: "markdown mode", ms: 5000 }, S.markdown);
   await page.keyboard.press("Control+Meta+.");
   await A.waitEntry(page, "bookshelf/Boethius/Consolatio/3pr2", 5000);
   await rest(page);
-  await log("⌃⌘M, then ⌃⌘.", { entry: await A.entry(page), source: await R.inSource(page) });
+  await log("⌃⌘M, then ⌃⌘.", { entry: await A.entry(page), markdown: await R.inMarkdown(page) });
 });
 section("stanza", async () => {
   /* the Faerie Queene's stanzas, each a `::: stanza N` fence — the number drawn in its own column at every interval, the crumb the canto's key, ⌃⌘R across a stanza gap referring to 1.1.1.3–2.1 and quoting both, ⌃⌘G asking by a Stanza box and a Line box */
@@ -304,17 +304,17 @@ section("the switch carries the text", async () => {
   await switchCarriesTextOpening();
   await switchPlaceRemembered();
   await switchFrom20pxDown();
-  await caretSeenSourceM();
+  await caretSeenMarkdownM();
 });
 async function switchCarriesTextOpening(): Promise<void> {
   const canto = Array.from({ length: 40 }, (_, k) => "::: stanza " + (k + 1) + "\n" + Array.from({ length: 9 }, (_, j) => "Stanza " + (k + 1) + ", line " + (j + 1) + ", set down to fill the measure").join("\n") + "\n:::").join("\n\n") + "\n";
   await go("commonplace/Long%20Canto");
   await page.click(S.editor);
   await page.keyboard.press("Control+Meta+m");
-  await waitShown(page, { name: "source view", ms: 5000 }, S.source);
-  await R.setSource(page, canto);
+  await waitShown(page, { name: "markdown mode", ms: 5000 }, S.markdown);
+  await R.setMarkdown(page, canto);
   await page.keyboard.press("Control+Meta+m");
-  await waitShown(page, { name: "rendered view", ms: 5000 }, S.editor);
+  await waitShown(page, { name: "HTML mode", ms: 5000 }, S.editor);
   await page.waitForTimeout(600);
   await wheelTo(0);
   await page.click(S.editorFirst);
@@ -322,16 +322,16 @@ async function switchCarriesTextOpening(): Promise<void> {
 async function switchPlaceRemembered(): Promise<void> {
   for (const [label, where] of [["a long canto switched at its middle", 0.5], ["a long canto switched at its end", 1]] as [string, number][]) {
     await wheelTo(Math.round((await page.evaluate(() => document.documentElement.scrollHeight - innerHeight)) * where));
-    const rendered = await R.topStanza(page), renderedEnd = await R.lastStanzaShowing(page);
+    const html = await R.topStanza(page), htmlEnd = await R.lastStanzaShowing(page);
     await page.keyboard.press("Control+Meta+m");
-    await waitShown(page, { name: "source view", ms: 5000 }, S.source);
+    await waitShown(page, { name: "markdown mode", ms: 5000 }, S.markdown);
     await rest(page);
-    const source = await R.topStanza(page), sourceEnd = await R.lastStanzaShowing(page);
+    const markdown = await R.topStanza(page), markdownEnd = await R.lastStanzaShowing(page);
     await page.keyboard.press("Control+Meta+m");
-    await waitShown(page, { name: "rendered view", ms: 5000 }, S.editor);
+    await waitShown(page, { name: "HTML mode", ms: 5000 }, S.editor);
     await rest(page);
-    /* at the end the source, the shorter, stops at its own foot: the last stanza showing in both, not one stanza at both tops */
-    await log(label, where < 1 ? { rendered, source, back: await R.topStanza(page) } : { rendered: renderedEnd, source: sourceEnd, back: await R.lastStanzaShowing(page) });
+    /* at the end markdown mode, the shorter, stops at its own foot: the last stanza showing in both, not one stanza at both tops */
+    await log(label, where < 1 ? { html, markdown, back: await R.topStanza(page) } : { html: htmlEnd, markdown: markdownEnd, back: await R.lastStanzaShowing(page) });
     if (where < 1) {
       await log("the switch's place remembered", { matches: await page.evaluate((k) => { try { const r = JSON.parse(localStorage.getItem(k) || "[]").find((x: { key: string }) => x.key === "commonplace/Long Canto"); return !!r && Math.abs(r.y - scrollY) < 3; } catch { return null; } }, A.ns + "places") });
       /* the page grows above the text just set, as a picture resolving does: the switch's place is held like an arrival's */
@@ -346,25 +346,25 @@ async function switchPlaceRemembered(): Promise<void> {
 async function switchFrom20pxDown(): Promise<void> {
   await wheelTo(20);
   await page.keyboard.press("Control+Meta+m");
-  await waitShown(page, { name: "source view", ms: 5000 }, S.source);
+  await waitShown(page, { name: "markdown mode", ms: 5000 }, S.markdown);
   await rest(page);
   const nearTop = await winY();
   await page.keyboard.press("Control+Meta+m");
-  await waitShown(page, { name: "rendered view", ms: 5000 }, S.editor);
+  await waitShown(page, { name: "HTML mode", ms: 5000 }, S.editor);
   await rest(page);
-  await log("⌃⌘M from 20px down", { source: nearTop, back: await winY() });
-  /* a caret placed low in the source view's window, then back: it is still in view */
+  await log("⌃⌘M from 20px down", { markdown: nearTop, back: await winY() });
+  /* a caret placed low in markdown mode's window, then back: it is still in view */
   await wheelTo(Math.round((await page.evaluate(() => document.documentElement.scrollHeight - innerHeight)) / 2));
   await page.keyboard.press("Control+Meta+m");
-  await waitShown(page, { name: "source view", ms: 5000 }, S.source);
+  await waitShown(page, { name: "markdown mode", ms: 5000 }, S.markdown);
   await settled(page);
   await page.mouse.click(400, (await page.evaluate(() => innerHeight)) - 30);
   await page.keyboard.press("Control+Meta+m");
-  await waitShown(page, { name: "rendered view", ms: 5000 }, S.editor);
+  await waitShown(page, { name: "HTML mode", ms: 5000 }, S.editor);
   await page.waitForTimeout(400);
 }
-async function caretSeenSourceM(): Promise<void> {
-  await log("a caret seen in the source, ⌃⌘M back", { caretInView: await page.evaluate(() => { const s = getSelection(); if (!s.rangeCount) return null; const r = s.getRangeAt(0).getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; }) });
+async function caretSeenMarkdownM(): Promise<void> {
+  await log("a caret seen in markdown mode, ⌃⌘M back", { caretInView: await page.evaluate(() => { const s = getSelection(); if (!s.rangeCount) return null; const r = s.getRangeAt(0).getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; }) });
 }
 section("sections fold on a journal day and a commonplace", async () => {
   /* a day and a commonplace under `##` headings: every section open on arrival, the triangle closing one to its word count, the closing kept when the day is left and opened again */

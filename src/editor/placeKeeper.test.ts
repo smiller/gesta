@@ -9,7 +9,7 @@ interface Fake extends PlaceSurface { at: number | null; size: number; throws: b
 interface World {
   log: string[]; box: Record<string, string>; win: { at: number; y(): number; scrollTo(y: number): void; under(): number };
   surf: Fake | null; readonly sets: number; fire(e: string): void; place(k: string): { pos: number; y: number } | null;
-  seed(k: string, pos: number, y: number): void; rendered(at?: number | null, size?: number): Fake; source(): Fake;
+  seed(k: string, pos: number, y: number): void; html(at?: number | null, size?: number): Fake; markdown(): Fake;
   keeper: ReturnType<typeof placeKeeper>; show(f: Fake | null): () => void;
 }
 function world(): World {
@@ -25,9 +25,9 @@ function world(): World {
     fire: (e: string) => { for (const f of handlers[e] || []) f(); },
     place: (k: string) => placeOf(parsePlaces(box[KEY] ?? null), k),
     seed: (k: string, pos: number, y: number) => { box[KEY] = JSON.stringify(withPlace(parsePlaces(box[KEY] ?? null), k, { pos, y })); },
-    rendered: (at: number | null = 5, size = 100): Fake => {
+    html: (at: number | null = 5, size = 100): Fake => {
       const f: Fake = {
-        source: false, at, size, throws: false, top: 7, carets: [],
+        markdownMode: false, at, size, throws: false, top: 7, carets: [],
         placeAt: () => f.at,
         topAt: () => f.top,
         lineStart: (p) => p,
@@ -38,7 +38,7 @@ function world(): World {
       };
       return f;
     },
-    source: (): Fake => Object.assign(w.rendered(null, 100), { source: true, placeAt: () => null, reveal: () => {}, scrollToPos: () => {} }),
+    markdown: (): Fake => Object.assign(w.html(null, 100), { markdownMode: true, placeAt: () => null, reveal: () => {}, scrollToPos: () => {} }),
     keeper: placeKeeper({
       surface: (): PlaceSurface | null => w.surf,
       window: win,
@@ -53,10 +53,10 @@ function world(): World {
 function arrived(): World {
   const w = world();
   w.seed("commonplace/A", 40, 400);
-  w.keeper.open("commonplace/A", "arrive", w.show(w.rendered()));
+  w.keeper.open("commonplace/A", "arrive", w.show(w.html()));
   return w;
 }
-function opened(view: (w: World) => Fake | null = (w) => w.rendered()): World {
+function opened(view: (w: World) => Fake | null = (w) => w.html()): World {
   const w = world();
   w.keeper.open("commonplace/A", "keep", w.show(view(w)));
   return w;
@@ -70,17 +70,17 @@ describe("arriving", () => {
     const w = arrived();
     expect(w.log).toEqual(["anchoring false", "reveal 40", "to 40"]);
     const first = world();
-    first.keeper.open("commonplace/B", "arrive", first.show(first.rendered()));
+    first.keeper.open("commonplace/B", "arrive", first.show(first.html()));
     expect(first.log).toEqual(["anchoring true", "scroll 0"]);
     const keep = world();
     keep.seed("commonplace/A", 40, 400);
-    keep.keeper.open("commonplace/A", "keep", keep.show(keep.rendered()));
+    keep.keeper.open("commonplace/A", "keep", keep.show(keep.html()));
     expect(keep.log).toEqual([]);
   });
   it("a highlight owed goes to the top, holds nothing, and leaves the stored place", () => {
     const w = world();
     w.seed("commonplace/A", 40, 400);
-    w.keeper.open("commonplace/A", "owed", w.show(w.rendered()));
+    w.keeper.open("commonplace/A", "owed", w.show(w.html()));
     expect(w.log).toEqual(["anchoring true", "scroll 0"]);
     w.fire("resize");
     expect(w.log).toHaveLength(2);
@@ -111,11 +111,11 @@ describe("the hold", () => {
   });
   it("is dropped by opening another entry, and kept by opening the same one", () => {
     const w = arrived();
-    w.keeper.open("commonplace/A", "keep", w.show(w.rendered()));
+    w.keeper.open("commonplace/A", "keep", w.show(w.html()));
     w.log.length = 0;
     w.fire("resize");
     expect(w.log).toEqual(["reveal 40", "to 40"]);
-    w.keeper.open("commonplace/B", "keep", w.show(w.rendered()));
+    w.keeper.open("commonplace/B", "keep", w.show(w.html()));
     w.fire("resize");
     expect(w.log).toEqual(["reveal 40", "to 40", "anchoring true"]);
   });
@@ -131,16 +131,16 @@ describe("the hold", () => {
 });
 
 describe("recording", () => {
-  it("is skipped while held; the source view records the window's offset, the rendered view the position at the masthead, or 0; no view, nothing", () => {
+  it("is skipped while held; markdown mode records the window's offset, HTML mode the position at the masthead, or 0; no view, nothing", () => {
     const w = arrived();
     w.win.at = 999;
     w.fire("leave");
     expect(w.place("commonplace/A")).toEqual({ pos: 40, y: 400 });
-    const src = opened((x) => x.source());
+    const src = opened((x) => x.markdown());
     src.win.at = 250;
     src.fire("leave");
     expect(src.place("commonplace/A")).toEqual({ pos: -1, y: 250 });
-    const r = opened((x) => x.rendered(7));
+    const r = opened((x) => x.html(7));
     r.win.at = 300;
     r.fire("leave");
     expect(r.place("commonplace/A")).toEqual({ pos: 7, y: 300 });
@@ -152,7 +152,7 @@ describe("recording", () => {
     expect(none.sets).toBe(0);
   });
   it("waits 400ms after the last scroll", () => {
-    const w = opened((x) => x.rendered(7));
+    const w = opened((x) => x.html(7));
     w.win.at = 300;
     w.fire("scroll");
     vi.advanceTimersByTime(300);
@@ -164,15 +164,15 @@ describe("recording", () => {
   });
   it("records the entry left, under its own key and from its own view, before the next is shown", () => {
     const w = world();
-    w.keeper.open("commonplace/A", "keep", w.show(w.source()));
+    w.keeper.open("commonplace/A", "keep", w.show(w.markdown()));
     w.win.at = 120;
     let seen: unknown = "unread";
-    w.keeper.open("commonplace/B", "keep", () => { seen = w.place("commonplace/A"); w.surf = w.rendered(); });
+    w.keeper.open("commonplace/B", "keep", () => { seen = w.place("commonplace/A"); w.surf = w.html(); });
     expect(seen).toEqual({ pos: -1, y: 120 });
     expect(w.place("commonplace/B")).toBeNull();
   });
   it("skips a write the same as the last; a move forgets the last", () => {
-    const w = opened((x) => x.rendered(7));
+    const w = opened((x) => x.html(7));
     w.win.at = 300;
     w.fire("leave");
     w.fire("leave");
@@ -190,15 +190,15 @@ describe("applying", () => {
     w.keeper.open("commonplace/A", "arrive", w.show(f(w)));
     return w.log.slice(1);
   };
-  it("by the window's offset where there is no position to go to: none stored, at the top, the source view, no view", () => {
-    expect(arrive([-1, 250], (w) => w.rendered())).toEqual(["scroll 250"]);
-    expect(arrive([40, 0], (w) => w.rendered())).toEqual(["scroll 0"]);
-    expect(arrive([40, 250], (w) => w.source())).toEqual(["scroll 250"]);
+  it("by the window's offset where there is no position to go to: none stored, at the top, markdown mode, no view", () => {
+    expect(arrive([-1, 250], (w) => w.html())).toEqual(["scroll 250"]);
+    expect(arrive([40, 0], (w) => w.html())).toEqual(["scroll 0"]);
+    expect(arrive([40, 250], (w) => w.markdown())).toEqual(["scroll 250"]);
     expect(arrive([40, 250], () => null)).toEqual(["scroll 250"]);
   });
   it("clamps the position to the text's end, reveals it, and falls back to the offset when it has no box", () => {
-    expect(arrive([999, 250], (w) => w.rendered(5, 50))).toEqual(["reveal 50", "to 50"]);
-    expect(arrive([40, 250], (w) => { const f = w.rendered(); f.throws = true; return f; })).toEqual(["reveal 40", "scroll 250"]);
+    expect(arrive([999, 250], (w) => w.html(5, 50))).toEqual(["reveal 50", "to 50"]);
+    expect(arrive([40, 250], (w) => { const f = w.html(); f.throws = true; return f; })).toEqual(["reveal 40", "scroll 250"]);
   });
 });
 
@@ -211,24 +211,24 @@ describe("the caret on arrival", () => {
     return s.carets;
   };
   it("goes to the start of a page never visited, and of one left at the top, the window left where it is", () => {
-    expect(caret(null, (w) => w.rendered())).toEqual(["0"]);
-    expect(caret([40, 0], (w) => w.rendered())).toEqual(["0"]);
-    expect(caret(null, (w) => w.source())).toEqual(["0"]);
+    expect(caret(null, (w) => w.html())).toEqual(["0"]);
+    expect(caret([40, 0], (w) => w.html())).toEqual(["0"]);
+    expect(caret(null, (w) => w.markdown())).toEqual(["0"]);
   });
   it("goes to the place held, clamped; to the first line under the masthead where the place has no position, or 0", () => {
-    expect(caret([40, 400], (w) => w.rendered())).toEqual(["40"]);
-    expect(caret([999, 400], (w) => w.rendered(5, 50))).toEqual(["50"]);
-    expect(caret([-1, 400], (w) => w.rendered())).toEqual(["7"]);
-    expect(caret([40, 400], (w) => w.source())).toEqual(["7"]);
-    expect(caret([40, 400], (w) => { const f = w.source(); f.top = null; return f; })).toEqual(["0"]);
+    expect(caret([40, 400], (w) => w.html())).toEqual(["40"]);
+    expect(caret([999, 400], (w) => w.html(5, 50))).toEqual(["50"]);
+    expect(caret([-1, 400], (w) => w.html())).toEqual(["7"]);
+    expect(caret([40, 400], (w) => w.markdown())).toEqual(["7"]);
+    expect(caret([40, 400], (w) => { const f = w.markdown(); f.top = null; return f; })).toEqual(["0"]);
   });
   it("goes to the start of the held place's line, or of the line under the masthead, never into its first word", () => {
-    expect(caret([43, 400], (w) => { const f = w.rendered(); f.lineStart = (p) => p - 3; return f; })).toEqual(["40"]);
-    expect(caret([-1, 400], (w) => { const f = w.rendered(); f.lineStart = (p) => p - 3; return f; })).toEqual(["4"]);
+    expect(caret([43, 400], (w) => { const f = w.html(); f.lineStart = (p) => p - 3; return f; })).toEqual(["40"]);
+    expect(caret([-1, 400], (w) => { const f = w.html(); f.lineStart = (p) => p - 3; return f; })).toEqual(["4"]);
   });
   it("goes to the start with a highlight owed; a keep leaves it", () => {
-    expect(caret([40, 400], (w) => w.rendered(), "owed")).toEqual(["0"]);
-    expect(caret([40, 400], (w) => w.rendered(), "keep")).toEqual([]);
+    expect(caret([40, 400], (w) => w.html(), "owed")).toEqual(["0"]);
+    expect(caret([40, 400], (w) => w.html(), "keep")).toEqual([]);
   });
 });
 

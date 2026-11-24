@@ -1,7 +1,7 @@
 import type { EditorView } from "prosemirror-view";
 import type { Node } from "prosemirror-model";
 import { imageView, pastedPictureBytes } from "./editor/images.ts";
-import { headingLineAt } from "./editor/sourceKeys.ts";
+import { headingLineAt } from "./editor/markdownKeys.ts";
 import { nextImageName, pictureKey } from "./store/names.ts";
 import { imageRefs } from "./store/exportEntries.ts";
 import { setLineInterval } from "./editor/lineNumbers.ts";
@@ -25,8 +25,8 @@ import { highlightIn, escapeJump } from "./editor/highlight.ts";
 import type { Highlight } from "./store/keys.ts";
 import { surfaces, type Surface, type Viewport, type ReplacePort } from "./editor/surface.ts";
 import { placeKeeper, type Page } from "./editor/placeKeeper.ts";
-import { renderedView, type RenderedView } from "./editor/renderedView.ts";
-import { sourceView } from "./editor/sourceView.ts";
+import { htmlMode, type HtmlMode } from "./editor/htmlMode.ts";
+import { markdownMode } from "./editor/markdownMode.ts";
 import { screenTake, type ScreenTake } from "./ui/tabWrite.ts";
 import { alertWords, said, type Raise, type Said, type ErrorOwner } from "./model/alertText.ts";
 import { refuseCold } from "./ui/journalLoad.ts";
@@ -56,7 +56,7 @@ export interface SessionOptions {
   onSelect?: () => void;
   onHighlight?: () => void;
   onLine?: (line: string) => void;
-  /* every entry locked and the markdown view refused */
+  /* every entry locked and markdown mode refused */
   readOnly?: boolean;
 }
 export interface Session {
@@ -65,7 +65,7 @@ export interface Session {
   /* the open entry is one an import is writing */
   readonly locked: boolean;
   /* the focus back to the text in either view, its selection as it stands
-     (pin: source view › ⌃⌘K, then Escape, in the source view) */
+     (pin: markdown mode › ⌃⌘K, then Escape, in markdown mode) */
   focusText(): void;
   /* the line at the window's top kept there while the page reflows, until
      a hand moves; at the entry's very top, nothing is held */
@@ -96,10 +96,10 @@ export interface Session {
      (pin: search › Enter) (pin: reference paste › the reference link followed) */
   highlight(q: string, nth: number, honorMarkers: boolean): boolean;
   insertText(text: string, after?: boolean): boolean;
-  sourceLineIsHeading(): boolean;
-  /* null outside the source view */
+  markdownLineIsHeading(): boolean;
+  /* null outside markdown mode */
   replacer(): ReplacePort | null;
-  readonly mdView: boolean;
+  readonly markdownMode: boolean;
   setView(md: boolean): void;
   /* the other view, refused on a read-only page */
   switchView(): void;
@@ -115,8 +115,8 @@ export function startSession(opts: SessionOptions): Session {
   const journal = journalOf(layer.cache);
   let interval = opts.interval;
   let current = { date: todayKey(), tag: null as string | null };
-  let rendered: RenderedView | null = null;
-  const live = (): EditorView | null => rendered && surface.current === rendered ? rendered.view : null;
+  let html: HtmlMode | null = null;
+  const live = (): EditorView | null => html && surface.current === html ? html.view : null;
   /* the highlight owed to the next paint, and the navigation it belongs
      to: a later navigation drops it, or it would select against the wrong
      entry. Unpinned: a race between two tasks no step can order */
@@ -181,11 +181,11 @@ export function startSession(opts: SessionOptions): Session {
     };
   }
   const keeper = placeKeeper({ surface: () => surface.current, window: viewport, page: browserPage() });
-  function mountEditor(doc: Node, date: string, tag: string | null): RenderedView {
+  function mountEditor(doc: Node, date: string, tag: string | null): HtmlMode {
     mount.replaceChildren();
     const ekey = entryKey(date, tag);
     const start = folds.startOf(date, tag);
-    rendered = renderedView(mount, doc, {
+    html = htmlMode(mount, doc, {
       interval,
       onChange: edited,
       onSelect: () => opts.onSelect?.(),
@@ -198,7 +198,7 @@ export function startSession(opts: SessionOptions): Session {
       onPasteFile: pasteFile,
       clearOf: pageTopCached,
     });
-    return rendered;
+    return html;
   }
   /* the entries an import is writing take no typing until it ends: typed
      into, the open one kept the typing and lost the import's text unsaid
@@ -207,8 +207,8 @@ export function startSession(opts: SessionOptions): Session {
   const lockedNow = <S extends Surface>(s: S): S => { s.lock(!!opts.readOnly || !!locked?.has(ekeyOf())); return s; };
   const surface = surfaces({
     build: {
-      rendered: (doc) => lockedNow(mountEditor(doc, current.date, current.tag)),
-      source: (md) => { mount.replaceChildren(); return lockedNow(sourceView(mount, md, { onChange: edited, onPasteFile: pasteFile, raise: (s) => { raise(s); } })); },
+      html: (doc) => lockedNow(mountEditor(doc, current.date, current.tag)),
+      markdown: (md) => { mount.replaceChildren(); return lockedNow(markdownMode(mount, md, { onChange: edited, onPasteFile: pasteFile, raise: (s) => { raise(s); } })); },
     },
     window: viewport,
     places: keeper,
@@ -259,9 +259,9 @@ export function startSession(opts: SessionOptions): Session {
        frame later when the size is observed (pin: places › the warm landed) */
     keeper.reapply();
   }
-  function sourceLineIsHeading(): boolean {
+  function markdownLineIsHeading(): boolean {
     const s = surface.current;
-    return !!s && s.source && headingLineAt(s.md(), s.selectionEnd());
+    return !!s && s.markdownMode && headingLineAt(s.md(), s.selectionEnd());
   }
   function insertText(text: string, after = false): boolean {
     if (!surface.current) return false;
@@ -442,7 +442,7 @@ export function startSession(opts: SessionOptions): Session {
     if (n === 1) raise("oneWord"); else raise("words", { n });
   }
   function copyReference(all = false): void {
-    if (surface.md) { raise("referenceInSource"); return; }
+    if (surface.md) { raise("referenceInMarkdown"); return; }
     const view = live();
     if (refuseCold(layer, raise)) return;
     if (!view) { raise("stillLoading"); return; }
@@ -480,16 +480,16 @@ export function startSession(opts: SessionOptions): Session {
     get locked() { return !!opts.readOnly || !!locked?.has(ekeyOf()); },
     focusText: () => { surface.current?.focus(); },
     holdTop: () => {
-      const s = surface.current?.source ? null : surface.current;
+      const s = surface.current?.markdownMode ? null : surface.current;
       if (!s) return;
       if (viewport.y() <= 0) return;
       const pos = s.topAt(underMasthead());
       if (pos !== null) keeper.carry(pos);
     },
     lockEntries: (keys) => { locked = keys; if (surface.current) lockedNow(surface.current); },
-    open, openHash, takeTabWrite, save, refresh, surfaceMd: currentMd, goto, step, today, copyReference, copyEntryLink, highlight, jump, setView: (md) => surface.switchTo(md), switchView, showWordCount, insertText, sourceLineIsHeading,
+    open, openHash, takeTabWrite, save, refresh, surfaceMd: currentMd, goto, step, today, copyReference, copyEntryLink, highlight, jump, setView: (md) => surface.switchTo(md), switchView, showWordCount, insertText, markdownLineIsHeading,
     replacer: () => surface.current?.replace ?? null,
-    get mdView() { return surface.md; },
+    get markdownMode() { return surface.md; },
     get hashDeferred() { return hashDeferred; },
     refreshFolds,
     movePlace: keeper.move,

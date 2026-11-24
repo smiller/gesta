@@ -15,7 +15,7 @@ export interface Page {
   on(event: PageEvent, fn: () => void): void;
   anchoring(on: boolean): void;
 }
-export type PlaceSurface = Pick<Surface, "source" | "placeAt" | "topAt" | "lineStart" | "reveal" | "scrollToPos" | "end" | "placeCaret">;
+export type PlaceSurface = Pick<Surface, "markdownMode" | "placeAt" | "topAt" | "lineStart" | "reveal" | "scrollToPos" | "end" | "placeCaret">;
 export interface PlaceKeeperOptions {
   surface(): PlaceSurface | null;
   window: Viewport;
@@ -33,7 +33,7 @@ export interface PlaceKeeper extends PlacePort {
 
 const samePlace = (was: (Place & { key: string }) | null, k: string, place: Place): boolean =>
   !!was && was.key === k && was.pos === place.pos && was.y === place.y;
-const atTopOnly = (s: { source: boolean }, p: Place): boolean => s.source || p.pos < 0 || p.y <= 0;
+const atTopOnly = (s: { markdownMode: boolean }, p: Place): boolean => s.markdownMode || p.pos < 0 || p.y <= 0;
 export function placeKeeper(opts: PlaceKeeperOptions): PlaceKeeper {
   const { window: win, page } = opts;
   const places = stored(NS + "places", parsePlaces, opts.storage);
@@ -77,7 +77,7 @@ export function placeKeeper(opts: PlaceKeeperOptions): PlaceKeeper {
     if (held && held.ekey === key) return;   /* the store holds it: it was restored from there (pin: places › Back again) */
     const s = opts.surface();
     if (!s) return;
-    if (s.source) { write(key, { pos: -1, y: win.y() }); return; }
+    if (s.markdownMode) { write(key, { pos: -1, y: win.y() }); return; }
     const at = s.placeAt(win.under());
     write(key, { pos: at ?? 0, y: win.y() });
   }
@@ -105,8 +105,8 @@ export function placeKeeper(opts: PlaceKeeperOptions): PlaceKeeper {
     timer = setTimeout(record, 400);
   });
   page.on("leave", record);
-  /* recorded BEFORE the next view is shown: shown first, a forced source
-     view released, the source view's place read as a rendered one with no view
+  /* recorded BEFORE the next view is shown: shown first, a forced markdown
+     mode released, its place read as HTML mode's with no view
      and was lost (pin: places › a forced entry left scrolled, returned to)
      (pin: placeKeeper.test › records the entry left) */
   function open(ekey: string, how: Arrival, show: () => void): void {
@@ -131,9 +131,9 @@ export function placeKeeper(opts: PlaceKeeperOptions): PlaceKeeper {
     const s = opts.surface();
     if (!s) return;
     if (!p || p.y <= 0) { s.placeCaret(0, false); return; }
-    /* in the source view the caret goes to the top line as given
-       (pin: places › typed at the place in a long paragraph's source) */
-    if (s.source) { s.placeCaret(s.topAt(win.under()) ?? 0, false); return; }
+    /* in markdown mode the caret goes to the top line as given
+       (pin: places › typed at the place in a long paragraph, in markdown mode) */
+    if (s.markdownMode) { s.placeCaret(s.topAt(win.under()) ?? 0, false); return; }
     const pos = p.pos >= 0 ? Math.min(p.pos, s.end()) : s.topAt(win.under());
     s.placeCaret(pos === null ? 0 : s.lineStart(pos), false);
   }

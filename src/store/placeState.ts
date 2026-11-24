@@ -1,6 +1,6 @@
-/* A place is the TEXT POSITION at the top of the window in the rendered
-   view — a pixel offset drifts with the window's width and with edits above
-   — and the scroll offset for the source view (pin: placeState.test › a
+/* A place is the TEXT POSITION at the top of the window in HTML mode
+   — a pixel offset drifts with the window's width and with edits above
+   — and the scroll offset for markdown mode (pin: placeState.test › a
    place round-trips). Parsing forgives anything: a damaged store is an
    empty one (pin: placeState.test › an absent or damaged store reads as
    empty). A per-browser convenience, never in the text or a backup. */

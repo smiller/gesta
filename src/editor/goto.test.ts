@@ -55,13 +55,13 @@ describe("askKind", () => {
     expect(toolbarFor(parseMarkdown("plain"), LINES).kind).toBe("none");
   });
 });
-const worded = (p: ReturnType<typeof toolbarFor>) => ({ ...p, none: alertWords(p.none), inSource: alertWords(p.inSource) });
+const worded = (p: ReturnType<typeof toolbarFor>) => ({ ...p, none: alertWords(p.none), inMarkdown: alertWords(p.inMarkdown) });
 describe("the toolbar's words", () => {
   it("the boxes' labels and what is said where nothing can be asked follow the work's conventions; with no document the toolbar asks nothing", () => {
     expect([LINES, VERSES, PARAGRAPHS].map((c) => worded(toolbarFor(null, c)))).toEqual([
-      { kind: "none", label: "Line", pageLabel: "Page", none: "no line or page numbers here", inSource: "Switch to the rendered view to go to a line or a page" },
-      { kind: "none", label: "Verse", pageLabel: "Page", none: "no verse numbers here", inSource: "Switch to the rendered view to go to a verse" },
-      { kind: "none", label: "Paragraph", pageLabel: "Page", none: "no paragraph numbers here", inSource: "Switch to the rendered view to go to a paragraph" },
+      { kind: "none", label: "Line", pageLabel: "Page", none: "no line or page numbers here", inMarkdown: "Switch to HTML mode to go to a line or a page" },
+      { kind: "none", label: "Verse", pageLabel: "Page", none: "no verse numbers here", inMarkdown: "Switch to HTML mode to go to a verse" },
+      { kind: "none", label: "Paragraph", pageLabel: "Page", none: "no paragraph numbers here", inMarkdown: "Switch to HTML mode to go to a paragraph" },
     ]);
   });
 });
@@ -354,7 +354,7 @@ describe("a work of prose by paragraph and verse by line: Verse Line, or Prose P
     expect(toolbarFor(proseOnly, PROSIMETRUM)).toMatchObject({ kind: "page", pageLabel: "Paragraph" });
     expect(toolbarFor(verseOnly, PROSIMETRUM)).toMatchObject({ kind: "line", label: "Line" });
     expect(toolbarFor(parseMarkdown("plain"), PROSIMETRUM).kind).toBe("none");
-    expect(worded(toolbarFor(null, PROSIMETRUM))).toMatchObject({ none: "no line or paragraph numbers here", inSource: "Switch to the rendered view to go to a line or a paragraph" });
+    expect(worded(toolbarFor(null, PROSIMETRUM))).toMatchObject({ none: "no line or paragraph numbers here", inMarkdown: "Switch to HTML mode to go to a line or a paragraph" });
   });
   it("the Paragraph box lands on the paragraph a reference names, its first sentence", () => {
     expect(lands(chapter, "3", PROSIMETRUM, "page")).toContain("First one.");

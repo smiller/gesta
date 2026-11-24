@@ -64,5 +64,5 @@ export const CLOSE_REASONS = ["escape", "tab", "icon", "resize", "displaced", "l
 export type CloseReason = (typeof CLOSE_REASONS)[number];
 const GIVES_BACK = new Set<CloseReason>(["escape", "tab", "icon", "resize", "displaced", "lost", "stayed"]);
 export const handsFocusBack = (reason: CloseReason): boolean => GIVES_BACK.has(reason);
-const NAVIGATING = new Set<Opening>(["navigated", "view", "sourceView", "here"]);
+const NAVIGATING = new Set<Opening>(["navigated", "view", "markdownMode", "here"]);
 export const reasonOpened = (by: Opening): CloseReason => (by === "escape" ? "escape" : NAVIGATING.has(by) ? "navigated" : "displaced");

@@ -56,8 +56,8 @@ export interface Screen {
      whether the row stands open (⌃⌘L, the summary) */
   gutter: boolean;
   linesOpen: boolean;
-  /* the markdown source view is on: the mode pill shows */
-  mdView: boolean;
+  /* markdown mode is on: the mode pill shows */
+  markdownMode: boolean;
   interval: number;
   /* which bundle the read-only page holds */
   held: string;
@@ -75,7 +75,7 @@ export function screenState(interval: number): Screen {
     bookmarks: { rows: [], foot: null, editing: "", draft: "", buf: "", unreadable: false, opening: 0 },
     shortcuts: { query: "", rows: [], active: 0, empty: "", editing: false, draft: "", dirty: false },
     backups: { canPick: true, configured: false, trouble: "", warm: "loading", unused: 0, overHalf: 0 },
-    gutter: false, linesOpen: false, mdView: false, interval, held: "",
+    gutter: false, linesOpen: false, markdownMode: false, interval, held: "",
   });
   return screen;
 }

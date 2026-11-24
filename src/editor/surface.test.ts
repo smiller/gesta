@@ -23,11 +23,11 @@ function world(y = 0) {
     resolve: () => { if (standing !== null) released.push(errors.length); standing = null; },
   };
   const win = { at: y, y: () => win.at, scrollTo: (to: number) => { win.at = to; log.push("scroll " + to); }, under: () => 0 };
-  const fake = (source: boolean, text: string, doc?: Node): Fake => {
+  const fake = (markdown: boolean, text: string, doc?: Node): Fake => {
     const f: Fake = {
-      source, caretAt: source ? text.length : 0, seen: true, top: null, text,
-      md: () => source ? f.text : serializeMarkdown(doc!),
-      flat: () => source ? flattenText(f.text) : flattenDoc(doc!),
+      markdownMode: markdown, caretAt: markdown ? text.length : 0, seen: true, top: null, text,
+      md: () => markdown ? f.text : serializeMarkdown(doc!),
+      flat: () => markdown ? flattenText(f.text) : flattenDoc(doc!),
       caret: () => { log.push("read caret"); return f.caretAt; },
       caretSeen: () => f.seen,
       topAt: () => { log.push("read top"); return f.top; },
@@ -35,19 +35,19 @@ function world(y = 0) {
       focus: () => {},
       lock: () => {},
       placeAt: () => null, reveal: () => {},
-      end: () => source ? f.text.length : doc!.content.size,
+      end: () => markdown ? f.text.length : doc!.content.size,
       scrollToPos: (pos) => { log.push("align " + pos); },
-      placeCaret: (pos, scroll) => { f.caretAt = pos ?? (source ? f.text.length : 0); log.push("caret " + pos + (scroll ? " scroll" : " still")); },
+      placeCaret: (pos, scroll) => { f.caretAt = pos ?? (markdown ? f.text.length : 0); log.push("caret " + pos + (scroll ? " scroll" : " still")); },
       insertText: () => {}, selectionEnd: () => f.caretAt, insertPicture: () => {}, words: () => 0,
-      destroy: () => { log.push("destroy " + (source ? "source" : "rendered")); },
+      destroy: () => { log.push("destroy " + (markdown ? "markdown" : "html")); },
     };
     built.push(f);
     return f;
   };
   const s = surfaces({
     build: {
-      rendered: (doc) => { log.push("build rendered"); return fake(false, "", doc); },
-      source: (md) => { log.push("build source"); return fake(true, md); },
+      html: (doc) => { log.push("build html"); return fake(false, "", doc); },
+      markdown: (md) => { log.push("build markdown"); return fake(true, md); },
     },
     window: win,
     places: {
@@ -71,7 +71,7 @@ describe("the switch", () => {
     w.log.length = 0;
     w.s.switchTo(true);
     const src = w.last().text;
-    expect(w.log).toEqual(["release", "read caret", "read top", "destroy rendered", "build source", "scroll 300", "align " + src.indexOf("C"), "view true", "switched", "caret 0 scroll"]);
+    expect(w.log).toEqual(["release", "read caret", "read top", "destroy html", "build markdown", "scroll 300", "align " + src.indexOf("C"), "view true", "switched", "caret 0 scroll"]);
     expect(w.s.md).toBe(true);
   });
   it("reads no top at the window's top, and a top at the first character stays at the top", () => {
@@ -85,9 +85,9 @@ describe("the switch", () => {
     w.last().top = 1;
     w.log.length = 0;
     w.s.switchTo(true);
-    expect(w.log.slice(w.log.indexOf("build source"))).toEqual(["build source", "scroll 20", "scroll 0", "view true", "switched", "caret 0 scroll"]);
+    expect(w.log.slice(w.log.indexOf("build markdown"))).toEqual(["build markdown", "scroll 20", "scroll 0", "view true", "switched", "caret 0 scroll"]);
   });
-  it("carries the top by the crossing, not an equal count: the source's stream holds the fence lines", () => {
+  it("carries the top by the crossing, not an equal count: markdown mode's stream holds the fence lines", () => {
     const md = "::: stanza 1\nA B\n:::\n\n::: stanza 2\nC D\n:::";
     const doc = parseMarkdown(md);
     const w = world(400);
@@ -96,7 +96,7 @@ describe("the switch", () => {
     w.s.switchTo(true);
     const src = w.last();
     expect(w.log).toContain("align " + src.text.indexOf("C"));
-    /* back: the rendered view's alignment carries the place */
+    /* back: HTML mode's alignment carries the place */
     src.top = src.text.indexOf("D");
     w.log.length = 0;
     w.s.switchTo(false);
@@ -133,7 +133,7 @@ describe("the caret across the switch", () => {
     moved.s.switchTo(false);
     expect(moved.log[moved.log.length - 1]).toBe("caret 1 scroll");
   });
-  it("a caret seen on leaving is scrolled to, and in the rendered view releases the hold; an unseen one leaves the window", () => {
+  it("a caret seen on leaving is scrolled to, and in HTML mode releases the hold; an unseen one leaves the window", () => {
     const seen = world();
     seen.s.show("AB\n\nCD", "commonplace/A");
     seen.s.switchTo(true);
@@ -157,34 +157,34 @@ describe("the caret across the switch", () => {
 describe("a text the model refuses", () => {
   const BAD = "::: grid\ntext first\n::: card-red\na\n:::\n:::";
   const WHY = 'a grid holds only cards; "text first" is not a card';
-  it("shown, forces the source view, raised as an error and told; the next show puts the reader's view back", () => {
+  it("shown, forces markdown mode, raised as an error and told; the next show puts the reader's view back", () => {
     const err = vi.spyOn(console, "error").mockImplementation(() => {});
     const w = world();
     w.s.show(BAD, "commonplace/Gridded");
-    expect(w.log).toEqual(["build source", "view true"]);
-    expect(w.errors).toEqual(["cannot render commonplace/Gridded — " + WHY + "; shown as source"]);
+    expect(w.log).toEqual(["build markdown", "view true"]);
+    expect(w.errors).toEqual(["cannot render commonplace/Gridded — " + WHY + "; shown in markdown mode"]);
     expect(err).toHaveBeenCalledWith("cannot render", "commonplace/Gridded", WHY);
     expect(w.s.md).toBe(true);
     w.log.length = 0;
     w.s.show("fine", "commonplace/Fine");
-    expect(w.log).toEqual(["view false", "destroy source", "build rendered"]);
+    expect(w.log).toEqual(["view false", "destroy markdown", "build html"]);
     expect(w.released).toEqual([1]);
     expect(w.s.md).toBe(false);
     err.mockRestore();
   });
-  it("switched back to, keeps the source view, its error raised again, and a forced view stays forced", () => {
+  it("switched back to, keeps markdown mode, its error raised again, and a forced view stays forced", () => {
     const err = vi.spyOn(console, "error").mockImplementation(() => {});
     const w = world();
     w.s.show(BAD, "commonplace/Gridded");
     w.log.length = 0;
     w.s.switchTo(false);
     expect(w.log).toEqual(["release", "read caret"]);
-    expect(w.errors[1]).toBe("cannot render commonplace/Gridded — " + WHY + "; shown as source");
+    expect(w.errors[1]).toBe("cannot render commonplace/Gridded — " + WHY + "; shown in markdown mode");
     expect([w.released, w.standing()]).toEqual([[], w.errors[1]]);
     expect(w.s.md).toBe(true);
     w.log.length = 0;
     w.s.show("fine", "commonplace/Fine");
-    expect(w.log).toEqual(["view false", "destroy source", "build rendered"]);
+    expect(w.log).toEqual(["view false", "destroy markdown", "build html"]);
     err.mockRestore();
   });
   it("a clean parse back resolves the error; the lines it refused are raised anew", () => {
@@ -212,18 +212,18 @@ describe("a text the model refuses", () => {
     expect(back("# Chaucer\n\n::: reference\nroman book and canto\n:::\n\n::: versey\nline\n:::")).toEqual([opened(fenceRefusals(parseMarkdown("::: versey\nline\n:::")), told())]);
     expect(back("# Chaucer\n\n::: reference\nroman book and canto\n:::")).toEqual([told()]);
   });
-  it("a show of another entry is in the rendered view; the same entry shown again keeps the view chosen", () => {
+  it("a show of another entry is in HTML mode; the same entry shown again keeps the view chosen", () => {
     const w = world();
     w.s.show("fine", "commonplace/A");
     w.s.switchTo(true);
     w.log.length = 0;
     w.s.show("fine", "commonplace/A");
     expect(w.s.md).toBe(true);
-    expect(w.log).toEqual(["destroy source", "build source"]);
+    expect(w.log).toEqual(["destroy markdown", "build markdown"]);
     w.log.length = 0;
     w.s.show("other", "commonplace/B");
     expect(w.s.md).toBe(false);
-    expect(w.log).toEqual(["view false", "destroy source", "build rendered"]);
+    expect(w.log).toEqual(["view false", "destroy markdown", "build html"]);
   });
   it("a renamed entry, shown under its new key with the view kept, stays in the view chosen", () => {
     const w = world();
@@ -251,7 +251,7 @@ describe("a text the model refuses", () => {
     const err = vi.spyOn(console, "error").mockImplementation(() => {});
     const w = world();
     w.s.show(BAD, "commonplace/Gridded");
-    expect(w.beneath).toEqual(["cannot render commonplace/Gridded — " + WHY + "; shown as source"]);
+    expect(w.beneath).toEqual(["cannot render commonplace/Gridded — " + WHY + "; shown in markdown mode"]);
     err.mockRestore();
   });
   it("a redraw of the entry on screen neither raises its error again nor resolves it", () => {

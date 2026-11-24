@@ -39,6 +39,7 @@ const ALLOWED: Record<string, string> = {
   "tools/vocabulary.ts toolbarByOldName": "a checker's rule, run by its own test",
   "tools/vocabulary.ts menuOrPanelByOldName": "a checker's rule, run by its own test",
   "tools/vocabulary.ts menuAreaByOldName": "a checker's rule, run by its own test",
+  "tools/vocabulary.ts viewByOldName": "a checker's rule, run by its own test",
   "tools/apostrophes.ts straightInStrings": "a checker's rule, run by its own test",
   "tools/apostrophes.ts straightInMarkup": "a checker's rule, run by its own test",
 };

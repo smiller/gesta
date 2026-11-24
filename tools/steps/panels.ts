@@ -144,7 +144,7 @@ section("Go to toolbar", async () => {
   await page.keyboard.press("Escape");
 });
 section("reference paste", async () => {
-  /* a reference pasted as plain text into the rendered view renders as its markdown */
+  /* a reference pasted as plain text into HTML mode renders as its markdown */
   await go("commonplace/Pasted");
   await page.click(S.editor);
   await R.pasteText(page, "[*Gesta*, 7 September 2026](#2026-09-07?h=blind%20cord):\n\n> blind cord");

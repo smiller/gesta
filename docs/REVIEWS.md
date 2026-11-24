@@ -6,7 +6,7 @@ is run:
 
 - REVIEWS, BY BATCH: the free checkers first, then ONE `/code-review` at
   HIGH over a commit range, when a batch touches a DOM seam (main.ts,
-  session.ts, editor.ts, paste.ts, renderedView.ts, sourceView.ts) or
+  session.ts, editor.ts, paste.ts, htmlMode.ts, markdownMode.ts) or
   closes a phase, never per commit. Its findings land in one fix commit. A
   confirmation pass is offered at its measured price, runs only on the
   reader's word, and only when a finding changed behaviour. High, not
