@@ -178,7 +178,7 @@ and F7 once.
   timeout and 11 that threw; `waitToolbar` kept, its thrown line being
   F1's watch. The ledger counts the lines through `ranOutCounts`. The
   whole corner at 1x: 0 sections read otherwise, no wait ran out.
-- 12:50 Candidate 2's checker (A26.1.2): `tools/waitCatches.test.ts`
+- 12:45 Candidate 2's checker (A26.1.2): `tools/waitCatches.test.ts`
   refuses a wait in the steps or their adapters whose failure a catch
   swallows, its statement read to its own closing parenthesis, so a wait
   laid over lines is found; its allowed list empty. Its own cases: one
