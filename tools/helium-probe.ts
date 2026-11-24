@@ -7,19 +7,16 @@
 // dumps before IndexedDB's real-time I/O settles, and --timeout never
 // exited. The profile lives under tools/out, so a run never touches the
 // running Helium's profile.
-import { installAlertReaders } from "./adapters/inPage.ts";
-import { chromium } from "playwright-core";
-import { mkdirSync, rmSync } from "node:fs";
+import { freshProfile, launchHelium } from "./adapters/launch.ts";
+import { mkdirSync } from "node:fs";
 import { resolve } from "node:path";
-const H = "/Applications/Helium.app/Contents/MacOS/Helium";
 const PROFILE = resolve("tools/out/helium-profile");
 const PAGE = "file://" + resolve("dist/index.html");
 const queries = process.argv.slice(2);
-if (queries.includes("--fresh")) { rmSync(PROFILE, { recursive: true, force: true }); queries.splice(queries.indexOf("--fresh"), 1); }
+if (queries.includes("--fresh")) { freshProfile(PROFILE); queries.splice(queries.indexOf("--fresh"), 1); }
 mkdirSync(PROFILE, { recursive: true });
 for (const qs of queries.length ? queries : [""]) {
-  const ctx = await chromium.launchPersistentContext(PROFILE, { executablePath: H, headless: true });
-  await installAlertReaders(ctx);
+  const ctx = await launchHelium(PROFILE);
   const page = await ctx.newPage();
   const logs = [];
   page.on("console", (m) => logs.push(m.text()));

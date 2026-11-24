@@ -4,6 +4,7 @@ import type { Dialog } from "playwright-core";
 import * as A from "../adapters/app.ts";
 import { inPageWith } from "../adapters/inPage.ts";
 import { said, markSaid, waitSaid } from "../adapters/said.ts";
+import { waitSaveLanded } from "../adapters/saves.ts";
 
 export type Tree = { name: string; text?: string; kids?: Tree[] };
 export interface RunOptions { screenshot?: string; only?: string[] | null; reverse?: boolean; shard?: [number, number] }
@@ -41,13 +42,7 @@ export const MARGIN_SEEDS = {
 /* a pause for the page to answer a gesture: two frames, ProseMirror and
    Svelte drawing within them, where a fixed sleep of up to 300 ms stood;
    a window not in front may have its frames slowed, so 100 ms at most */
-/* a pause for the save after typing: 650 ms past the last edit and no
-   store write open, where the page carries the watcher the corner driver
-   installs; else the sleep it replaced */
-export async function landed(p: Page, ms: number) {
-  if (!(await p.evaluate(() => "__writes" in window).catch(() => false))) return p.waitForTimeout(ms);
-  await p.waitForFunction(() => performance.now() - window.__lastEdit > 650 && !window.__writes, null, { timeout: ms + 2000, polling: 25 }).catch(() => {});
-}
+export const landed = (p: Page, ms: number) => waitSaveLanded(p, ms + 2000);
 /* ⌃⌘K, then the words once the box holds the focus: typed at once, they
    went to the entry under it (pin: where the keys go › ⌃⌘T on today from Search) */
 export async function searchFor(p: Page, words: string) {

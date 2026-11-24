@@ -78,3 +78,16 @@ the launch's "10 entries stored" where an act said nothing.
   whole and passed unchanged, but for two line readings that wrote ""
   for null, kept as null. F6 opened: the order run once read the search
   result step with no hit, a section this does not touch.
+- 22:07 A24.1.4 and A24.1.3 (grilled, asked yes): `tools/adapters/launch.ts`
+  launches headless Helium for all five tools, a lingering process killed
+  by its profile's name and the profile cleared (`freshProfile`, tested),
+  the alert readers and write watcher installed, the clock and viewport
+  options. `tools/adapters/saves.ts` holds the write watcher and the one
+  wait for a save to land, its threshold the debounce plus a 150 ms
+  margin (tested); the kit's `landed`, `A.stored` and the bridge use it,
+  the kit's fallback sleep gone, and a wait that runs out prints so with
+  the watcher's state. Its first whole play printed one run-out in "quote
+  tab" in both orders, which an 800 ms sleep had hidden before
+  (inferred); not repeated alone, with the section before it, or in the
+  next whole play: F7, waking on "a save's wait ran out". The verdict
+  otherwise passed unchanged. CLAUDE.md's layout names the three modules.

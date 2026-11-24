@@ -4,16 +4,14 @@
 // is made here from fixtures/ and the run is the one under a verdict;
 // `node tools/helium-reader.ts <zip>` times a real one instead: the pick,
 // the relaunch, the heap, the first search's index.
-import { installAlertReaders } from "./adapters/inPage.ts";
+import { freshProfile, launchHelium } from "./adapters/launch.ts";
 import { said, markSaid } from "./adapters/said.ts";
-import { chromium } from "playwright-core";
-import { mkdirSync, rmSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { zipTo } from "../src/store/io.ts";
 import { TODAY } from "./helium-steps.ts";
 import type { Page } from "./heliumPage.ts";
-const H = "/Applications/Helium.app/Contents/MacOS/Helium";
 const PROFILE = resolve(tmpdir(), "gesta-helium-reader-profile");
 const PAGE = "file://" + resolve("dist-reader/index.html");
 const TIMED = process.argv[2] ? resolve(process.argv[2]) : null;
@@ -35,13 +33,10 @@ if (!TIMED) {
   mkdirSync(resolve("tools/out"), { recursive: true });
   writeFileSync(ZIP, Buffer.concat(parts));
 }
-rmSync(PROFILE, { recursive: true, force: true });
-mkdirSync(PROFILE, { recursive: true });
+freshProfile(PROFILE);
 const logs: string[] = [];
 const launch = async () => {
-  const ctx = await chromium.launchPersistentContext(PROFILE, { executablePath: H, headless: true, viewport: { width: 1024, height: 1366 } });
-  await installAlertReaders(ctx);
-  if (!TIMED) await ctx.clock.setFixedTime(new Date(TODAY + "T12:00:00"));
+  const ctx = await launchHelium(PROFILE, { viewport: { width: 1024, height: 1366 }, ...(TIMED ? {} : { clock: { at: new Date(TODAY + "T12:00:00") } }) });
   const page = await ctx.newPage();
   page.on("console", (m) => logs.push(m.text()));
   page.on("pageerror", (e) => logs.push("pageerror: " + e.message));

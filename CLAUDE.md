@@ -380,7 +380,10 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
   - Helium: `helium-steps.ts` (THE STEPS; sections in `tools/steps/`, a
     module a group, over `steps/kit.ts` and `steps/timing.ts`; `TODAY` the
     fixed date the page's clock is set to), `adapters/app.ts` (the
-    readings over the app), `helium-corner.ts` (the driver: `STEPS=`,
+    readings over the app), `adapters/said.ts` (what the page said since a
+    step's mark), `adapters/saves.ts` (the write watcher and the wait for
+    a save to land), `adapters/launch.ts` (headless Helium launched over a
+    fresh profile, for every tool here), `helium-corner.ts` (the driver: `STEPS=`,
     `ORDER=reverse`, `TIMING=1`, `SHARD=k/n`), `helium-approve.ts` (the verdict;
     `WINDOWS=n`), `heliumShards.ts` (the sections dealt over windows and
     their prints merged back as one window's),

@@ -2,22 +2,19 @@
 // as entries, open each by hash and compare the editor's markdown with the
 // store's, refuse an unknown book, then TYPE into an entry, wait past the
 // debounce, relaunch and read the text back. `node tools/helium-bridge.ts`
-import { installWriteWatcher, installAlertReaders } from "./adapters/inPage.ts";
-import { chromium } from "playwright-core";
-import { mkdirSync, rmSync } from "node:fs";
+import { freshProfile, launchHelium } from "./adapters/launch.ts";
 import { resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { TODAY } from "./helium-steps.ts";
 import type { Page } from "./heliumPage.ts";
 import { inPage } from "./adapters/inPage.ts";
 import { said } from "./adapters/said.ts";
+import { waitSaveLanded } from "./adapters/saves.ts";
 import { reseeded } from "./adapters/app.ts";
 import { SEEDS } from "./steps/kit.ts";
-const H = "/Applications/Helium.app/Contents/MacOS/Helium";
 const PROFILE = resolve(tmpdir(), "gesta-helium-bridge-profile");   /* the system temp, not Dropbox: a profile there is held by the sync, and its delete failed */
 const PAGE = "file://" + resolve("dist/index.html");
-rmSync(PROFILE, { recursive: true, force: true });
-mkdirSync(PROFILE, { recursive: true });
+freshProfile(PROFILE);
 /* what a launch shows, read in the page: its parts top-level functions run there as one script */
 function imageLine(i: HTMLElement): string {
   return (i.getAttribute("src") || "").slice(0, 30) + (i.dataset.missing ? " MISSING" : "");
@@ -45,10 +42,8 @@ function launchShows(): Record<string, unknown> {
 }
 const read = async (page: Page): Promise<Record<string, unknown>> => ({ ...(await page.evaluate(inPage(launchShows, textsShown, crumbShown, firstLineShown, imageLine)) as Record<string, unknown>), status: await said(page) });
 async function launch(url: string, fn: (page: Page) => Promise<Record<string, unknown>>): Promise<Record<string, unknown>> {
-  const ctx = await chromium.launchPersistentContext(PROFILE, { executablePath: H, headless: true });
-  await installAlertReaders(ctx);
-  await installWriteWatcher(ctx);
-  await ctx.clock.setFixedTime(new Date(TODAY + "T12:00:00"));   /* the refusals land on today: pinned, not scrubbed */
+  /* the refusals land on today: pinned, not scrubbed */
+  const ctx = await launchHelium(PROFILE, { clock: { at: new Date(TODAY + "T12:00:00") } });
   const page = await ctx.newPage();
   const logs: string[] = [];
   page.on("pageerror", (e) => logs.push("pageerror: " + e.message));
@@ -73,7 +68,7 @@ log("an unknown commonplace mints on visit", await launch(PAGE + "#commonplace/B
 log("type, wait past the debounce", await launch(PAGE + "#commonplace/Brand%20New", async (page) => {
   await page.click("#editor .ProseMirror");
   await page.keyboard.type("Typed in headless Helium.");
-  const saveWait = await page.waitForFunction(() => performance.now() - window.__lastEdit > 650 && !window.__writes, null, { timeout: 5000, polling: 25 }).then(() => "landed", () => "ran out");
+  const saveWait = await waitSaveLanded(page, 5000);
   return { ...(await read(page)), saveWait };
 }));
 log("relaunch: the text came back", await launch(PAGE + "#commonplace/Brand%20New", read));

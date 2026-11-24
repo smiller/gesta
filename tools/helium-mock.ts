@@ -1,8 +1,7 @@
-import { chromium } from "playwright-core";
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { freshProfile, launchHelium } from "./adapters/launch.ts";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join, resolve } from "node:path";
 import { tmpdir } from "node:os";
-import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 import type { Page } from "./heliumPage.ts";
 import { foreignWrite, url, waitEntry, waitWarm } from "./adapters/app.ts";
@@ -26,10 +25,6 @@ const NOW = { name: "now" };
 /* a profile of its own outside Dropbox, which held one under tools/out
    past the run's end */
 const PROFILE = resolve(tmpdir(), "gesta-mock-profile");
-function freshProfile(): void {
-  spawnSync("pkill", ["-f", basename(PROFILE)]);
-  rmSync(PROFILE, { recursive: true, force: true });
-}
 
 async function seeded(page: Page, spec: MockSpec): Promise<void> {
   await page.goto(url(spec.entries[0]));
@@ -92,14 +87,14 @@ async function main(specPath: string): Promise<void> {
   const spec: MockSpec = (await import(pathToFileURL(resolve(specPath)).href)).default;
   const out = resolve("tools/out/mocks", basename(specPath).replace(/\.ts$/, ""));
   mkdirSync(out, { recursive: true });
-  freshProfile();
-  const ctx = await chromium.launchPersistentContext(PROFILE, { executablePath: "/Applications/Helium.app/Contents/MacOS/Helium", headless: true, viewport: { width: 1280, height: spec.height ?? 800 } });
+  freshProfile(PROFILE);
+  const ctx = await launchHelium(PROFILE, { viewport: { width: 1280, height: spec.height ?? 800 } });
   const page = await ctx.newPage();
   await seeded(page, spec);
   const frames: Frame[] = [];
   for (const state of spec.states) for (const option of [NOW, ...spec.options]) frames.push(await frame(page, spec, state, option));
   await ctx.close();
-  freshProfile();
+  freshProfile(PROFILE);
   writeFileSync(join(out, "index.html"), mockPage(spec.title, frames));
   for (const f of frames) console.log(f.state + " · " + f.option + ": " + JSON.stringify(f.reading) + (f.covered ? " · under the bars: " + f.covered.under.join(" | ") : ""));
   console.log("the page: " + join(out, "index.html"));

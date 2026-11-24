@@ -6,6 +6,7 @@ import { blankRowReader } from "./blankRow.ts";
 import type { Page } from "../heliumPage.ts";
 import { inPage } from "./inPage.ts";
 import { said, saidAfterGesture } from "./said.ts";
+import { waitSaveLanded } from "./saves.ts";
 export const name = "app";
 /* under the system temp, not tools/out: a profile under Dropbox is held by
    the sync and by the exiting browser, and its delete failed one run in
@@ -50,8 +51,7 @@ export const waitEntry = (page: Page, key: string, ms = 15000) => page.waitForFu
 export const waitWarm = (page: Page) => page.waitForFunction(() => document.documentElement.dataset.probe?.includes("all;"), null, { timeout: 15000 });
 /* the markdown the store holds, read straight from IndexedDB after the
    save's debounce */
-/* the save lands 500 ms after the last edit: read once that has passed and no write is open */
-export const stored = async (page: Page, which?: string) => { await page.waitForFunction(() => performance.now() - window.__lastEdit > 650 && !window.__writes, null, { timeout: 3000, polling: 25 }).catch(() => page.waitForTimeout(800)); return page.evaluate(([which, dbName, storeName]) => new Promise<string | null>((res, rej) => { const key = which || document.documentElement.dataset.entry; const r = indexedDB.open(dbName); r.onerror = () => rej(r.error); r.onsuccess = () => { const db = r.result; const g = db.transaction(storeName).objectStore(storeName).get(key); g.onsuccess = () => { db.close(); res(g.result?.md ?? null); }; g.onerror = () => { db.close(); rej(g.error); }; }; }), [which, ENTRY_DB, ENTRY_STORE]); };
+export const stored = async (page: Page, which?: string) => { await waitSaveLanded(page, 3000); return page.evaluate(([which, dbName, storeName]) => new Promise<string | null>((res, rej) => { const key = which || document.documentElement.dataset.entry; const r = indexedDB.open(dbName); r.onerror = () => rej(r.error); r.onsuccess = () => { const db = r.result; const g = db.transaction(storeName).objectStore(storeName).get(key); g.onsuccess = () => { db.close(); res(g.result?.md ?? null); }; g.onerror = () => { db.close(); rej(g.error); }; }; }), [which, ENTRY_DB, ENTRY_STORE]); };
 /* another tab's write or delete, made in `page` straight to the store and announced as a landing is */
 export const pictureKeys = (page: Page, prefix: string) => page.evaluate(([prefix, dbName, storeName]) => new Promise<IDBValidKey[]>((res, rej) => { const r = indexedDB.open(dbName); r.onerror = () => rej(r.error); r.onsuccess = () => { const db = r.result; const g = db.transaction(storeName).objectStore(storeName).getAllKeys(); g.onsuccess = () => { db.close(); res(g.result.filter((k) => String(k).startsWith(prefix)).sort()); }; g.onerror = () => { db.close(); rej(g.error); }; }; }), [prefix, IMG_DB, IMG_STORE]);
 export const foreignWrite = (page: Page, key: string, md: string | null) => page.evaluate(([k, md, dbName, storeName, channel]) => new Promise<void>((res, rej) => { const r = indexedDB.open(dbName); r.onerror = () => rej(r.error); r.onsuccess = () => { const db = r.result; const t = db.transaction(storeName, "readwrite"); const st = t.objectStore(storeName); if (md === null) st.delete(k); else st.put({ key: k, md }); t.onerror = () => rej(t.error); t.oncomplete = () => { db.close(); new BroadcastChannel(channel).postMessage(k); res(); }; }; }), [key, md, ENTRY_DB, ENTRY_STORE, NS + "entries"]);

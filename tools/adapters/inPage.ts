@@ -18,18 +18,3 @@ export async function installAlertReaders(ctx: BrowserContext): Promise<void> {
     window.__pageTop = () => parseFloat(document.documentElement.style.getPropertyValue("--alert-area-bottom")) || 0;
   });
 }
-/* the last edit's time and the store writes still open, for a read of the
-   stored text to wait on rather than sleep */
-export async function installWriteWatcher(ctx: BrowserContext): Promise<void> {
-  await ctx.addInitScript(() => {
-    window.__lastEdit = 0; window.__writes = 0;
-    for (const t of ["keydown", "input", "paste", "drop", "cut", "pointerdown", "click"]) addEventListener(t, () => { window.__lastEdit = performance.now(); }, true);
-    const put = IDBObjectStore.prototype.put;
-    IDBObjectStore.prototype.put = function (this: IDBObjectStore, ...args: Parameters<IDBObjectStore["put"]>) {
-      window.__writes++;
-      const tx = this.transaction, done = () => { window.__writes--; tx.removeEventListener("complete", done); tx.removeEventListener("error", done); tx.removeEventListener("abort", done); };
-      tx.addEventListener("complete", done); tx.addEventListener("error", done); tx.addEventListener("abort", done);
-      return put.apply(this, args);
-    };
-  });
-}
