@@ -7,8 +7,8 @@ const walk = (dir: string): string[] => readdirSync(dir).flatMap((name) => {
   return statSync(p).isDirectory() ? walk(p) : [p];
 });
 
-test("every module under src/ is named in CLAUDE.md's layout", () => {
-  const claude = readFileSync("CLAUDE.md", "utf8");
+test("every module under src/ is named in the layout", () => {
+  const claude = readFileSync("docs/LAYOUT.md", "utf8");
   const modules = walk("src").filter((f) => f.endsWith(".ts") && !f.endsWith(".test.ts") && !f.endsWith(".d.ts"));
   expect(modules.length).toBeGreaterThan(0);
   expect(modules.filter((f) => !claude.includes(f.split("/").pop()!))).toEqual([]);

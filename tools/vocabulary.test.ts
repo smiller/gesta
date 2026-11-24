@@ -62,8 +62,8 @@ function walk(dir: string): string[] {
     return statSync(p).isDirectory() ? walk(p) : [p];
   });
 }
-test("the app, its tools, its one-off scripts, CLAUDE.md and the glossary say reference, alert, masthead, toolbar, menu, menu area and panel: no retired word anywhere", () => {
-  const files = [...walk("src"), ...walk("tools"), ...walk("one-offs"), "CLAUDE.md", "GLOSSARY.md", "index.html"].filter((f) => !QUOTES_A_BOOK.has(f) && /\.(ts|mjs|svelte|html|css|sh|txt|md)$/.test(f));
+test("the app, its tools, its one-off scripts, CLAUDE.md, the layout, the reviews' page and the glossary say reference, alert, masthead, toolbar, menu, menu area and panel: no retired word anywhere", () => {
+  const files = [...walk("src"), ...walk("tools"), ...walk("one-offs"), "CLAUDE.md", "docs/LAYOUT.md", "docs/REVIEWS.md", "GLOSSARY.md", "index.html"].filter((f) => !QUOTES_A_BOOK.has(f) && /\.(ts|mjs|svelte|html|css|sh|txt|md)$/.test(f));
   const rules = [retiredWord, headerForMasthead, toolbarByOldName, menuOrPanelByOldName, menuAreaByOldName];
   const retired = (f: string) => (t: string): boolean => rules.some((rule) => rule(t)) || (!(f in ALERT_SENSE_KEPT) && retiredAlertSense(t));
   const found = files.flatMap((f) => readFileSync(f, "utf8").split("\n").flatMap((t, i) => (retired(f)(t) ? [f + ":" + (i + 1)] : [])));

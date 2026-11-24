@@ -9,9 +9,9 @@ const NAMED = /(?<![\w-])(?<![\w-]\/)(?:tools|one-offs)\/(?!out\/)[\w./-]*\w\.(?
 /* a test's paths are its data */
 const TEST = /\.test\.ts$|hooks-test\.sh$/;
 
-test("every tools/ and one-offs/ file the code, the scripts, the hooks and CLAUDE.md name is there", () => {
+test("every tools/ and one-offs/ file the code, the scripts, the hooks, CLAUDE.md, the layout and the reviews' page name is there", () => {
   const texts = [...walk("src"), ...walk("tools"), ...walk("one-offs")].filter((f) => /\.(ts|mjs|sh|svelte)$/.test(f) && !TEST.test(f))
-    .concat("CLAUDE.md", "package.json", ".claude/settings.json", ...walk("hooks").filter((f) => !TEST.test(f)));
+    .concat("CLAUDE.md", "docs/LAYOUT.md", "docs/REVIEWS.md", "package.json", ".claude/settings.json", ...walk("hooks").filter((f) => !TEST.test(f)));
   const missing = texts.flatMap((f) => [...readFileSync(f, "utf8").matchAll(NAMED)].map((m) => m[0]).filter((p) => !existsSync(p)).map((p) => f + ": " + p));
   expect([...new Set(missing)]).toEqual([]);
 });
