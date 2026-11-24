@@ -191,7 +191,7 @@ and F7 once.
   it ended. The tells stay after each act rather than in `cancel`: a
   debounce ended and told before its write began would read as nothing
   pending between them, which the save wait takes as landed.
-- 13:10 The reader: the Ws built in order of likely usefulness against
+- 13:40 The reader: the Ws built in order of likely usefulness against
   flakes. None makes a flake less likely itself; ranked W5 (the throttle,
   which found today's clock-bound steps, plays through the verdict's own
   play), W4 (the flake rate kept honest), W3 (a contract, not a race; it
