@@ -52,8 +52,18 @@ test("what a run reads of the code is its drivers and every file they reach thro
   files["tools/d.ts"] += '\n// an example: import { z } from "./gone.ts";\nconst later = await import("./later.ts");';
   expect(readByDrivers(["tools/d.ts"], (f) => files[f] ?? null)).toEqual(["src/store/b.ts", "src/store/c.ts", "tools/a.ts", "tools/d.ts", "tools/later.ts", "tools/steps/s.ts"]);
   const read = readByDrivers(DRIVERS, (f) => readFileSync(f, "utf8"));
-  expect(["src/store/io.ts", "src/store/fsa.ts", "tools/steps/kit.ts", "tools/adapters/inPage.ts", "tools/helium-corner.ts"].filter((f) => !read.includes(f))).toEqual([]);
+  expect(["src/store/io.ts", "tools/steps/kit.ts", "tools/adapters/inPage.ts", "tools/helium-corner.ts"].filter((f) => !read.includes(f))).toEqual([]);
   expect(read.filter((f) => f === "tools/corpus.ts" || f.startsWith("tools/out/") || f.startsWith("tools/progress/"))).toEqual([]);
+});
+
+test("a type-only import is no code a run reads: the file it names is reached only by an import that runs", () => {
+  const files: Record<string, string> = {
+    "tools/d.ts": ["import type { R } from \"./types.ts\";", "import type {", "  S,", "} from \"./more.ts\";", "import { a } from \"./a.ts\";"].join("\n"),
+    "tools/a.ts": 'export type { R } from "./types.ts";',
+    "tools/types.ts": "", "tools/more.ts": "",
+  };
+  expect(readByDrivers(["tools/d.ts"], (f) => files[f] ?? null)).toEqual(["tools/a.ts", "tools/d.ts"]);
+  expect(readByDrivers(DRIVERS, (f) => readFileSync(f, "utf8"))).not.toContain("tools/heliumLedger.ts");
 });
 
 test("a run failed where a section failed, its fresh start failed, or it exited badly; and such a run is not approved", () => {

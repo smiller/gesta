@@ -37,13 +37,17 @@ export const DRIVERS = ["tools/helium-corner.ts", "tools/helium-bridge.ts", "too
    files missed one reached only through another's import (pin:
    heliumStamp.test › what a run reads of the code) */
 const RELATIVE = /(?:from|import)\s*\(?\s*"(\.{1,2}\/[^"]+\.ts)"/g;
+/* a type-only import or export is stripped before the run: the file it
+   names is never loaded (pin: heliumStamp.test › a type-only import is no
+   code a run reads) */
+const TYPE_ONLY = /\b(?:import|export)\s+type\s+[^;]*?\bfrom\s*"[^"]+"/g;
 export function readByDrivers(drivers: string[], read: (path: string) => string | null): string[] {
   const seen = new Set<string>(), todo = [...drivers];
   for (let f = todo.pop(); f !== undefined; f = todo.pop()) {
     const text = seen.has(f) ? null : read(f);
     if (text === null) continue;
     seen.add(f);
-    for (const m of text.matchAll(RELATIVE)) todo.push(posix.normalize(posix.join(posix.dirname(f), m[1])));
+    for (const m of text.replace(TYPE_ONLY, "").matchAll(RELATIVE)) todo.push(posix.normalize(posix.join(posix.dirname(f), m[1])));
   }
   return [...seen].sort();
 }
