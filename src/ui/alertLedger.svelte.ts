@@ -38,8 +38,7 @@ export interface Alerts {
   clearWarning(): void;
   /* an alert by its id in the table, shown where its kind goes */
   raise: Raise;
-  /* `saves`: this owner's errors are saves'; its resolve after one says "saved" */
-  owner(opts?: { saves?: boolean }): ErrorOwner;
+  owner(): ErrorOwner;
   progress(id: BareIdOf<"info">): Progress;
   click(kind: Kind): void;
   /* the ×: closes the alert without copying */
@@ -48,7 +47,7 @@ export interface Alerts {
 }
 /* what each kind holds while it is live, for the headless tools to read
    without waiting on what is drawn (pin: alertLedger.test › each kind present only while live) */
-export type Live = Partial<Record<Kind, string>> & { latest?: Fading; last?: Kind };
+export type Live = Partial<Record<Kind, string>> & { latest?: Fading };
 export function liveAlerts(state: AlertState): Live {
   const live: Live = {};
   for (const kind of ["error", "warning", "info", "success"] as const) if (state[kind].shown) live[kind] = state[kind].text;
@@ -93,7 +92,6 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
   }
   function say(kind: Kind, text: string, id?: AlertId): void {
     state.said[kind] = text;
-    state.said.last = kind;
     if (kind === "info" || kind === "success") state.said.latest = kind;
     if (id && alertBackground(id)) return;
     const n = state.log.n + 1;
@@ -162,23 +160,14 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
     place({ owner, text, copy: from.copy || (caught ? errText(from.caught) : "") || text }, !!from.beneath);
     tell("error", text);
   }
-  /* a landed save says nothing, but the one that ends a save's failure
-     says "saved", its error closed or not (pin: alertLedger.test › an owner
-     of saves says "saved" once) */
-  function owner(opts: { saves?: boolean } = {}): ErrorOwner {
+  function owner(): ErrorOwner {
     const me = {};
-    let failed = false;
     return {
       raise: ((a: AlertId | Said, b?: unknown, c?: unknown): void => {
         const [s, from] = asSaid(a, b, c);
-        failed = true;
         error(alertWords(s), from, me);
       }) as ErrorOwner["raise"],
-      resolve: () => {
-        take(standing.find((x) => x.owner === me));
-        if (opts.saves && failed) succeed(IDLE_TEXT, alertMs("saved"), "saved");
-        failed = false;
-      },
+      resolve: () => { take(standing.find((x) => x.owner === me)); },
     };
   }
   let warningTimer: ReturnType<typeof setTimeout> | null = null;

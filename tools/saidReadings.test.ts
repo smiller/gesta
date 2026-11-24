@@ -11,7 +11,7 @@ import { join } from "node:path";
    its count and reason. */
 type Reads = { corner: number; fade: number; live: number; alerts: number };
 const ALLOWED: Record<string, Reads & { why: string }> = {
-  "adapters/app.ts": { corner: 1, fade: 0, live: 1, alerts: 0, why: "the screen line, whose corner the verdict scrubs; and an error standing, which no clock removes" },
+  "adapters/app.ts": { corner: 1, fade: 0, live: 2, alerts: 0, why: "the screen line, whose corner the verdict scrubs; and an error standing, read twice, which no clock removes" },
   "steps/launch.ts": { corner: 0, fade: 6, live: 0, alerts: 0, why: "the launch's fade and pill, read under the page's own clock" },
   "steps/alerts.ts": { corner: 0, fade: 0, live: 1, alerts: 0, why: "where each standing alert is drawn, in a section about the alerts' layout" },
   "steps/references.ts": { corner: 0, fade: 0, live: 1, alerts: 0, why: "a wait for no error to stand" },

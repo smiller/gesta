@@ -2,7 +2,7 @@
 // as entries, open each by hash and compare the editor's markdown with the
 // store's, refuse an unknown book, then TYPE into an entry, wait past the
 // debounce, relaunch and read the text back. `node tools/helium-bridge.ts`
-import { installAlertReaders } from "./adapters/inPage.ts";
+import { installWriteWatcher, installAlertReaders } from "./adapters/inPage.ts";
 import { chromium } from "playwright-core";
 import { mkdirSync, rmSync } from "node:fs";
 import { resolve } from "node:path";
@@ -46,6 +46,7 @@ const read = (page: Page): Promise<Record<string, unknown>> => page.evaluate(inP
 async function launch(url: string, fn: (page: Page) => Promise<Record<string, unknown>>): Promise<Record<string, unknown>> {
   const ctx = await chromium.launchPersistentContext(PROFILE, { executablePath: H, headless: true });
   await installAlertReaders(ctx);
+  await installWriteWatcher(ctx);
   await ctx.clock.setFixedTime(new Date(TODAY + "T12:00:00"));   /* the refusals land on today: pinned, not scrubbed */
   const page = await ctx.newPage();
   const logs: string[] = [];
@@ -71,8 +72,8 @@ log("an unknown commonplace mints on visit", await launch(PAGE + "#commonplace/B
 log("type, wait past the debounce", await launch(PAGE + "#commonplace/Brand%20New", async (page) => {
   await page.click("#editor .ProseMirror");
   await page.keyboard.type("Typed in headless Helium.");
-  await page.waitForTimeout(1500);
-  return read(page);
+  const saveWait = await page.waitForFunction(() => performance.now() - window.__lastEdit > 650 && !window.__writes, null, { timeout: 5000, polling: 25 }).then(() => "landed", () => "ran out");
+  return { ...(await read(page)), saveWait };
 }));
 log("relaunch: the text came back", await launch(PAGE + "#commonplace/Brand%20New", read));
 log("an unknown book under a known author", await launch(PAGE + "#bookshelf/Browning,%20Robert/Nothing", read));

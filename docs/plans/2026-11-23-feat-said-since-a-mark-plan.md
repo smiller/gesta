@@ -38,3 +38,17 @@ the launch's "10 entries stored" where an act said nothing.
   bridge's status reads ""; "after the click" waits for its "copied".
   Approved; verify passes with all four runs. F4 woke once on the way
   (the column marks drag), its print kept.
+- 21:05 A24, the batch review, `/code-review high d80134b..7980170`:
+  149,370 tokens (the transcript's last message). Five findings, fixed:
+  - "saved" was said whenever a save owner resolved, a failed entry
+    deleted or the layer cleared included. It now comes from the layer's
+    landing path alone (`settled(ekey, true)`), tested first in
+    entries.test; the ledger's owner is plain again. Changes U17's
+    decision 2 to "when the owed saves land".
+  - The clean switch's refusal reads the standing error again, which
+    what was said since the mark could not show.
+  - The bridge waits on the save itself (`installWriteWatcher`, shared
+    with the corner driver) and prints whether the wait ran out.
+  - `said.last`, which nothing read, goes.
+  - The chord table's comment keeps why every masthead row has a chord.
+  The verdict differed only in the bridge's `saveWait`; approved.

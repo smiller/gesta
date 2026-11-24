@@ -547,6 +547,23 @@ test("the save error stands until the last owed entry lands, a removed entry owi
   expect(calls.resolved).toBe(1);
 });
 
+test("the last owed entry landing says \"saved\"; the owed entries deleted or cleared away say nothing", async () => {
+  const failing = new Set(["a"]);
+  const { layer, calls } = fresh((m) => ({ ...m, set: (k, md) => (failing.has(k) ? Promise.reject(new Error("quota")) : m.set(k, md)) }));
+  await layer.setEntry("a", "1");
+  failing.delete("a");
+  await layer.setEntry("a", "2");
+  expect(calls.raised.filter((t) => t === "saved")).toEqual(["saved"]);
+  failing.add("b");
+  await layer.setEntry("b", "1");
+  await layer.removeEntry("b");
+  await layer.setEntry("c", "1");
+  failing.add("d");
+  await layer.setEntry("d", "1");
+  await layer.clear();
+  expect(calls.raised.filter((t) => t === "saved")).toEqual(["saved"]);
+});
+
 test("a save refused as stale stands for its own entry: a later failure on another entry neither replaces it nor, landing, resolves it; the entry gone, it goes", async () => {
   let failB = true;
   const { layer, mem, calls } = fresh((m) => ({ ...m, set: (k, md) => (k === "b" && failB ? Promise.reject(new Error("quota")) : m.set(k, md)) }));

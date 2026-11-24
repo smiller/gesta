@@ -6,7 +6,8 @@ export interface Chord { key: string; label: string; help: string; act: ChordAct
 
 const chord = (key: string, act: Chord["act"], help: string, inReader = true): Chord => ({ key, label: "⌃⌘" + (key === "enter" ? "Enter" : key.toUpperCase()), help, act, inReader });
 /* ⌃⌘N is "new": a tagged entry, a sub-entry, a book; ⌃⌘L toggles the Line
-   numbering row — L for lines; ⌃⌘R is the reference, so replace is ⌃⌘E,
+   numbering row — L for lines, every masthead row having a chord here
+   since Tab indents in the text; ⌃⌘R is the reference, so replace is ⌃⌘E,
    for exchange; the menus share ⌃⌘J with the Go to row, B being
    bookmarks. Each chord here is one Helium lets through
    (pin: walk › ⌃⌘. from 3pr1 over an index of 3pr1, 3m1, 3pr2)

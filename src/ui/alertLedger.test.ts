@@ -153,18 +153,6 @@ describe("an error", () => {
     other.resolve();
     expect(n.state.error).toMatchObject({ text: "shortcuts not saved — storage full", shown: true });
   });
-  it("an owner of saves says \"saved\" once when it resolves after an error it raised, its error closed or not; a resolve with none before it says nothing", () => {
-    const saves = n.owner({ saves: true });
-    saves.resolve();
-    expect(n.state.success.shown).toBe(false);
-    saves.raise("notSaved");
-    n.dismiss("error");
-    saves.resolve();
-    expect(n.state.success).toMatchObject({ text: "saved", shown: true });
-    vi.advanceTimersByTime(5000);
-    saves.resolve();
-    expect(n.state.success.shown).toBe(false);
-  });
   it("an error with no owner goes only when closed; raised again in the same words it moves to the top, one of it", () => {
     const owned = n.owner();
     n.raise("copyButtonFailed");
@@ -342,16 +330,16 @@ describe("the live alerts", () => {
 });
 
 describe("what each kind last said", () => {
-  it("nothing said at rest; each kind's last words, which of info and success spoke last, and which kind of all spoke last, kept after they fade", () => {
+  it("nothing said at rest; each kind's last words, and which of info and success spoke last, kept after they fade", () => {
     expect(saidAlerts(n.state)).toEqual({});
     n.raise("entriesStored", { n: 1 });
     n.raise("noLineNumbers");
     vi.advanceTimersByTime(WARNING_MS);
     expect(liveAlerts(n.state)).toEqual({});
-    expect(saidAlerts(n.state)).toEqual({ info: "1 entry stored", warning: "no line numbers here", latest: "info", last: "warning" });
+    expect(saidAlerts(n.state)).toEqual({ info: "1 entry stored", warning: "no line numbers here", latest: "info" });
     n.raise("notSaved", { copy: "detail" });
     n.raise("saved");
-    expect(saidAlerts(n.state)).toEqual({ info: "1 entry stored", warning: "no line numbers here", error: "not saved", success: "saved", latest: "success", last: "success" });
+    expect(saidAlerts(n.state)).toEqual({ info: "1 entry stored", warning: "no line numbers here", error: "not saved", success: "saved", latest: "success" });
   });
   it("numbers each thing said and keeps the last eight, oldest first, with their kinds", () => {
     n.raise("entriesStored", { n: 1 });

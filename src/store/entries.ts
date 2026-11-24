@@ -76,10 +76,16 @@ export function entryLayer(store: EntryStore, alerts: EntryAlerts, opts: LayerOp
     rescues.set(ekey, own);
     own.raise(id, { caught: err, copy: rescue });
   }
-  function settled(ekey: string): void {
+  /* a landing that ends the failure says "saved", the one save that is
+     news; an owed entry deleted or cleared away says nothing, its text
+     never having landed (pin: entries.test › the last owed entry landing
+     says "saved") */
+  function settled(ekey: string, landing = false): void {
     rescues.get(ekey)?.resolve();
     rescues.delete(ekey);
-    if (owed.delete(ekey) && !owed.size) saves.resolve();
+    if (!owed.delete(ekey) || owed.size) return;
+    saves.resolve();
+    if (landing) alerts.raise("saved");
   }
   const chain: Record<string, Promise<unknown>> = Object.create(null);
   /* false until the warm has filled the cache: a backup run before it would
@@ -158,7 +164,7 @@ export function entryLayer(store: EntryStore, alerts: EntryAlerts, opts: LayerOp
   function landed(ekey: string, v: unknown): boolean {
     if (v === GONE) return true;
     debts.delete(ekey);
-    settled(ekey);
+    settled(ekey, true);
     opts.announce?.(ekey);
     opts.onLanded?.(ekey);
     /* a landing says the store takes writes again */
