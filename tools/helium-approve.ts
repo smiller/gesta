@@ -128,12 +128,15 @@ function said(name: string, c: Exclude<Compared, { pass: true }>): string {
     "read " + relative(process.cwd(), L.receivedPath(name)) + "; if it is right, `node tools/helium-approve.ts --approve " + name + "`"].join("\n");
 }
 interface Playing { name: string; played: string }
+/* what the play says of each run, kept for the ledger as it is printed */
+const told: string[] = [];
+const tell = (line: string): void => { told.push(line); console.log(line); };
 /* a run to play, its stamps cleared and its profile emptied before any run
    of its group starts; null where a passing run's stamp stands */
 function prepare(name: string): Playing | null {
   /* an edit made while it plays is not what it played */
   const fp = fingerprint(inputsFor(name));
-  if (L.reusable(name, fp, !!process.env.STEPS)) { console.log(name + ": ok — not replayed, its inputs those of a passing run"); return null; }
+  if (L.reusable(name, fp, !!process.env.STEPS)) { tell(name + ": ok — not replayed, its inputs those of a passing run"); return null; }
   L.clear(name);
   for (const w of windowsOf(name)) clearProfile(w);
   return { name, played: fp };
@@ -146,11 +149,11 @@ function judge({ name, played }: Playing, received: string, baseline: string | n
   outputs.push(received);
   const held = !!TOOLS[name].heldTo, c = compared(received, baseline, held);
   L.after(name, { received, fp: played, steps: !!process.env.STEPS, held }, c);
-  if (c.pass === true) { console.log(name + ": ok"); return; }
+  if (c.pass === true) { tell(name + ": ok"); return; }
   failed++;
-  console.log(said(name, c));
+  tell(said(name, c));
   const otherwise = readOtherwise(name, c, received, baseline);
-  for (const l of otherwise) console.log(l);
+  for (const l of otherwise) tell(l);
   outputs.push(otherwise.join("\n"));
   console.log(name + ": this run kept at " + relative(process.cwd(), keptFailed(name, received)));
 }
@@ -180,6 +183,14 @@ function wakeOnce(): void {
   process.stdout.write(w.stdout ?? "");
   if (w.status !== 0) console.log("wake failed (" + (w.status ?? w.signal) + "): " + (w.stderr || w.error?.message || "").trim());
 }
+/* every play into the ledger, for a flake rate across sessions; a child,
+   as the wake is, so an edit to it is not the run's input */
+function ledgered(): void {
+  if (!outputs.length) return;
+  const args = [fileURLToPath(new URL("./heliumLedger.ts", import.meta.url)), String(WINDOWS), process.env.STEPS ? "1" : "0", String(Math.round(process.uptime()))];
+  const l = spawnSync("node", args, { input: [...told, ...outputs].join("\n"), encoding: "utf8" });
+  if (l.status !== 0) console.log("ledger failed (" + (l.status ?? l.signal) + "): " + (l.stderr || l.error?.message || "").trim());
+}
 if (approve) for (const name of run) approveOne(name);
-else { for (const group of TOGETHER) await playGroup(group); wakeOnce(); }
+else { for (const group of TOGETHER) await playGroup(group); wakeOnce(); ledgered(); }
 process.exit(failed ? 1 : 0);

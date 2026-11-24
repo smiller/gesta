@@ -385,7 +385,10 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
     a save to land), `adapters/launch.ts` (headless Helium launched over a
     fresh profile, for every tool here), `helium-corner.ts` (the driver: `STEPS=`,
     `ORDER=reverse`, `TIMING=1`, `SHARD=k/n`), `helium-approve.ts` (the verdict;
-    `WINDOWS=n`), `heliumShards.ts` (the sections dealt over windows and
+    `WINDOWS=n`), `heliumLedger.ts` (each verdict play appended to
+    `docs/helium-runs/<day>.jsonl`; only a whole play of a committed tree
+    is flake evidence), `heliumRate.ts` (the flake rate from it, per day,
+    window count and section), `heliumShards.ts` (the sections dealt over windows and
     their prints merged back as one window's),
     `heliumStamp.ts`, `heliumOrder.ts`, `helium-probe.ts`,
     `helium-mock.ts` with `mockPage.ts` (a design's mock: `node
