@@ -159,3 +159,4 @@
 {"at":"2026-11-23T20:41","ev":"done","id":"U16","commits":["7980170"]}
 {"at":"2026-11-23T20:57","ev":"add","id":"A24","list":"A","title":"The batch review: /code-review at HIGH over d80134b..7980170","detail":"Asked: /code-review high d80134b..7980170, typed at 20:57. Why: CLAUDE.md's batch review, owed when a batch touches a DOM seam or closes a phase. Done when: its findings land in one fix commit and its cost is recorded in the plan."}
 {"at":"2026-11-23T20:57","ev":"start","id":"A24"}
+{"at":"2026-11-23T21:06","ev":"done","id":"A24","commits":["d05d7f2"]}
