@@ -1,6 +1,6 @@
 import type { BrowserContext, Page } from "../heliumPage.ts";
 import { inPage } from "./inPage.ts";
-import { ranOutLine } from "./waits.ts";
+import { expected } from "./waits.ts";
 
 /* the store's write transactions still open, for a read of the stored
    text to wait on rather than sleep: a transaction, not a put, since a
@@ -33,7 +33,6 @@ function landedNow(): boolean {
 /* once the last edit's save has landed, or `ms` has gone by: a wait that
    runs out says so in the run's own output, where the verdict reads it */
 export async function waitSaveLanded(page: Page, ms: number): Promise<"landed" | "ran out"> {
-  const outcome = await page.waitForFunction(inPage(landedNow, saveLanded), undefined, { timeout: ms, polling: 25 }).then(() => "landed" as const, () => "ran out" as const);
-  if (outcome === "ran out") console.log(ranOutLine("save", ms, await page.evaluate(() => ({ pending: window.__published("savesPending"), writes: window.__writes })).catch((): null => null)));
-  return outcome;
+  const stood = () => page.evaluate(() => ({ pending: window.__published("savesPending"), writes: window.__writes }));
+  return (await expected("save", ms, (t) => page.waitForFunction(inPage(landedNow, saveLanded), undefined, { timeout: t, polling: 25 }), stood)) ? "landed" : "ran out";
 }

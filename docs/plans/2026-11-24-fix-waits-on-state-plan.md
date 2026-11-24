@@ -218,3 +218,22 @@ and F7 once.
   number ("288" to 288), approved after reading the whole diff.
 - 14:02 F8 added: in that verdict's order run, both external links'
   new-tab waits ran out in one window; two replays opened both.
+- 14:19 `/code-review high bbf4764..2b5bac3`: 4 important, 3 nits, all
+  holding when read; 203,657 tokens (input 2, cache creation 2,103,
+  cache read 199,009, output 2,543). Fixed in one commit:
+  - `TIMING=1` keyed every wait by the wait module's own frames: now
+    skipped (the search section: 9 waits at 8 places).
+  - `clearProfile` gave up silently: a profile still standing ends the
+    tool.
+  - the tree read as a play starts was parsed where a failed read would
+    crash a passing verdict: now "ledger failed" and nothing written.
+  - `waitSearchAnswered` and `waitSaveLanded` swallowed any failure
+    by `.then(…, () => …)`: both through `expected`; the checker now
+    finds that form, which also found a third new-tab wait it had
+    missed (⌘-click on an internal link), now through `expected`.
+  - `nothingCame` took any failure for "nothing came": a timeout only.
+  - a point past its needle's end at its block's end landed nowhere:
+    one at or past the end closes it (no caller passes one today).
+  - `decoded`'s comment spoke of another module and called the tools
+    "a reader": reworded, and a test runs the decoder from its source
+    alone.

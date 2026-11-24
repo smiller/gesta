@@ -61,10 +61,12 @@ async function plainClickExternalLink(): Promise<void> {
   await page.click(S.editorLink("https://example.org/"));
   await rest(page);
   await log("a plain click on an external link", { entry: await A.entry(page), url: page.url().split("#")[1] });
-  const newTab = ctx.waitForEvent("page", { timeout: 5000 }).then((p) => p.url(), () => "(no new tab)");
+  let tab: { url(): string } | null = null;
+  const opened = expected("new tab", 5000, (ms) => ctx.waitForEvent("page", { timeout: ms }).then((p) => { tab = p; }));
   await page.click(S.editorLink("#commonplace/Horace"), { modifiers: ["Meta"] });
   await rest(page);
-  await log("⌘-click on an internal link", { newTab: (await newTab).split("#")[1], ...(await R.afterModClick(page)) });
+  await opened;
+  await log("⌘-click on an internal link", { newTab: tab?.url().split("#")[1], ...(await R.afterModClick(page)) });
   const newTab2 = expected("new tab", 5000, (ms) => ctx.waitForEvent("page", { timeout: ms }));
   await page.click(S.editorLink("https://example.org/"), { modifiers: ["Meta"] });
   await rest(page);

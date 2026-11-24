@@ -22,6 +22,10 @@ test("a wait for what should not come answers whether it came, and prints nothin
   expect(said).not.toHaveBeenCalled();
 });
 
+test("a wait for what should not come fails its step on a failure other than running out", async () => {
+  await expect(nothingCame(Promise.reject(new Error("Target closed")))).rejects.toThrow("Target closed");
+});
+
 test("a print's waits that ran out are counted by what each waited for", () => {
   const print = [ranOutLine("save", 3000), "corner: ok", ranOutLine("alert", 2000, "one still stood"), ranOutLine("save", 3000, { pending: "1" })].join("\n");
   expect(ranOutCounts(print)).toEqual({ save: 2, alert: 1 });

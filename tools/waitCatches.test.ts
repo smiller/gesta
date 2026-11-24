@@ -1,7 +1,7 @@
 import { test, expect } from "vitest";
 import { readdirSync, readFileSync } from "node:fs";
 
-const CALL = /\b(wait\w*|selectionMoved)\(/g, SWALLOW = /^\s*\.catch\(\(\)\s*=>\s*(?:\{\s*\}|undefined|null|false)\)/;
+const CALL = /\b(wait\w*|selectionMoved)\(/g, SWALLOW = /^\s*(?:\.catch\(\(\)\s*=>\s*(?:\{\s*\}|undefined|null|false)\)|\.then\([^,]*,\s*\(\)\s*=>)/;
 const QUOTES = new Set(['"', "'", "`"]), DEPTH: Record<string, number> = { "(": 1, ")": -1 };
 function stringEnd(text: string, i: number): number {
   for (let j = i + 1; j < text.length; j++) {
@@ -28,11 +28,12 @@ function swallowedWaits(text: string): string[] {
 const ALLOWED: Record<string, string> = {};
 const files = ["tools/steps", "tools/adapters"].flatMap((d) => readdirSync(d).filter((f) => f.endsWith(".ts") && !f.endsWith(".test.ts")).map((f) => d + "/" + f));
 
-test("a swallowed wait is found however its statement is laid out, and a wait that says why it failed is not", () => {
+test("a wait swallowed by a catch, or by a then's answer to its failure, is found however its statement is laid out; a wait that says why it failed is not", () => {
   expect(swallowedWaits('await A.waitEntry(page, "x", 5000).catch(() => {});')).toEqual(["1: waitEntry"]);
   expect(swallowedWaits("a;\nawait page.waitForFunction(() => {\n  return 1;\n}, null, { timeout: 5 })\n  .catch(() => undefined);")).toEqual(["2: waitForFunction"]);
   expect(swallowedWaits('await page.waitForSelector(s).catch(() => console.log("why"));')).toEqual([]);
   expect(swallowedWaits("await page.click(s).catch(() => {});")).toEqual([]);
+  expect(swallowedWaits("const ok = await page.waitForFunction(f, null, { timeout: 5 }).then(() => true, () => false);")).toEqual(["1: waitForFunction"]);
 });
 
 test("no wait in the steps or their adapters swallows its failure: it goes through the wait module, which says so", () => {

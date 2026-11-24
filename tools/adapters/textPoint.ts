@@ -14,7 +14,7 @@ export function pieceAt(lengths: number[], k: number, closing: boolean): [number
   return null;
 }
 export function closesNeedle(needle: string, i: number): boolean {
-  return i > 0 && i === needle.length;
+  return i > 0 && i >= needle.length;
 }
 /* a needle is sought within one block, its pieces joined: marks split a
    block's text into pieces, and a span across blocks is two needles

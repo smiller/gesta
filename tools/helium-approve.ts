@@ -152,9 +152,14 @@ function wakeOnce(): void {
    as the wake is, so an edit to it is not the run's input */
 const LEDGER = fileURLToPath(new URL("./heliumLedger.ts", import.meta.url));
 const treeAtStart = spawnSync("node", [LEDGER, "--tree"], { encoding: "utf8" }).stdout;
+function treeOf(said: string): PlayRecord["tree"] | null {
+  try { return JSON.parse(said); } catch { return null; }
+}
 function ledgered(): void {
   if (!outputs.length) return;
-  const record: PlayRecord = { runs: results, readOtherwise: otherwiseBy, windows: WINDOWS, steps: !!process.env.STEPS, secs: Math.round(process.uptime()), tree: JSON.parse(treeAtStart), print: outputs.join("\n") };
+  const tree = treeOf(treeAtStart);
+  if (!tree) { console.log("ledger failed: the tree was not read as the play started"); return; }
+  const record: PlayRecord = { runs: results, readOtherwise: otherwiseBy, windows: WINDOWS, steps: !!process.env.STEPS, secs: Math.round(process.uptime()), tree, print: outputs.join("\n") };
   const l = spawnSync("node", [LEDGER], { input: JSON.stringify(record), encoding: "utf8" });
   if (l.status !== 0) console.log("ledger failed (" + (l.status ?? l.signal) + "): " + (l.stderr || l.error?.message || "").trim());
 }

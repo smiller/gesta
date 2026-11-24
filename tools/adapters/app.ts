@@ -7,7 +7,7 @@ import type { Page } from "../heliumPage.ts";
 import { inPage, inPageWith } from "./inPage.ts";
 import { said, saidAfterGesture } from "./said.ts";
 import { waitSaveLanded } from "./saves.ts";
-import { ranOutLine, waitState } from "./waits.ts";
+import { expected, waitState } from "./waits.ts";
 import type { SearchShown } from "../../src/published.ts";
 import { landings, landing, pieceAt, closesNeedle, type TextPoint } from "./textPoint.ts";
 export const name = "app";
@@ -55,11 +55,9 @@ export const waitEntry = (page: Page, key: string, ms = 15000) => waitState(page
    that runs out says so in the run's own output, with what the box held,
    and answers null, the rows then those of some other query */
 export async function waitSearchAnswered(page: Page, q: string, ms = 5000): Promise<SearchShown | null> {
-  const answered = await page.waitForFunction((q) => window.__published("search")?.answered === q, q, { timeout: ms, polling: 25 }).then(() => true, () => false);
-  if (answered) return page.evaluate(() => window.__published("search"));
-  const shown = await page.evaluate(() => ({ shown: window.__published("search"), typed: document.querySelector<HTMLInputElement>(".search-input")?.value ?? null, focused: String(document.activeElement?.className || document.activeElement?.tagName).slice(0, 30) }));
-  console.log(ranOutLine("search", ms, { q, ...shown }));
-  return null;
+  const stood = () => page.evaluate(() => ({ shown: window.__published("search"), typed: document.querySelector<HTMLInputElement>(".search-input")?.value ?? null, focused: String(document.activeElement?.className || document.activeElement?.tagName).slice(0, 30) }));
+  const answered = await expected("search", ms, (t) => page.waitForFunction((q) => window.__published("search")?.answered === q, q, { timeout: t, polling: 25 }), async () => ({ q, ...(await stood()) }));
+  return answered ? page.evaluate(() => window.__published("search")) : null;
 }
 export const waitWarm = (page: Page) => waitState(page, { name: "warm", ms: 15000, stood: () => page.evaluate(() => window.__published("probe")) }, () => window.__published("probe").includes("all;"));
 /* the markdown the store holds, read straight from IndexedDB after the

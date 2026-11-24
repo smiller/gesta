@@ -26,7 +26,7 @@ export async function expected(name: string, ms: number, came: (ms: number) => P
   }
 }
 /* a wait for what should not come: running out is the answer, and says nothing */
-export const nothingCame = (coming: Promise<unknown>): Promise<boolean> => coming.then(() => false, () => true);
+export const nothingCame = (coming: Promise<unknown>): Promise<boolean> => coming.then(() => false, (e: unknown) => { if (!timedOut(e)) throw e; return true; });
 
 /* `stood` reads what the page showed instead, for the line of a wait that ran out */
 export interface Waiting { name: string; ms: number; polling?: number | "raf"; stood?: () => Promise<unknown> }

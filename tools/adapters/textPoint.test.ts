@@ -17,6 +17,10 @@ test("a needle is found only within one block, the first block holding it", () =
   expect(landings([["English"], ["Latin"], ["Latin poets"]], ["Latin", 0], ["Latin", 5])).toEqual([[1, 0, 0], [1, 0, 5]]);
 });
 
+test("a point past its needle's end lands as one closing it, at the end of its block too", () => {
+  expect(landings([["rules the sea."]], ["rules the", 14], ["rules the", 14])).toEqual([[0, 0, 14], [0, 0, 14]]);
+});
+
 test("a point past its block's end, or a needle not there, lands nowhere", () => {
   expect(landings([["one"], ["two"]], ["one", 4], ["one", 4])).toBe(null);
   expect(landings([["one"]], ["three", 0], ["one", 0])).toBe(null);

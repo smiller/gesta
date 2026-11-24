@@ -8,8 +8,8 @@ export interface SaidLog { n: number; recent: { n: number; kind: Kind; text: str
    the load or the index answers it), how many rows, the explanatory line */
 export interface SearchShown { open: boolean; answered: string | null; rows: number; empty: string }
 /* the page's state published on the root, each value under its own
-   attribute, for a reader outside the app to read without waiting on
-   what is drawn */
+   attribute, for the headless tools to read without waiting on what is
+   drawn */
 export interface Published {
   entry: string | null;
   savesPending: number;
@@ -24,9 +24,10 @@ export interface Published {
   probe: string;
 }
 export type PublishedName = keyof Published;
-/* a value as published, or its none while it is not: run in a reader's
-   page as it is, so it names nothing outside itself (pin: published.test ›
-   a value not yet published) */
+/* a value as published, or its none while it is not; it names nothing
+   outside itself, so its source alone can run (pin: published.test › the
+   decoder runs from its own source alone) (pin: published.test › a value
+   not yet published) */
 export function decoded<K extends PublishedName>(name: K, raw: string | undefined): Published[K] {
   const json = (s: string): unknown => JSON.parse(s), text = (s: string): string => s;
   const [none, read] = ({

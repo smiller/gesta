@@ -15,9 +15,10 @@ function countSleeps(c: Clock, p: Page): void {
   const w = p.waitForTimeout.bind(p);
   p.waitForTimeout = (ms: number) => { c.slept += ms; const at = site(new Error().stack); c.sites[at] = (c.sites[at] || 0) + ms; return w(ms); };
 }
-/* where a wait was asked for: the step and adapter frames under it, the clock's own aside */
+/* where a wait was asked for: the step and adapter frames under it, the
+   clock's own and those every wait passes through aside */
 const callers = (stack: string): string =>
-  stack.split("\n").filter((l) => /steps\/|adapters\//.test(l) && !l.includes("steps/timing.ts")).slice(0, 2).map((l) => l.replace(/.*\/(tools\/[^:]+:\d+).*/, "$1")).join(" < ");
+  stack.split("\n").filter((l) => /steps\/|adapters\//.test(l) && !/steps\/timing\.ts|adapters\/waits\.ts/.test(l)).slice(0, 2).map((l) => l.replace(/.*\/(tools\/[^:]+:\d+).*/, "$1")).join(" < ");
 function countWaits(c: Clock, p: Page): void {
   const q = p as unknown as Record<string, (...a: unknown[]) => Promise<unknown>>;
   for (const name of ["waitForFunction", "waitForSelector"]) {

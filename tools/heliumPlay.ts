@@ -1,5 +1,5 @@
 import { spawn, spawnSync } from "node:child_process";
-import { rmSync } from "node:fs";
+import { existsSync, rmSync } from "node:fs";
 import { resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { merged } from "./heliumShards.ts";
@@ -22,10 +22,13 @@ export function built(scripts: string[], env: Record<string, string>): void {
   }
 }
 /* the last run's browser may still be exiting: kill, then retry the
-   delete for a few seconds rather than fail on a held directory */
+   delete for a few seconds rather than fail on a held directory; one still
+   standing after them ends the tool, a play over the last run's store
+   reading otherwise for no reason of its own */
 export function clearProfile(name: string): void {
   spawnSync("pkill", ["-f", "gesta-helium-" + name + "-profile"]);
   for (let i = 0; i < 20; i++) { try { rmSync(profileOf(name), { recursive: true, force: true }); break; } catch { spawnSync("sleep", ["0.5"]); } }
+  if (existsSync(profileOf(name))) throw new Error("the profile " + profileOf(name) + " would not clear");
 }
 export interface Printed { out: string; tail: string }
 /* a driver's print, and after it, where it crashed, its exit and what it
