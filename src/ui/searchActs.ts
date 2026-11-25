@@ -9,7 +9,7 @@ import { parseMarkdown } from "../model/parse.ts";
 import { flattenDocText } from "../model/flatten.ts";
 import { dexieIndexKeeper } from "../store/indexStore.ts";
 import { searchIndex } from "../store/searchIndex.ts";
-import { searchEntries, snippetRuns, SEARCH_CAP } from "../store/search.ts";
+import { searchEntries, snippetRuns, SEARCH_CAP, SCOPE_EVERYTHING } from "../store/search.ts";
 import { failWhy, errText } from "../store/files.ts";
 import { said } from "../model/alertText.ts";
 import { NS } from "../store/keys.ts";
@@ -28,7 +28,11 @@ export interface SearchDeps {
   focusRow(): void;
 }
 export interface SearchRow {
-  toggle(open: boolean): void; query(q: string): void; scope(at: number): void; walk(dir: 1 | -1): void; hover(i: number): void; pick(i: number): void; enter(): void;
+  toggle(open: boolean): void;
+  /* ⌃⌘K: opens the row on the entry's own scope, then widens it to
+     Everything, then closes it, by the scope as it stands */
+  press(): void;
+  query(q: string): void; scope(at: number): void; walk(dir: 1 | -1): void; hover(i: number): void; pick(i: number): void; enter(): void;
   buildIndex(): void; reanswer(): void;
 }
 export function searchActs(d: SearchDeps): SearchRow {
@@ -154,6 +158,13 @@ export function searchActs(d: SearchDeps): SearchRow {
     renderSearch();
   };
   const toggleSearch = openRow;
+  const everywhere = (): number => sr.options.findIndex((o) => o.scope.kind === SCOPE_EVERYTHING.kind);
+  const press = (): void => {
+    if (!sr.open) { openRow(true); return; }
+    if (sr.scopeAt === everywhere()) { openRow(false); return; }
+    scopeSearch(everywhere());
+    focusRow();
+  };
   const querySearch = (q: string): void => { sr.query = q; sr.answered = null; cancelScan(); searchTimer = setTimeout(() => { searchTimer = null; renderSearch(); }, 150); };
   const scopeSearch = (at: number): void => { sr.scopeAt = at; cancelScan(); renderSearch(); };
   const walkSearch = (dir: 1 | -1): void => {
@@ -170,7 +181,7 @@ export function searchActs(d: SearchDeps): SearchRow {
   };
   const enterSearch = (): void => { flushScan(); if (sr.active >= 0) pickSearch(sr.active); };
   return {
-    toggle: toggleSearch, query: querySearch, scope: scopeSearch, walk: walkSearch, pick: pickSearch, enter: enterSearch,
+    toggle: toggleSearch, press, query: querySearch, scope: scopeSearch, walk: walkSearch, pick: pickSearch, enter: enterSearch,
     hover: (i: number) => { sr.active = i; },
     buildIndex: () => buildIndex(), reanswer: () => { if (sr.open) renderSearch(); },
   };

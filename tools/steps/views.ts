@@ -178,7 +178,31 @@ section("list", async () => {
   await log("a list typed: bullet, Enter, Tab, Enter, Shift-Tab twice", { md: await A.stored(page), text: listSaid });
   await log("the gap between the two outer items, and a line's height", await laid(R.listGaps));
 });
+/* ⌃⌘K three times on a book, a commonplace and a journal day: the row opens
+   on the entry's own scope, then widens to Everything, then closes */
+const searchShown = () => page.evaluate(() => ({ open: !!document.querySelector<HTMLDetailsElement>(".page-search")?.open, scope: document.querySelector<HTMLSelectElement>(".page-search select")?.selectedOptions[0]?.textContent ?? null, inBox: !!document.activeElement?.classList.contains("search-input") }));
+/* in the page: the row as `w` says, open with the focus in its box, on
+   Everything, or closed */
+const rowIs = (w: string): boolean => {
+  const d = document.querySelector<HTMLDetailsElement>(".page-search")!;
+  if (w === "closed") return !d.open;
+  const inBox = document.activeElement === d.querySelector(".search-input"), scope = d.querySelector("select")!.selectedOptions[0].textContent;
+  return d.open && inBox && (w === "open" || scope === w);
+};
+async function pressK(want: string): Promise<Awaited<ReturnType<typeof searchShown>>> {
+  await page.keyboard.press("Control+Meta+k");
+  await waitState(page, { name: "search row", ms: 2000 }, rowIs, want);
+  return searchShown();
+}
+async function searchWidened(): Promise<void> {
+  for (const hash of ["bookshelf/Boethius/Consolatio", "commonplace/Horace", "2026-09-06"]) {
+    await go(hash);
+    const presses = [await pressK("open"), await pressK("Everything"), await pressK("closed")];
+    await log("⌃⌘K three times on " + decodeURIComponent(hash), { presses });
+  }
+}
 section("search", async () => {
+  await searchWidened();
   await go("commonplace/Links");
   await page.keyboard.press("Control+Meta+k");
   await rest(page);

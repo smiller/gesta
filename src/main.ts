@@ -177,7 +177,7 @@ const roundTo = (to: ReturnType<typeof jRound>): void => {
 const CHORD_ACTS: Record<ChordAct, () => void> = {
   previous: () => session.step("prev"), next: () => session.step("next"),
   round: () => roundTo(jRound(screen.opened, screen.goto.open)),
-  search: () => acts.search.toggle(!screen.search.open),
+  search: () => acts.search.press(),
   lines: () => acts.lines(!screen.linesOpen),
   gotoToolbar: () => acts.gotoToolbar.toggle(),
   today: () => session.today(),
