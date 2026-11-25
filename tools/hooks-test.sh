@@ -59,6 +59,8 @@ esac
 for f in sig.sh accept.sh pre-review.sh stop.sh pre-commit; do
   cp "$REPO/hooks/$f" hooks/ || exit 1
 done
+# PRE_COMMIT=<file>: a pre-commit hook to play in place of hooks/pre-commit
+[ -n "${PRE_COMMIT:-}" ] && { cp "$PRE_COMMIT" hooks/pre-commit || exit 1; }
 # the npm scripts the test gates run, as stubs this script flips: a file
 # each, so a case rewrites one line and the hook under test runs npm as
 # it does in anger
@@ -236,6 +238,22 @@ if [ "$crc" != 0 ] && [ "$(git rev-parse HEAD)" = "$h1" ]; then ok "pre-commit: 
 git add src/needed.ts
 if git commit -qm "feat: whole" >/dev/null 2>&1 && [ "$(git rev-parse HEAD)" != "$h1" ]; then ok "pre-commit: the same commit staged whole lands"; else bad "pre-commit: the same commit staged whole did not land"; fi
 git reset -q --hard "$h1"; green verify.sh
+# verify appends to the play ledger while a line of it is set aside, and
+# starts a new day's: the commit lands and every line stays, the set-aside
+# ones first
+clean
+mkdir -p docs/helium-runs
+echo '{"at":"1"}' > docs/helium-runs/d.jsonl; git add docs/helium-runs/d.jsonl; git commit -qm "chore: a ledger" --no-verify
+h2=$(git rev-parse HEAD)
+echo '{"at":"2"}' >> docs/helium-runs/d.jsonl; echo '{"at":"4"}' > docs/helium-runs/e.jsonl
+printf '#!/bin/sh\necho "{\\"at\\":\\"3\\"}" >> docs/helium-runs/d.jsonl\necho "{\\"at\\":\\"5\\"}" >> docs/helium-runs/e.jsonl\n' > verify.sh
+touch_src; git add verify.sh src/a.ts
+cout=$(git commit -qm "feat: with a play" 2>&1); crc=$?
+if [ "$crc" = 0 ] && [ "$(git rev-parse HEAD)" != "$h2" ]; then ok "pre-commit: a commit whose verify writes the ledger lands"; else bad "pre-commit: a commit whose verify writes the ledger was refused (exit $crc): $(printf '%s' "$cout" | tail -1)"; fi
+[ "$(cat docs/helium-runs/d.jsonl 2>/dev/null | tr '\n' ' ')" = '{"at":"1"} {"at":"2"} {"at":"3"} ' ] && ok "pre-commit: the ledger keeps the set-aside line and verify's, in order" || bad "pre-commit: the ledger reads '$(cat docs/helium-runs/d.jsonl 2>/dev/null | tr '\n' ' ')'"
+[ "$(cat docs/helium-runs/e.jsonl 2>/dev/null | tr '\n' ' ')" = '{"at":"4"} {"at":"5"} ' ] && ok "pre-commit: a new day's ledger keeps both" || bad "pre-commit: the new day's ledger reads '$(cat docs/helium-runs/e.jsonl 2>/dev/null | tr '\n' ' ')'"
+[ -z "$(git stash list)" ] && ok "pre-commit: no stash is left behind" || { bad "pre-commit: a stash is left behind"; git stash drop -q; }
+git reset -q --hard "$h1"; rm -rf docs; green verify.sh
 
 # === skill-row.sh ==========================================================
 # a typed review writes its row into the fixture's log; the second event
