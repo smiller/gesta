@@ -189,7 +189,10 @@ export const seed = (seeds: Record<string, string>) => A.reseeded(page, seeds);
 /* a list or table kept in localStorage, written before the section reads it */
 export const keep = (name: string, value: string) => page.evaluate(([k, v]) => localStorage.setItem(k, v), [A.ns + name, value]);
 /* whether a foreign write has landed in the store, read back for up to 30 rests: the reading says so when it has not */
-export const seededIn = async (key: string) => { for (let i = 0; i < 30; i++) { if (await A.stored(page, key)) return true; await rest(page); } return false; };
+/* read as it stands, not after the saves: just after a fresh start the
+   search index's own write can stand open past the save wait's 3 s on a
+   loaded machine, and the wait's line read a section otherwise */
+export const seededIn = async (key: string) => { for (let i = 0; i < 30; i++) { if (await A.storedNow(page, key)) return true; await rest(page); } return false; };
 /* the open entry's stored text holding `text`, read back for up to 40 rests */
 export const storedWith = async (text: string) => { for (let i = 0; i < 40; i++) { if (((await A.stored(page)) ?? "").includes(text)) return; await rest(page); } };
 /* the window, a paragraph by its first words, the corner's text */
