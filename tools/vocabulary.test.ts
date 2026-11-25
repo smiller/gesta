@@ -1,7 +1,5 @@
 import { test, expect } from "vitest";
-import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join } from "node:path";
-import { retiredWord, retiredAlertSense, headerForMasthead, toolbarByOldName, menuOrPanelByOldName, menuAreaByOldName, viewByOldName } from "./vocabulary.ts";
+import { retiredWord, retiredAlertSense, headerForMasthead, toolbarByOldName, menuOrPanelByOldName, menuAreaByOldName, viewByOldName, retiredLines } from "./vocabulary.ts";
 
 test("retiredWord: the noun, the verb and an identifier built on either; never a word that only contains the letters", () => {
   for (const bad of ["a citation", "Citations", "it cites both", "cited by", "citing", "re-cited", "citesLocator", "citationAnchorHTML", "referenceCitation", "A CITATION", "const CITATION = 1", "CitationAnchor", "citeRange", "CITED_LINES", "cite_x", "type CitesLocator", "_citation", "uncited", "miscited"]) expect(retiredWord(bad), bad).toBe(true);
@@ -53,24 +51,9 @@ test("viewByOldName: the two views by their names before, in prose, an identifie
   for (const good of ["in markdown mode", "HTML mode", "htmlMode", "markdownMode", "a source line", "the source named the way a reader would", "renders as a table", "Wikisource", "sourceSpans", "the markdown it carries", "markdown sources", "source/view", "source.view", "source1view", "rendered=text", "markdownSourcesOf"]) expect(viewByOldName(good), good).toBe(false);
 });
 
-// Milton's own preface to Samson Agonistes uses the verb.
-const QUOTES_A_BOOK = new Set(["one-offs/miltonSamsonRun.ts", "tools/vocabulary.ts", "tools/vocabulary.test.ts"]);
-const ALERT_SENSE_KEPT: Record<string, string> = {
-  "src/ui/alertLog.ts": "carries a log kept under its kinds' names before",
-  "src/ui/alertLog.test.ts": "carries a log kept under its kinds' names before",
-  "tools/commentRules.ts": "its resolvers are the checking pin's, bridgePin and the rest",
-};
-function walk(dir: string): string[] {
-  return readdirSync(dir).flatMap((name) => {
-    const p = join(dir, name);
-    if (name === "out" || name === "node_modules") return [];
-    return statSync(p).isDirectory() ? walk(p) : [p];
-  });
-}
-test("the app, its tools, its one-off scripts, CLAUDE.md, the layout, the reviews' page and the glossary say reference, alert, masthead, toolbar, menu, menu area, panel, markdown mode and HTML mode: no retired word anywhere", () => {
-  const files = [...walk("src"), ...walk("tools"), ...walk("one-offs"), "CLAUDE.md", "docs/LAYOUT.md", "docs/REVIEWS.md", "GLOSSARY.md", "index.html"].filter((f) => !QUOTES_A_BOOK.has(f) && /\.(ts|mjs|svelte|html|css|sh|txt|md)$/.test(f));
-  const rules = [retiredWord, headerForMasthead, toolbarByOldName, menuOrPanelByOldName, menuAreaByOldName, viewByOldName];
-  const retired = (f: string) => (t: string): boolean => rules.some((rule) => rule(t)) || (!(f in ALERT_SENSE_KEPT) && retiredAlertSense(t));
-  const found = files.flatMap((f) => readFileSync(f, "utf8").split("\n").flatMap((t, i) => (retired(f)(t) ? [f + ":" + (i + 1)] : [])));
-  expect(found).toEqual([]);
+test("a sweep lists each line using a retired word by file and line; a file quoting a book is passed over, and a log kept under the alert kinds' names keeps them", () => {
+  expect(retiredLines("src/x.ts", "fine\na flash here\n")).toEqual(["src/x.ts:2: a flash here"]);
+  expect(retiredLines("one-offs/miltonSamsonRun.ts", "as his editors cite him")).toEqual([]);
+  expect(retiredLines("src/ui/alertLog.ts", 'kind: "refusal"')).toEqual([]);
+  expect(retiredLines("src/ui/other.ts", 'kind: "refusal"')).toEqual(['src/ui/other.ts:1: kind: "refusal"']);
 });

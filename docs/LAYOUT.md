@@ -161,7 +161,9 @@ tools' switches. `tools/claudeLayout.test.ts` fails on a module under
     answering with an element); `tsconfig.json` leaves them out.
   - The checkers: `comments.ts` with `commentRules.ts`, `testTitles.ts`
     with `testTitlesRun.ts`, `codeHealth.ts` with `codeHealthRun.ts`,
-    `vocabulary.ts`, `claudeLayout.test.ts` (every src/ module named
+    `vocabulary.ts` with `vocabularyRun.ts` (the retired words' rules, and
+    `npm run vocabulary`, every line using one, run when a word is retired;
+    not under `verify`), `claudeLayout.test.ts` (every src/ module named
     here), `apostrophes.ts` (what the app shows writes ’, not '),
     `unusedExports.ts` (an export nothing uses, or only
     tests, fails, its allowed list giving each exception's reason),

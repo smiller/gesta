@@ -83,8 +83,12 @@ measured; a rule below names its plan where one exists.
   a `<select>`.
   ⌃⌘M switches between MARKDOWN MODE and HTML MODE, the entry's two
   views; "source" is where a reference or a line comes from.
-  `tools/vocabulary.test.ts` fails on a retired word in src/, tools/,
-  one-offs/, this file or the glossary; dated plan records keep their words.
+  `npm run vocabulary` lists every line using a retired word in src/,
+  tools/, one-offs/, this file, the layout and the glossary; it is run
+  whenever a word is retired, not under `verify`, its later refusals
+  having all been false (record:
+  docs/plans/2026-11-24-chore-vocabulary-sweep-plan.md); dated plan
+  records keep their words.
 - THE DOMAIN'S WORDS are in `GLOSSARY.md`, the file
   `/improve-codebase-architecture` reads: things a reader of the app would
   recognise, never how the code does them; a word is added when a design

@@ -18,6 +18,7 @@
     "titles:read": "node tools/testTitlesRun.ts --read",
     "test:health": "node tools/codeHealthRun.ts",
     "test:hooks": "sh tools/hooks-test.sh",
+    "vocabulary": "node tools/vocabularyRun.ts",
     "verify": "npm run check && npm test && npm run test:comments && npm run test:titles && npm run test:health && npm run test:hooks && npm run test:helium"
   },
   "devDependencies": {

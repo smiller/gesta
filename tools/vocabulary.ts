@@ -34,3 +34,18 @@ export const menuAreaByOldName = (line: string): boolean => OLD_MENU_AREA.test(l
    a reference or a line comes from, "rendered" for what a view does */
 const OLD_VIEW = /source[ _-]?view|rendered[ _-]?(?:view|text)|reading view|markdown[ _-]?(?:source|view)\b|(?<![a-z])mdView/i;
 export const viewByOldName = (line: string): boolean => OLD_VIEW.test(line.replace(RECORD, ""));
+
+/* Milton's own preface to Samson Agonistes uses the verb, and the
+   checker's own files spell the words they retire */
+const QUOTES_A_BOOK = new Set(["one-offs/miltonSamsonRun.ts", "tools/vocabulary.ts", "tools/vocabulary.test.ts"]);
+const ALERT_SENSE_KEPT: Record<string, string> = {
+  "src/ui/alertLog.ts": "carries a log kept under its kinds' names before",
+  "src/ui/alertLog.test.ts": "carries a log kept under its kinds' names before",
+  "tools/commentRules.ts": "its resolvers are the checking pin's, bridgePin and the rest",
+};
+const RULES = [retiredWord, headerForMasthead, toolbarByOldName, menuOrPanelByOldName, menuAreaByOldName, viewByOldName];
+export function retiredLines(file: string, text: string): string[] {
+  if (QUOTES_A_BOOK.has(file)) return [];
+  const retired = (t: string): boolean => RULES.some((rule) => rule(t)) || (!(file in ALERT_SENSE_KEPT) && retiredAlertSense(t));
+  return text.split("\n").flatMap((t, i) => (retired(t) ? [file + ":" + (i + 1) + ": " + t.trim()] : []));
+}
