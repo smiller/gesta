@@ -140,3 +140,4 @@
 {"at":"2026-11-24T21:24","ev":"start","id":"A30"}
 {"at":"2026-11-24T21:37","ev":"done","id":"A30","commits":["f989ac1","40a1755"],"note":"nine findings: five from one cause (the reader re-spelled the parser), fixed by asking the parser; two comments fixed; the Acts cast kept; 108,271 tokens"}
 {"at":"2026-11-24T21:37","ev":"start","id":"F9"}
+{"at":"2026-11-24T21:46","ev":"done","id":"F9","commits":["8336684"],"note":"go()'s focus wait allows 5 s; the startup-writes hold measured as having nothing to wait for; the watch stays"}
