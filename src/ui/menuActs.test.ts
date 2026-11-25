@@ -8,14 +8,14 @@ const ROWS: Record<string, MenuRow[]> = {
 };
 const key = (k: string) => ({ key: k, shiftKey: false, metaKey: false, ctrlKey: false, altKey: false, isComposing: false });
 
-function world(focusAt: string = "text", here = "#commonplace/Elsewhere", rows: Record<string, MenuRow[]> = ROWS) {
+function world(focusAt: string = "text", here = "#commonplace/Elsewhere", rows: Record<string, MenuRow[]> = ROWS, readOnly = false) {
   const log: string[] = [];
   let focus = focusAt;
   const screen = { opened: null as string | null, menuRows: [] as MenuRow[], menuEmpty: "", menu: { sel: -1 } };
   const deps: MenuDeps = {
     screen: screen as MenuDeps["screen"],
     answer: (name) => ({ rows: rows[name], empty: "" }),
-    readOnly: false,
+    readOnly,
     flush: () => log.push("flush"),
     overlay: () => log.push("rows closed"),
     focus: { here: () => focus as unknown as Element, back: (was) => { focus = String(was); log.push("focus back to " + String(was)); } },
@@ -185,4 +185,15 @@ describe("an open menu answered again", () => {
     w.menus.answer();
     expect(w.log.filter((l) => l.startsWith("menu area"))).toEqual(["menu area for 272", "menu area for 272"]);
   });
+});
+
+it("the items a menu draws are the ones its selection walks and chooses from, its acts left out on a page that cannot be written", () => {
+  const w = world();
+  w.menus.open("bookshelf");
+  const drawn = w.menus.items("bookshelf");
+  expect(drawn.at(-1)).toMatchObject({ text: "Shelves…", row: null });
+  w.menus.choose(drawn.length - 1);
+  expect(w.log.at(-1)).toBe("shelves in bookshelf");
+  const r = world("text", "#commonplace/Elsewhere", ROWS, true);
+  expect(r.menus.items("bookshelf").every((it) => it.act === null)).toBe(true);
 });

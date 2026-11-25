@@ -17,7 +17,7 @@
   import Shortcuts from "./Shortcuts.svelte";
   import Backups from "./Backups.svelte";
   import Menu from "./Menu.svelte";
-  import { isMenu, menuActs, type CloseReason, type Opened } from "./menuModel.ts";
+  import { isMenu, type CloseReason, type MenuItem, type MenuName, type Opened } from "./menuModel.ts";
   let { screen, onToday, onExport, onImport, onInterval, onLines, onOpener, onCloseOpened, menus, search, goto, gotoToolbar, replace, bookmarks, shortcuts, backups, onCreate, onRename, onDelete, reader = null }: {
     screen: Screen;
     /* the read-only page: a new bundle picked */
@@ -28,7 +28,7 @@
     onLines: (open: boolean) => void;
     onOpener: (ns: Opened) => void;
     onCloseOpened: () => void;
-    menus: { onKey: (e: KeyboardEvent) => boolean; onHover: (i: number) => void; onChoose: (i: number) => void; onClose: (reason: CloseReason) => void; onMounted: (menuRight: number) => void };
+    menus: { onKey: (e: KeyboardEvent) => boolean; onHover: (i: number) => void; onChoose: (i: number) => void; onClose: (reason: CloseReason) => void; onMounted: (menuRight: number) => void; items: (name: MenuName) => MenuItem[] };
     search: { onToggle: (open: boolean) => void; onQuery: (q: string) => void; onScope: (at: number) => void; onWalk: (dir: 1 | -1) => void; onEnter: () => void; onPick: (i: number) => void; onHover: (i: number) => void };
     goto: { onToggle: (open: boolean) => void; onPick: (level: number, value: string, ns?: string) => void };
     gotoToolbar: { onInput: (kind: "line" | "page" | "stanza", value: string) => void; onEnter: (kind: "line" | "page" | "stanza", value: string, repeat: boolean) => void; onClose: () => void };
@@ -120,7 +120,7 @@
   {#if screen.opened === "backups"}<Backups backups={screen.backups} {...backups} />{/if}
   {#if isMenu(screen.opened)}
     {@const ns = screen.opened}
-    <Menu name={ns} rows={screen.menuRows} empty={screen.menuEmpty} acts={menuActs(ns, !!reader)} sel={screen.menu.sel} {menus} onLeave={leaveMenu} />
+    <Menu name={ns} rows={screen.menuRows} empty={screen.menuEmpty} items={menus.items(ns)} sel={screen.menu.sel} {menus} onLeave={leaveMenu} />
   {/if}
   <GotoToolbar bind:this={gotoToolbarEl} gotoToolbar={screen.gotoToolbar} {...gotoToolbar} />
   <ReplaceToolbar bind:this={replaceEl} replace={screen.replace} {...replace} />

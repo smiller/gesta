@@ -43,7 +43,7 @@ import { stepped } from "./ui/pickKeys.ts";
 import { menuArea, browserLayout, provideMenuArea } from "./editor/menuArea.ts";
 import { writeCap } from "./editor/fit.ts";
 import { chordAct, type ChordAct } from "./ui/chords.ts";
-import { isMenu, jRound, reasonOpened, type CloseReason, type MenuName, type Opened } from "./ui/menuModel.ts";
+import { isMenu, jRound, reasonOpened, type CloseReason, type MenuItem, type MenuName, type Opened } from "./ui/menuModel.ts";
 import { NS, asAddress } from "./store/keys.ts";
 import { parseShortcuts, filterShortcuts, type Shortcut } from "./store/shortcuts.ts";
 import { nsOf } from "./store/keys.ts";
@@ -115,7 +115,7 @@ const acts = {
   },
   menus: {
     open: (_name: MenuName) => {}, close: (_reason: CloseReason) => {}, key: (_e: KeyboardEvent) => false, hover: (_i: number) => {}, choose: (_i: number) => {},
-    mounted: (_right: number) => {}, answer: () => {},
+    mounted: (_right: number) => {}, answer: () => {}, items: (_name: MenuName): MenuItem[] => [],
   },
 };
 const closeOpened = (reason: CloseReason = "displaced"): void => { if (isMenu(screen.opened)) acts.menus.close(reason); else screen.opened = null; };
@@ -147,7 +147,7 @@ const masthead = mount(Masthead, { target: document.body, anchor: document.query
   onLines: (open: boolean) => acts.lines(open),
   onOpener: (ns: Opened) => acts.opener(ns), onCloseOpened: closeOpened, menus: {
     onKey: (e: KeyboardEvent) => acts.menus.key(e), onHover: (i: number) => acts.menus.hover(i), onChoose: (i: number) => acts.menus.choose(i),
-    onClose: (reason: CloseReason) => acts.menus.close(reason), onMounted: (right: number) => acts.menus.mounted(right),
+    onClose: (reason: CloseReason) => acts.menus.close(reason), onMounted: (right: number) => acts.menus.mounted(right), items: (name: MenuName) => acts.menus.items(name),
   },
   onCreate: () => acts.create(), onRename: () => acts.rename(), onDelete: () => acts.delete(),
   /* a new pick is kept, then read as at any launch */

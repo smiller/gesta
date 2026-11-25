@@ -5,15 +5,14 @@
   import { untrack } from "svelte";
   import { publish } from "../published.ts";
   import type { MenuRow } from "./mastheadModel.ts";
-  import { menuItems, type MenuName, type MenuAct, type CloseReason } from "./menuModel.ts";
-  let { name, rows, empty, acts, sel, menus, onLeave }: {
-    name: MenuName; rows: MenuRow[]; empty: string; acts: MenuAct[]; sel: number;
+  import type { MenuName, MenuItem, CloseReason } from "./menuModel.ts";
+  let { name, rows, empty, items, sel, menus, onLeave }: {
+    name: MenuName; rows: MenuRow[]; empty: string; items: MenuItem[]; sel: number;
     menus: { onKey: (e: KeyboardEvent) => boolean; onHover: (i: number) => void; onChoose: (i: number) => void; onClose: (reason: CloseReason) => void; onMounted: (menuRight: number) => void };
     onLeave: (e: FocusEvent) => void;
   } = $props();
-  const items = $derived(menuItems(rows, acts.map((a) => a.text)));
   const rowItem = $derived(new Map(items.flatMap((it, j) => (it.row === null ? [] : [[it.row, j] as const]))));
-  const actItem = $derived(new Map(items.flatMap((it, j) => (it.act === null ? [] : [[it.act, j] as const]))));
+  const actItems = $derived(items.flatMap((it, j) => (it.act === null ? [] : [{ text: it.text, j }])));
   const els: HTMLElement[] = $state([]);
   let nav: HTMLElement | undefined = $state();
   /* the other menu opened over this one starts at its top, its selected
@@ -57,8 +56,8 @@
     {:else}<a href={r.href} title={r.text} class:shelved={r.shelved} class:sel={rowItem.get(i) === sel} bind:this={els[rowItem.get(i)!]} onmousemove={() => hover(rowItem.get(i)!)} onclick={(e) => rowClicked(e, rowItem.get(i)!)}>{r.text}</a>{/if}
   {/each}
   {#if !rows.length && empty}<span class="menu-empty">{empty}</span>{/if}
-  {#each acts as a, k (a.text)}
-    <button class="menu-act" type="button" class:sel={actItem.get(k) === sel} bind:this={els[actItem.get(k)!]} onmousemove={() => hover(actItem.get(k)!)} onclick={() => menus.onChoose(actItem.get(k)!)}>{a.text}</button>
+  {#each actItems as a (a.text)}
+    <button class="menu-act" type="button" class:sel={a.j === sel} bind:this={els[a.j]} onmousemove={() => hover(a.j)} onclick={() => menus.onChoose(a.j)}>{a.text}</button>
   {/each}
 </nav>
 

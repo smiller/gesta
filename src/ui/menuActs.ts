@@ -32,6 +32,9 @@ export interface Menus {
   /* the menu drawn, its right edge where it stands */
   mounted(menuRight: number): void;
   answer(): void;
+  /* the items drawn for the menu named, its rows and then its acts: the
+     list the selection walks and chooses from */
+  items(name: MenuName): MenuItem[];
 }
 
 /* ONE MENU OPEN AT MOST, and this module's own record of which: a panel may
@@ -41,7 +44,8 @@ export interface Menus {
 export function menuActs(d: MenuDeps): Menus {
   const { screen } = d;
   let open: MenuName | null = null, was: Element | null = null, typed: Typed = { buf: "", at: 0 }, drawnAt: number | null = null, moved = false;
-  const items = () => (open ? menuItems(screen.menuRows, actsOf(open, d.readOnly).map((a) => a.text)) : []);
+  const itemsOf = (name: MenuName): MenuItem[] => menuItems(screen.menuRows, actsOf(name, d.readOnly).map((a) => a.text));
+  const items = () => (open ? itemsOf(open) : []);
   const idOf = (it: MenuItem | undefined): string | null => (!it ? null : it.row === null ? "act " + it.act : screen.menuRows[it.row].href);
   const select = (i: number): void => { moved = true; screen.menu.sel = i; };
   const isHere = (href: string): boolean => sameEntry(asAddress(href), asAddress(d.openAddress()));
@@ -108,7 +112,7 @@ export function menuActs(d: MenuDeps): Menus {
     return true;
   };
   return {
-    open: show, close, key, choose, answer,
+    open: show, close, key, choose, answer, items: itemsOf,
     hover: (i) => { if (open) select(i); },
     mounted: (menuRight) => { if (!open) return; drawnAt = menuRight; d.area.open(menuRight); },
   };

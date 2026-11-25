@@ -58,3 +58,9 @@ Strong), then "yes" to the five decisions below.
   link typed into one in markdown mode broke it (MEASURED on a line of
   the backup's "External Links"). It now reads as a link; one in `<…>`,
   drawn as text, does not. A third Helium reading, approved.
+- 21:13 W2 (asked "Let's explore whether W1 and W2 are worth doing", then
+  "yes"): the open menu drew items it built itself from an acts prop the
+  masthead derived with `!!reader`, while the selection walked the menus'
+  own list derived with `READER`, agreeing only because the two were set
+  together. The menus' module answers `items(name)`; the menu draws that
+  list. Tested; the verdict read as approved.
