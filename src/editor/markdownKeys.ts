@@ -76,12 +76,30 @@ export function markdownTyped(value: string, caret: number): Typed | null {
   return curled(value, caret, ch);
 }
 
-/* whether the line holding `pos` is a heading's, a fence's lines being
-   code (pin: markdownKeys.test › a heading's line) */
-export function headingLineAt(text: string, pos: number): boolean {
-  const start = pos === 0 ? 0 : text.lastIndexOf("\n", pos - 1) + 1;
-  const end = text.indexOf("\n", start);
-  let fenced = false;
-  for (const line of text.slice(0, start).split("\n")) if (FENCE_LINE.test(line)) fenced = !fenced;
-  return !fenced && HEADING_LINE.test(text.slice(start, end === -1 ? text.length : end));
+export type MarkdownSpan = "fence" | "code" | "link" | "heading";
+/* a backtick run opens inline code only where a run as long closes it
+   later on the line: a lone one typed for an apostrophe is prose (pin:
+   markdownKeys.test › what the caret is inside, in markdown mode) */
+function inCodeSpan(line: string, at: number): boolean {
+  let open = 0;
+  for (const m of line.slice(0, at).matchAll(/`+/g)) open = open === 0 ? m[0].length : m[0].length === open ? 0 : open;
+  return open > 0 && line.slice(at).split(/[^`]+/).includes("`".repeat(open));
 }
+const LINK_SPAN = /!?\[[^\]\n]*\]\([^)\n]*\)/g;
+const inLink = (line: string, at: number): boolean => [...line.matchAll(LINK_SPAN)].some((m) => at > m.index && at < m.index + m[0].length);
+/* what the caret at `pos` is inside, the fence first: a fence's lines are
+   code, whatever they hold (pin: markdownKeys.test › what the caret is
+   inside, in markdown mode) */
+export function markdownSpanAt(text: string, pos: number): MarkdownSpan | null {
+  const { start, line } = lineAround(text, pos), at = pos - start;
+  if (fencedAt(text.slice(0, start), line)) return "fence";
+  if (inCodeSpan(line, at)) return "code";
+  if (inLink(line, at)) return "link";
+  return HEADING_LINE.test(line) ? "heading" : null;
+}
+function lineAround(text: string, pos: number): { start: number; line: string } {
+  const start = pos === 0 ? 0 : text.lastIndexOf("\n", pos - 1) + 1, end = text.indexOf("\n", start);
+  return { start, line: text.slice(start, end === -1 ? text.length : end) };
+}
+const fencedAt = (before: string, line: string): boolean =>
+  FENCE_LINE.test(line) || before.split("\n").filter((l) => FENCE_LINE.test(l)).length % 2 === 1;

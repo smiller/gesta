@@ -558,6 +558,10 @@ alerts and surfaces: arrived at commonplace/Horace: {"cursor":"at a line's start
 a shortcut chosen with no cursor in the entry: {"corner":"place your cursor in the entry","unchanged":true,"cursor":"at a line's start","screen":"commonplace/Horace · sel none · toolbar off · opened none · rows none · html · corner [whatever stood]"}
 alerts and surfaces: arrived at commonplace/Heading Line: {"cursor":"at a line's start"}
 a bookmark's link on a heading's line in markdown mode: {"md":"# Heading Line\n\nx","corner":"no link inside a heading — place your cursor below it","cursor":"inside a line","screen":"commonplace/Heading Line · sel none · toolbar off · opened none · rows none · markdown · corner [whatever stood]"}
+alerts and surfaces: arrived at commonplace/Fence Line: {"cursor":"at a line's start"}
+a bookmark's link in a code fence in markdown mode: {"md":"```\nsome code\n```","corner":"no link inside a code block","cursor":"inside a line","screen":"commonplace/Fence Line · sel none · toolbar off · opened none · rows none · markdown · corner [whatever stood]"}
+alerts and surfaces: arrived at commonplace/Link Line: {"cursor":"at a line's start"}
+a bookmark's link inside a link in markdown mode: {"md":"see [the link](#commonplace/Horace) now","corner":"no link inside a link","cursor":"inside a line","screen":"commonplace/Link Line · sel none · toolbar off · opened none · rows none · markdown · corner [whatever stood]"}
 alerts and surfaces: arrived at commonplace/Source Link: {"cursor":"at a line's start"}
 a bookmark's link in markdown mode: {"md":"x[Links](…)","cursor":"at the end","screen":"commonplace/Source Link · sel none · toolbar off · opened none · rows none · markdown · corner [whatever stood]"}
 Search opened before the warm: {"loading":"Still loading…","rows":true,"cursor":"at the end","screen":"commonplace/Source Link · sel none · toolbar off · opened none · rows none · html · corner [whatever stood]"}

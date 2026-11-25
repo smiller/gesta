@@ -1,15 +1,15 @@
 import { describe, it, expect } from "vitest";
-import { markdownTab, markdownTyped, headingLineAt } from "./markdownKeys.ts";
+import { markdownTab, markdownTyped, markdownSpanAt } from "./markdownKeys.ts";
 import { said } from "../model/alertText.ts";
 
-describe("headingLineAt", () => {
-  it("a heading's line, at its start or end; not a line in a fence, nor the empty line before a heading", () => {
+describe("markdownSpanAt", () => {
+  it("a heading's line, at its start or end; a line in a fence is the fence's, the empty line before a heading and the body nothing", () => {
     const text = "\n# Title\nbody\n```\n# comment\n```\n";
-    expect(headingLineAt(text, 1)).toBe(true);
-    expect(headingLineAt(text, 8)).toBe(true);
-    expect(headingLineAt(text, 0)).toBe(false);
-    expect(headingLineAt(text, 12)).toBe(false);
-    expect(headingLineAt(text, text.indexOf("# comment") + 3)).toBe(false);
+    expect(markdownSpanAt(text, 1)).toBe("heading");
+    expect(markdownSpanAt(text, 8)).toBe("heading");
+    expect(markdownSpanAt(text, 0)).toBeNull();
+    expect(markdownSpanAt(text, 12)).toBeNull();
+    expect(markdownSpanAt(text, text.indexOf("# comment") + 3)).toBe("fence");
   });
 });
 
@@ -59,4 +59,21 @@ describe("markdownTyped", () => {
     expect(typedIn("see <https://x.org/a -- ")).toBe("see <https://x.org/a -- ");
     expect(typedIn("[x](#a) and \"")).toBe("[x](#a) and “");
   });
+});
+
+it("what the caret is inside, in markdown mode: a fence, inline code that closes, a link or an image, a heading's line; nothing at a span's edge or in prose", () => {
+  const at = (text: string) => markdownSpanAt(text.replace("|", ""), text.indexOf("|"));
+  expect(at("```\nsome |code\n```\n")).toBe("fence");
+  expect(at("```|\ncode\n```\n")).toBe("fence");
+  expect(at("see `co|de` now")).toBe("code");
+  expect(at("see ``a ` |b`` now")).toBe("code");
+  expect(at("it`s |fine")).toBeNull();
+  expect(at("see [the li|nk](#x) now")).toBe("link");
+  expect(at("see [the link](#x|) now")).toBe("link");
+  expect(at("see |[the link](#x) now")).toBeNull();
+  expect(at("see [the link](#x)| now")).toBeNull();
+  expect(at("# A He|ading")).toBe("heading");
+  expect(at("# A `co|de` heading")).toBe("code");
+  expect(at("plain |prose")).toBeNull();
+  expect(at("```\ncode\n```\n\nafter |it")).toBeNull();
 });

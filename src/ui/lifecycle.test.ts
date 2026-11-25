@@ -113,7 +113,7 @@ async function world(o: Opts) {
   const pics: Record<string, string> = { ...(o.pics ?? {}) };
   const life = lifecycle({
     layer, journal: journalOf(layer.cache),
-    shown: (): Shown | null => (s.dropped ? null : !o.noView ? { mode: "html", view: view as unknown as EditorView } : o.markdown ? { mode: "markdown", replace: REPLACE, lineIsHeading: () => !!o.markdownHeading } : null),
+    shown: (): Shown | null => (s.dropped ? null : !o.noView ? { mode: "html", view: view as unknown as EditorView } : o.markdown ? { mode: "markdown", replace: REPLACE, spanAt: () => (o.markdownHeading ? "heading" : null) } : null),
     caretInEntry: () => !o.noCaret,
     session: fakeSession(log, s, layer), dialogs: fakeDialogs(log, asked, answers),
     ...fakePictures(o, log, pics), kept: fakeKept(log), ui: fakeUi(log),

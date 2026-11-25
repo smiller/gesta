@@ -178,18 +178,30 @@ async function shortcutWithNoCursor(before: string): Promise<void> {
   await rest(page);
   await log("a shortcut chosen with no cursor in the entry", { corner: await corner(), unchanged: (await A.stored(page, "commonplace/Horace")) === before });
 }
-async function bookmarkLinkInMarkdownMode(): Promise<void> {
-  await page.keyboard.press("Escape");
-  /* a heading's line refuses it in markdown mode, as it does a new entry's */
-  await write("commonplace/Heading Line", "# Heading Line\n\nx\n");
-  await view(true);
-  await R.markdownCaretTo(page, "Line");
-  await keep("bookmarks", '["2026-09-06","commonplace/Horace","commonplace/Links"]');
+const pressBookmarkLink = async (): Promise<void> => {
   await page.keyboard.press("Control+Meta+b");
   await rest(page);
   await page.click(".bookmark-link[aria-label='Link to Links']", { timeout: 2000 }).catch(() => {});
   await rest(page);
-  await log("a bookmark's link on a heading's line in markdown mode", { md: await stored(), corner: await corner() });
+};
+/* a heading's line, a code fence and a link refuse it in markdown mode, as they do a new entry's */
+async function refusedInMarkdownMode(): Promise<void> {
+  for (const [label, name, md, needle] of [
+    ["a bookmark's link on a heading's line in markdown mode", "commonplace/Heading Line", "# Heading Line\n\nx\n", "Line"],
+    ["a bookmark's link in a code fence in markdown mode", "commonplace/Fence Line", "```\nsome code\n```\n", "code"],
+    ["a bookmark's link inside a link in markdown mode", "commonplace/Link Line", "see [the link](#commonplace/Horace) now\n", "e li"],
+  ]) {
+    await write(name, md);
+    await view(true);
+    await R.markdownCaretTo(page, needle);
+    await keep("bookmarks", '["2026-09-06","commonplace/Horace","commonplace/Links"]');
+    await pressBookmarkLink();
+    await log(label, { md: await stored(), corner: await corner() });
+  }
+}
+async function bookmarkLinkInMarkdownMode(): Promise<void> {
+  await page.keyboard.press("Escape");
+  await refusedInMarkdownMode();
   await write("commonplace/Source Link", "x\n");
   await view(true);
   await R.markdownCaretTo(page, "x");

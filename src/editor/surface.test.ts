@@ -288,11 +288,11 @@ describe("the view shown", () => {
     expect(shownOf(html, html)).toEqual({ mode: "html", view });
     expect(htmlView(shownOf(html, html))).toBe(view);
   });
-  it("is markdown mode with its replace and whether the caret's line is a heading, and no editor", () => {
+  it("is markdown mode with its replace and what the caret is inside, and no editor", () => {
     const shown = shownOf(markdown("# Title\n\nprose", 3), html);
     expect(shown?.mode === "markdown" && shown.replace).toBe(replace);
-    expect(shown?.mode === "markdown" && shown.lineIsHeading()).toBe(true);
-    expect((shownOf(markdown("# Title\n\nprose", 12), html) as { lineIsHeading(): boolean }).lineIsHeading()).toBe(false);
+    expect(shown?.mode === "markdown" && shown.spanAt()).toBe("heading");
+    expect((shownOf(markdown("# Title\n\nprose", 12), html) as { spanAt(): string | null }).spanAt()).toBeNull();
     expect(htmlView(shown ?? null)).toBeNull();
   });
   it("is the same view across two readings while neither the mode nor its editor or replace changed", () => {

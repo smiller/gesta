@@ -46,3 +46,10 @@ Strong), then "yes" to the five decisions below.
   (`compared` says "failed" only for a held run), now asserted. Kept for
   the reader: in markdown mode a link after the caret is let into a code
   fence, inline code or a link, where HTML mode refuses (pre-existing).
+- 20:14 S31 (asked "yes, refuse those in markdown mode too"): markdown
+  mode refuses a link after the caret inside a code fence, inline code
+  that closes, or a link, as HTML mode does: `markdownSpanAt` in
+  `markdownKeys.ts` reads the text around the caret (it replaces
+  `headingLineAt`); `shown`'s markdown mode carries `spanAt()`. Before, a
+  link typed inside a link broke it (MEASURED by parsing each case). Two
+  Helium readings in markdown mode, approved as the corner's only change.
