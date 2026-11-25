@@ -99,6 +99,9 @@ Amber. Why an act just tried did nothing. It fades after ten seconds, or goes wh
 | `a tagged entry holds no entries of its own` | ⌃⌘N on a day’s tagged entry. |
 | `no link inside a code block` | A link placed with the cursor in code. |
 | `no link inside a link` | A link placed with the cursor in a link. |
+| `no link right after “!” — it would be read as a picture` | A link placed in markdown mode with the cursor just after an exclamation mark. |
+| `no link before a list’s or a quote’s marker — place your cursor after it` | A link placed in markdown mode at the very start of a list item’s or a quote’s line. |
+| `no link while this entry can’t be drawn — fix the line its error names first` | A link placed in markdown mode in an entry the editor cannot draw. |
 | `no link inside a heading — place your cursor below it` | A new entry’s or a bookmark’s link placed with the cursor in a heading, or a new entry’s selection cutting into one. |
 | `a letter b to z, then letters or digits — a adds, a leading digit jumps` | A bookmark key given in a shape keys do not take. |
 | `“…” already goes to …` | A bookmark key given that another bookmark has. |

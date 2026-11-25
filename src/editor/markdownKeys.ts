@@ -78,7 +78,7 @@ export function markdownTyped(value: string, caret: number): Typed | null {
   return curled(value, caret, ch);
 }
 
-export type MarkdownSpan = "fence" | "code" | "link" | "heading";
+export type MarkdownSpan = "fence" | "code" | "link" | "heading" | "picture" | "marker" | "unparsed";
 const PROBE_HREF = "#gesta-probe", PROBE = "[probe](" + PROBE_HREF + ")";
 type Linked = { text: string; href: string };
 function linksIn(doc: Node): Linked[] {
@@ -86,13 +86,16 @@ function linksIn(doc: Node): Linked[] {
   doc.descendants((n) => { const l = n.isText ? n.marks.find((m) => m.type.name === "link") : undefined; if (l && l.attrs.href !== PROBE_HREF) out.push({ text: n.text!, href: l.attrs.href }); });
   return out;
 }
-/* where the probe link landed: as a link, by its parent; else as literal
-   text, by the code it fell in or the link it broke; "lost" where no text
-   holds it, a fence's own line having taken it for its language */
+/* where the probe link landed: as a link, by its parent; as a picture,
+   where a "!" before it made it one; else as literal text, by the code it
+   fell in or the link it broke; "lost" where no text holds it, a fence's
+   own line having taken it for its language */
 function landed(doc: Node): MarkdownSpan | "free" | "lost" {
   let at: MarkdownSpan | "free" | null = null;
   doc.descendants((n, _pos, parent) => {
-    if (at !== null || !n.isText) return at === null;
+    if (at !== null) return false;
+    if (n.type.name === "image" && n.attrs.src === PROBE_HREF) { at = "picture"; return false; }
+    if (!n.isText) return true;
     if (n.marks.some((m) => m.type.name === "link" && m.attrs.href === PROBE_HREF)) at = parent?.type.name === "heading" ? "heading" : "free";
     else if (n.text!.includes(PROBE)) at = parent?.type.name === "code_block" ? "fence" : n.marks.some((m) => m.type.name === "code") ? "code" : "link";
     return at === null;
@@ -107,11 +110,18 @@ const blocksIn = (doc: Node, type: string): string[] => {
   return out;
 };
 const sameBlocks = (a: Node, b: Node, type: string): boolean => blocksIn(a, type).join("\n") === blocksIn(b, type).join("\n");
-/* a probe that broke a heading or a fence (typed at a heading's start, or
-   onto a fence's own line) is refused as that block */
+const kindsIn = (doc: Node): string => {
+  const out: string[] = [];
+  doc.descendants((n) => { if (n.isBlock && n.type.name !== "paragraph") out.push(n.type.name); });
+  return out.join(" ");
+};
+/* a probe that broke a heading, a fence or any other block (typed at a
+   heading's start, onto a fence's own line, before a list's or a quote's
+   marker) is refused as that block */
 function brokenBlock(before: Node, after: Node): MarkdownSpan | null {
   if (blocksIn(after, "heading").length < blocksIn(before, "heading").length) return "heading";
-  return sameBlocks(before, after, "code_block") ? null : "fence";
+  if (!sameBlocks(before, after, "code_block")) return "fence";
+  return kindsIn(before) === kindsIn(after) ? null : "marker";
 }
 /* what the caret at `pos` is inside, read as a link typed there would parse:
    asked of the parser, never spelled again here, so a fence, inline code,
@@ -119,7 +129,8 @@ function brokenBlock(before: Node, after: Node): MarkdownSpan | null {
    markdownKeys.test › what the caret is inside, in markdown mode) */
 export function markdownSpanAt(text: string, pos: number): MarkdownSpan | null {
   let before: Node, after: Node;
-  try { before = parseMarkdown(text); after = parseMarkdown(text.slice(0, pos) + PROBE + text.slice(pos)); } catch { return null; }
+  try { before = parseMarkdown(text); } catch { return "unparsed"; }
+  try { after = parseMarkdown(text.slice(0, pos) + PROBE + text.slice(pos)); } catch { return "link"; }
   const where = landed(after);
   if (where === "lost") return FENCE_LINE.test(lineAt(text, pos)) ? "fence" : "link";
   if (where !== "free" && where !== "link") return where;

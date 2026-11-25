@@ -25,3 +25,14 @@ something from the commonplace menu, and something from the journal".
   Everything with the focus in the box, then closed; the corner's only
   change, approved. The first reading caught its own race (the focus
   given to the box a tick after the row opens) and now waits for it.
+- 22:22 A31, `/code-review high 5dab0b6..HEAD`: 92,114 tokens; five
+  findings, four on A30's unreviewed rewrite of markdown mode's reader.
+  Built (asked "yes" to Q1-Q3, words as proposed): an entry the parser
+  cannot draw refuses every link ("no link while this entry can't be
+  drawn"); after a "!" the probe became a picture, now its own refusal;
+  a probe breaking any block but a paragraph (a list's or a quote's
+  marker at a line's start) is refused. The help's ⌃⌘K wording: on
+  Everything it closes. Did not stand: two parses per placement cost
+  33-38 ms on the backup's largest entry (657,560 characters).
+  Three Helium readings added, approved. Found: an undrawable entry
+  written as another tab stands its error twice (on S).

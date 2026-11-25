@@ -61,7 +61,7 @@ describe("markdownTyped", () => {
   });
 });
 
-it("what the caret is inside, in markdown mode, read as a link typed there would parse: a fence, inline code, a link or a bare address it would break, a heading's line; nothing in prose", () => {
+it("what the caret is inside, in markdown mode, read as a link typed there would parse: a fence, inline code, a link or a bare address it would break, a heading's line, a list's or a quote's marker, a picture's \"!\", an entry that cannot be drawn; nothing in prose", () => {
   const at = (text: string) => markdownSpanAt(text.replace("|", ""), text.indexOf("|"));
   expect(at("```\nsome |code\n```\n")).toBe("fence");
   expect(at("```|\ncode\n```\n")).toBe("fence");
@@ -85,6 +85,11 @@ it("what the caret is inside, in markdown mode, read as a link typed there would
   expect(at("````\n```\nso|me\n````\n")).toBe("fence");
   expect(at("see x:https://exa|mple.org now")).toBeNull();
   expect(at("see https://example.org/ |now")).toBeNull();
+  expect(at("Wow!| next")).toBe("picture");
+  expect(at("|- item\n- two")).toBe("marker");
+  expect(at("|> quote")).toBe("marker");
+  expect(at("- it|em\n- two")).toBeNull();
+  expect(at("```\nco|de\n```\n\n::: grid\nloose\n:::\n")).toBe("unparsed");
   expect(at("see <https://exam|ple.org/> now")).toBeNull();
   expect(at("```\ncode\n```\n\nafter |it")).toBeNull();
 });

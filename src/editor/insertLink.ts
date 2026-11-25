@@ -41,7 +41,7 @@ export function insertLinkAfter(view: Pick<EditorView, "state" | "dispatch">, hr
   const text = schema.text(label, [schema.marks.link.create({ href })]);
   view.dispatch(view.state.tr.insert($to.pos, text).scrollIntoView());
 }
-const SPAN_REFUSAL = { fence: "noLinkInCode", code: "noLinkInCode", link: "noLinkInLink", heading: "noLinkInHeading" } as const;
+const SPAN_REFUSAL = { fence: "noLinkInCode", code: "noLinkInCode", link: "noLinkInLink", heading: "noLinkInHeading", picture: "noLinkAfterBang", marker: "noLinkBeforeMarker", unparsed: "noLinkUndrawn" } as const;
 /* one rule for every act that puts a link after the caret, whichever view
    shows: a new entry's link and a bookmark's alike (pin: insertLink.test ›
    a link after the caret is refused alike in either act) */

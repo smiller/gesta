@@ -45,7 +45,7 @@ test("linkMarkdown: the link as HTML mode's own link saves, escaped the same way
 
 const html = (state: EditorState): Shown => ({ mode: "html", view: { state } as unknown as EditorView });
 const markdown = (span: MarkdownSpan | null): Shown => ({ mode: "markdown", replace: {} as ReplacePort, spanAt: () => span });
-test("a link after the caret is refused alike in either act and either mode: nowhere with nothing shown; inside code, a link or a heading", () => {
+test("a link after the caret is refused alike in either act and either mode: nowhere with nothing shown; inside code, a link or a heading; in markdown mode also after a picture's \"!\", before a list's or a quote's marker, or in an entry that cannot be drawn", () => {
   expect(linkAfterRefusal(null)).toEqual(said("placeCursor"));
   expect(linkAfterRefusal(html(at("plain text", "plain")))).toBeNull();
   expect(linkAfterRefusal(html(at("see `code here` now", "code")))).toEqual(said("noLinkInCode"));
@@ -55,6 +55,9 @@ test("a link after the caret is refused alike in either act and either mode: now
   expect(linkAfterRefusal(markdown("fence"))).toEqual(said("noLinkInCode"));
   expect(linkAfterRefusal(markdown("code"))).toEqual(said("noLinkInCode"));
   expect(linkAfterRefusal(markdown("link"))).toEqual(said("noLinkInLink"));
+  expect(linkAfterRefusal(markdown("picture"))).toEqual(said("noLinkAfterBang"));
+  expect(linkAfterRefusal(markdown("marker"))).toEqual(said("noLinkBeforeMarker"));
+  expect(linkAfterRefusal(markdown("unparsed"))).toEqual(said("noLinkUndrawn"));
   expect(linkAfterRefusal(markdown(null))).toBeNull();
 });
 test("a link after the caret goes in as a link in HTML mode and is typed as its markdown in markdown mode", () => {

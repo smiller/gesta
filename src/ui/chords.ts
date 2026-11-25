@@ -17,7 +17,7 @@ export const CHORDS: readonly Chord[] = [
   chord(",", "previous", "go to the previous entry"),
   chord(".", "next", "go to the next entry"),
   chord("j", "round", "go to entry — the bookshelf menu; again, the commonplace menu; a third time, the masthead’s “Go to” row"),
-  chord("k", "search", "search — open the masthead’s “Search” row; again, search everything; again, close it"),
+  chord("k", "search", "search — open the masthead’s “Search” row; again, search everything; on everything, close it"),
   chord("l", "lines", "line numbering — open the masthead’s “Line numbering” row (on an entry with verse)"),
   chord("i", "editor", "add ⟨line⟩ so the line counts as a numbered line and not a stage direction"),
   chord("g", "gotoToolbar", "go to a line, or a page number (on an entry with a gutter)"),

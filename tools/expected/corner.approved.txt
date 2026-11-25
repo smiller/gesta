@@ -570,6 +570,12 @@ alerts and surfaces: arrived at commonplace/Link Line: {"cursor":"at a line's st
 a bookmark's link inside a link in markdown mode: {"md":"see [the link](#commonplace/Horace) now","corner":"no link inside a link","cursor":"inside a line","screen":"commonplace/Link Line · sel none · toolbar off · opened none · rows none · markdown · corner [whatever stood]"}
 alerts and surfaces: arrived at commonplace/Address Line: {"cursor":"at a line's start"}
 a bookmark's link inside a bare address in markdown mode: {"md":"see https://example.org/page now","corner":"no link inside a link","cursor":"inside a line","screen":"commonplace/Address Line · sel none · toolbar off · opened none · rows none · markdown · corner [whatever stood]"}
+alerts and surfaces: arrived at commonplace/Bang Line: {"cursor":"at a line's start"}
+a bookmark's link right after an exclamation mark in markdown mode: {"md":"Wow! next","corner":"no link right after “!” — it would be read as a picture","cursor":"inside a line","screen":"commonplace/Bang Line · sel none · toolbar off · opened none · rows none · markdown · corner [whatever stood]"}
+alerts and surfaces: arrived at commonplace/List Line: {"cursor":"at a line's start"}
+a bookmark's link before a list's marker in markdown mode: {"md":"- item\n- two","corner":"no link before a list’s or a quote’s marker — place your cursor after it","cursor":"at a line's start","screen":"commonplace/List Line · sel none · toolbar off · opened none · rows none · markdown · corner [whatever stood]"}
+alerts and surfaces: arrived at commonplace/Undrawn: {"cursor":"at a line's start"}
+a bookmark's link in an entry that cannot be drawn: {"md":"```\ncode\n```\n\n::: grid\nloose\n:::","corner":"cannot render commonplace/Undrawn — a grid holds only cards; \"loose\" is not a card; shown in markdown mode · cannot render commonplace/Undrawn — a grid holds only cards; \"loose\" is not a card; shown in markdown mode · no link while this entry can’t be drawn — fix the line its error names first","cursor":"at a line's start","screen":"commonplace/Undrawn · sel none · toolbar off · opened none · rows none · markdown · corner [whatever stood]"}
 alerts and surfaces: arrived at commonplace/Source Link: {"cursor":"at a line's start"}
 a bookmark's link in markdown mode: {"md":"x[Links](…)","cursor":"at the end","screen":"commonplace/Source Link · sel none · toolbar off · opened none · rows none · markdown · corner [whatever stood]"}
 Search opened before the warm: {"loading":"Still loading…","rows":true,"cursor":"at the end","screen":"commonplace/Source Link · sel none · toolbar off · opened none · rows none · html · corner [whatever stood]"}
@@ -813,3 +819,4 @@ error: nothing to import here — 1 .md file will NOT be imported. null
 error: two files here are the same entry (commonplace/Trip--Log.md and commonplace/Trip-Log.md) — remove one and import again null
 error: picture not saved r
 error: Couldn’t copy the link [*Links*](#commonplace/Links)
+error: cannot render commonplace/Undrawn a grid holds only cards; "loose" is not a card
