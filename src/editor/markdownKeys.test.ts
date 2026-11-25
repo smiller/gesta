@@ -61,7 +61,7 @@ describe("markdownTyped", () => {
   });
 });
 
-it("what the caret is inside, in markdown mode: a fence, inline code that closes, a link or an image, a heading's line; nothing at a span's edge or in prose", () => {
+it("what the caret is inside, in markdown mode: a fence, inline code that closes, a link, a bare address or an image, a heading's line; nothing at a span's edge or in prose", () => {
   const at = (text: string) => markdownSpanAt(text.replace("|", ""), text.indexOf("|"));
   expect(at("```\nsome |code\n```\n")).toBe("fence");
   expect(at("```|\ncode\n```\n")).toBe("fence");
@@ -75,5 +75,10 @@ it("what the caret is inside, in markdown mode: a fence, inline code that closes
   expect(at("# A He|ading")).toBe("heading");
   expect(at("# A `co|de` heading")).toBe("code");
   expect(at("plain |prose")).toBeNull();
+  expect(at("- https://chelsea|troy.com/2024/ai/")).toBe("link");
+  expect(at("see www.exam|ple.org now")).toBe("link");
+  expect(at("see https://example.org/| now")).toBeNull();
+  expect(at("see |https://example.org/ now")).toBeNull();
+  expect(at("see <https://exam|ple.org/> now")).toBeNull();
   expect(at("```\ncode\n```\n\nafter |it")).toBeNull();
 });

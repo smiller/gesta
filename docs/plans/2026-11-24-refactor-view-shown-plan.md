@@ -53,3 +53,8 @@ Strong), then "yes" to the five decisions below.
   `headingLineAt`); `shown`'s markdown mode carries `spanAt()`. Before, a
   link typed inside a link broke it (MEASURED by parsing each case). Two
   Helium readings in markdown mode, approved as the corner's only change.
+- 20:24 S31, found writing its hand-check: a bare address (http or www)
+  is drawn as a link in HTML mode but was nothing to the reader, so a
+  link typed into one in markdown mode broke it (MEASURED on a line of
+  the backup's "External Links"). It now reads as a link; one in `<…>`,
+  drawn as text, does not. A third Helium reading, approved.

@@ -562,6 +562,8 @@ alerts and surfaces: arrived at commonplace/Fence Line: {"cursor":"at a line's s
 a bookmark's link in a code fence in markdown mode: {"md":"```\nsome code\n```","corner":"no link inside a code block","cursor":"inside a line","screen":"commonplace/Fence Line · sel none · toolbar off · opened none · rows none · markdown · corner [whatever stood]"}
 alerts and surfaces: arrived at commonplace/Link Line: {"cursor":"at a line's start"}
 a bookmark's link inside a link in markdown mode: {"md":"see [the link](#commonplace/Horace) now","corner":"no link inside a link","cursor":"inside a line","screen":"commonplace/Link Line · sel none · toolbar off · opened none · rows none · markdown · corner [whatever stood]"}
+alerts and surfaces: arrived at commonplace/Address Line: {"cursor":"at a line's start"}
+a bookmark's link inside a bare address in markdown mode: {"md":"see https://example.org/page now","corner":"no link inside a link","cursor":"inside a line","screen":"commonplace/Address Line · sel none · toolbar off · opened none · rows none · markdown · corner [whatever stood]"}
 alerts and surfaces: arrived at commonplace/Source Link: {"cursor":"at a line's start"}
 a bookmark's link in markdown mode: {"md":"x[Links](…)","cursor":"at the end","screen":"commonplace/Source Link · sel none · toolbar off · opened none · rows none · markdown · corner [whatever stood]"}
 Search opened before the warm: {"loading":"Still loading…","rows":true,"cursor":"at the end","screen":"commonplace/Source Link · sel none · toolbar off · opened none · rows none · html · corner [whatever stood]"}

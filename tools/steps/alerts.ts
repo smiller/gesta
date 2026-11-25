@@ -190,6 +190,7 @@ async function refusedInMarkdownMode(): Promise<void> {
     ["a bookmark's link on a heading's line in markdown mode", "commonplace/Heading Line", "# Heading Line\n\nx\n", "Line"],
     ["a bookmark's link in a code fence in markdown mode", "commonplace/Fence Line", "```\nsome code\n```\n", "code"],
     ["a bookmark's link inside a link in markdown mode", "commonplace/Link Line", "see [the link](#commonplace/Horace) now\n", "e li"],
+    ["a bookmark's link inside a bare address in markdown mode", "commonplace/Address Line", "see https://example.org/page now\n", "example"],
   ]) {
     await write(name, md);
     await view(true);

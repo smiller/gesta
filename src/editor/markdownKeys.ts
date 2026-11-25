@@ -85,7 +85,10 @@ function inCodeSpan(line: string, at: number): boolean {
   for (const m of line.slice(0, at).matchAll(/`+/g)) open = open === 0 ? m[0].length : m[0].length === open ? 0 : open;
   return open > 0 && line.slice(at).split(/[^`]+/).includes("`".repeat(open));
 }
-const LINK_SPAN = /!?\[[^\]\n]*\]\([^)\n]*\)/g;
+/* a bare address, http or www, is drawn as a link in HTML mode, so it is
+   one here; one in <…> is drawn as text (pin: markdownKeys.test › what the
+   caret is inside, in markdown mode) */
+const LINK_SPAN = /!?\[[^\]\n]*\]\([^)\n]*\)|(?<![<\w])(?:https?:\/\/|www\.)[^\s<>]+/gi;
 const inLink = (line: string, at: number): boolean => [...line.matchAll(LINK_SPAN)].some((m) => at > m.index && at < m.index + m[0].length);
 /* what the caret at `pos` is inside, the fence first: a fence's lines are
    code, whatever they hold (pin: markdownKeys.test › what the caret is
