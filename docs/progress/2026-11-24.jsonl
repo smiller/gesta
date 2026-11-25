@@ -138,3 +138,4 @@
 {"at":"2026-11-24T21:23","ev":"add","id":"A30","list":"A","title":"The batch review: /code-review at HIGH over cf64c42..HEAD","detail":"Asked: owed by REVIEWS, BY BATCH: W1 and W2 touched main.ts (a DOM seam); the batch since A29 also holds S31 (1d1e052, 8005bf2), S30, S28, F7, P22 (tools and hooks). Done when: the review run, its findings fixed in one commit, its cost recorded. No architecture run: the batch is a run's own builds and fixes."}
 {"at":"2026-11-24T21:23","ev":"start","id":"A30"}
 {"at":"2026-11-24T21:24","ev":"start","id":"A30"}
+{"at":"2026-11-24T21:37","ev":"done","id":"A30","commits":["f989ac1","40a1755"],"note":"nine findings: five from one cause (the reader re-spelled the parser), fixed by asking the parser; two comments fixed; the Acts cast kept; 108,271 tokens"}
