@@ -245,3 +245,11 @@ and F7 once.
   there, the search index's own. Both counts read 0 a moment later. The
   seed check now reads the store as it stands (`A.storedNow`); it retries
   30 times and needs no save.
+- 21:44 F9 (asked "(a)"): the hold first proposed, the fresh start waiting
+  for its startup writes, measured as having nothing to wait for: after the
+  seed check the store's writes closed in a median 1 ms (3 ms at 4x), at
+  most 50 ms, over 72 sections each. F7 and F9 both ran out at a section's
+  first wait after a reload, nothing pending, in whole verdicts at load
+  20-34: a page starved by the machine (inferred). `go()`'s focus wait,
+  the tightest state wait at 1 s, now allows 5 s; it returns as the focus
+  lands. The watch stays.

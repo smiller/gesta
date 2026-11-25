@@ -180,7 +180,9 @@ export const log = async (label: string, x: unknown) => { const base = x !== nul
    the wait. No screen: the last section's format toolbar may still be fading */
 export const go = async (hash: string, ms = 15000) => {
   await page.goto(A.url(hash)); await A.waitEntry(page, decodeURIComponent(hash).replace(/%20/g, " "), ms);
-  await waitState(page, { name: "focus", ms: 1000 }, ([ed, src]) => [ed, src].some((q) => document.querySelector(q)?.contains(document.activeElement)), [S.editor, S.markdown]);
+  /* 5 s, not 1: just after a reload on a loaded machine the page may not
+     answer its first wait within 1 s, nothing pending */
+  await waitState(page, { name: "focus", ms: 5000 }, ([ed, src]) => [ed, src].some((q) => document.querySelector(q)?.contains(document.activeElement)), [S.editor, S.markdown]);
   console.log(current + ": arrived at " + decodeURIComponent(hash) + ":", JSON.stringify({ cursor: await cursor() }));
 };
 /* entries written as another tab would, in turn */
