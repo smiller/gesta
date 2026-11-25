@@ -15,12 +15,10 @@ if ! git diff --quiet || [ -n "$(git ls-files --others --exclude-standard)" ]; t
   aside=1
 fi
 npm run verify; status=$?
-# The logs verify writes, 2026-11-24: verify appends its play to
-# docs/helium-runs/<day>.jsonl, and its wake can append to the progress log,
-# while what was not staged is set aside; the stash would not pop over them,
-# the commit was refused and the set-aside lines stranded in the stash
-# (three plays, twice in one evening). Both logs are append-only: verify's
-# lines are taken off, the stash put back, and they are appended after it.
+# The two logs, docs/helium-runs and docs/progress, are append-only and
+# may gain lines while what was not staged is set aside: those lines are
+# taken off, the stash put back, and they are appended after it, so the
+# stash pops and no line is lost.
 if [ "$aside" = 1 ]; then
   kept=$(mktemp -d) || exit 1
   for f in $(git diff --name-only -- docs/helium-runs docs/progress) $(git ls-files --others --exclude-standard -- docs/helium-runs docs/progress); do
