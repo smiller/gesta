@@ -125,3 +125,4 @@
 {"at":"2026-11-24T20:44","ev":"start","id":"S28"}
 {"at":"2026-11-24T20:46","ev":"done","id":"S28","commits":["6e40146"],"note":"(b): the tree-wide refusal leaves verify; npm run vocabulary, run when a word is retired"}
 {"at":"2026-11-24T20:48","ev":"start","id":"F7"}
+{"at":"2026-11-24T20:52","ev":"done","id":"F7","commits":["68dde6f"],"note":"both run-outs at a fresh start's seed check (A.stored's save wait over the search index's own write); the seed check reads as it stands; the watch stays, a save's wait elsewhere still wakes it"}

@@ -237,7 +237,7 @@ and F7 once.
   - `decoded`'s comment spoke of another module and called the tools
     "a reader": reworded, and a test runs the decoder from its source
     alone.
-- 20:58 F7 (asked "Look at F7 again"): both sightings (2026-11-23 22:02,
+- 20:50 F7 (asked "Look at F7 again"): both sightings (2026-11-23 22:02,
   "quote tab"; today 19:34, "refused fence") ran out right after the
   section's header, before its first arrival: the fresh start's seed
   check, `seededIn`, read the store through `A.stored`, which waits 3 s for
