@@ -71,3 +71,15 @@ Strong), then "yes" to the five decisions below.
   each stub function logged when called, and a whole corner run (1x, 5
   windows) logged none. Its `backupsPanel` was dead, bound and called
   nowhere. Verify's first play read F9 (below); its unchanged replay passed.
+- 21:31 A30, `/code-review high cf64c42..HEAD`: 108,271 tokens; nine
+  findings. Five (1-4, 6) shared one cause: markdown mode's reader spelled
+  the parser's link rules again and missed their edges (a caret at a bare
+  address's end or start, in `_…_`, before a destination's last `)`, in a
+  four-backtick fence; a refusal where no link is drawn). The reader now
+  asks the parser: a probe link typed at the caret is parsed, and the
+  caret is refused unless the probe is a link of its own with every other
+  link, heading and fence as before. Two of S31's expectations were the
+  old rule's error and are flipped; the review's cases are in its test.
+  Fixed: two comments (the seed check's; the hook's, copied in by the
+  reader). Not changed: the `Acts` cast (a forgotten binding throws at its
+  first use, where the stub did nothing; both hide it, the throw less).

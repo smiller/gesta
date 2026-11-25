@@ -61,12 +61,12 @@ describe("markdownTyped", () => {
   });
 });
 
-it("what the caret is inside, in markdown mode: a fence, inline code that closes, a link, a bare address or an image, a heading's line; nothing at a span's edge or in prose", () => {
+it("what the caret is inside, in markdown mode, read as a link typed there would parse: a fence, inline code, a link or a bare address it would break, a heading's line; nothing in prose", () => {
   const at = (text: string) => markdownSpanAt(text.replace("|", ""), text.indexOf("|"));
   expect(at("```\nsome |code\n```\n")).toBe("fence");
   expect(at("```|\ncode\n```\n")).toBe("fence");
   expect(at("see `co|de` now")).toBe("code");
-  expect(at("see ``a ` |b`` now")).toBe("code");
+  expect(at("see ``a ` |b`` now")).toBeNull();
   expect(at("it`s |fine")).toBeNull();
   expect(at("see [the li|nk](#x) now")).toBe("link");
   expect(at("see [the link](#x|) now")).toBe("link");
@@ -77,8 +77,14 @@ it("what the caret is inside, in markdown mode: a fence, inline code that closes
   expect(at("plain |prose")).toBeNull();
   expect(at("- https://chelsea|troy.com/2024/ai/")).toBe("link");
   expect(at("see www.exam|ple.org now")).toBe("link");
-  expect(at("see https://example.org/| now")).toBeNull();
-  expect(at("see |https://example.org/ now")).toBeNull();
+  expect(at("see https://example.org/| now")).toBe("link");
+  expect(at("see https://example.org/page.| Next")).toBe("link");
+  expect(at("see |https://example.org/ now")).toBe("link");
+  expect(at("see _https://exam|ple.org/_ now")).toBe("link");
+  expect(at("see [x](https://en.wikipedia.org/wiki/A_(b)|) now")).toBe("link");
+  expect(at("````\n```\nso|me\n````\n")).toBe("fence");
+  expect(at("see x:https://exa|mple.org now")).toBeNull();
+  expect(at("see https://example.org/ |now")).toBeNull();
   expect(at("see <https://exam|ple.org/> now")).toBeNull();
   expect(at("```\ncode\n```\n\nafter |it")).toBeNull();
 });

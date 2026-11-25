@@ -12,7 +12,9 @@
    shifts every line it touches) (pin: markdownKeys.test › an empty line gains
    nothing) */
 import { curlChar } from "./typing.ts";
-import { FENCE_LINE, HEADING_LINE } from "../model/grammar.ts";
+import type { Node } from "prosemirror-model";
+import { parseMarkdown } from "../model/parse.ts";
+import { FENCE_LINE } from "../model/grammar.ts";
 import { said, type Said } from "../model/alertText.ts";
 
 export interface Edit { value: string; start: number; end: number }
@@ -77,32 +79,51 @@ export function markdownTyped(value: string, caret: number): Typed | null {
 }
 
 export type MarkdownSpan = "fence" | "code" | "link" | "heading";
-/* a backtick run opens inline code only where a run as long closes it
-   later on the line: a lone one typed for an apostrophe is prose (pin:
+const PROBE_HREF = "#gesta-probe", PROBE = "[probe](" + PROBE_HREF + ")";
+type Linked = { text: string; href: string };
+function linksIn(doc: Node): Linked[] {
+  const out: Linked[] = [];
+  doc.descendants((n) => { const l = n.isText ? n.marks.find((m) => m.type.name === "link") : undefined; if (l && l.attrs.href !== PROBE_HREF) out.push({ text: n.text!, href: l.attrs.href }); });
+  return out;
+}
+/* where the probe link landed: as a link, by its parent; else as literal
+   text, by the code it fell in or the link it broke; "lost" where no text
+   holds it, a fence's own line having taken it for its language */
+function landed(doc: Node): MarkdownSpan | "free" | "lost" {
+  let at: MarkdownSpan | "free" | null = null;
+  doc.descendants((n, _pos, parent) => {
+    if (at !== null || !n.isText) return at === null;
+    if (n.marks.some((m) => m.type.name === "link" && m.attrs.href === PROBE_HREF)) at = parent?.type.name === "heading" ? "heading" : "free";
+    else if (n.text!.includes(PROBE)) at = parent?.type.name === "code_block" ? "fence" : n.marks.some((m) => m.type.name === "code") ? "code" : "link";
+    return at === null;
+  });
+  return at ?? "lost";
+}
+const sameLinks = (a: Linked[], b: Linked[]): boolean => a.length === b.length && a.every((l, i) => l.text === b[i].text && l.href === b[i].href);
+const lineAt = (text: string, pos: number): string => text.slice(text.lastIndexOf("\n", pos - 1) + 1).split("\n")[0];
+const blocksIn = (doc: Node, type: string): string[] => {
+  const out: string[] = [];
+  doc.descendants((n) => { if (n.type.name === type) out.push(n.textContent + "\u0000" + String(n.attrs.language ?? n.attrs.level ?? "")); });
+  return out;
+};
+const sameBlocks = (a: Node, b: Node, type: string): boolean => blocksIn(a, type).join("\n") === blocksIn(b, type).join("\n");
+/* a probe that broke a heading or a fence (typed at a heading's start, or
+   onto a fence's own line) is refused as that block */
+function brokenBlock(before: Node, after: Node): MarkdownSpan | null {
+  if (blocksIn(after, "heading").length < blocksIn(before, "heading").length) return "heading";
+  return sameBlocks(before, after, "code_block") ? null : "fence";
+}
+/* what the caret at `pos` is inside, read as a link typed there would parse:
+   asked of the parser, never spelled again here, so a fence, inline code,
+   an address drawn as a link and a heading are what HTML mode draws (pin:
    markdownKeys.test › what the caret is inside, in markdown mode) */
-function inCodeSpan(line: string, at: number): boolean {
-  let open = 0;
-  for (const m of line.slice(0, at).matchAll(/`+/g)) open = open === 0 ? m[0].length : m[0].length === open ? 0 : open;
-  return open > 0 && line.slice(at).split(/[^`]+/).includes("`".repeat(open));
-}
-/* a bare address, http or www, is drawn as a link in HTML mode, so it is
-   one here; one in <…> is drawn as text (pin: markdownKeys.test › what the
-   caret is inside, in markdown mode) */
-const LINK_SPAN = /!?\[[^\]\n]*\]\([^)\n]*\)|(?<![<\w])(?:https?:\/\/|www\.)[^\s<>]+/gi;
-const inLink = (line: string, at: number): boolean => [...line.matchAll(LINK_SPAN)].some((m) => at > m.index && at < m.index + m[0].length);
-/* what the caret at `pos` is inside, the fence first: a fence's lines are
-   code, whatever they hold (pin: markdownKeys.test › what the caret is
-   inside, in markdown mode) */
 export function markdownSpanAt(text: string, pos: number): MarkdownSpan | null {
-  const { start, line } = lineAround(text, pos), at = pos - start;
-  if (fencedAt(text.slice(0, start), line)) return "fence";
-  if (inCodeSpan(line, at)) return "code";
-  if (inLink(line, at)) return "link";
-  return HEADING_LINE.test(line) ? "heading" : null;
+  let before: Node, after: Node;
+  try { before = parseMarkdown(text); after = parseMarkdown(text.slice(0, pos) + PROBE + text.slice(pos)); } catch { return null; }
+  const where = landed(after);
+  if (where === "lost") return FENCE_LINE.test(lineAt(text, pos)) ? "fence" : "link";
+  if (where !== "free" && where !== "link") return where;
+  const broken = brokenBlock(before, after);
+  if (broken) return broken;
+  return where === "link" || !sameLinks(linksIn(before), linksIn(after)) ? "link" : null;
 }
-function lineAround(text: string, pos: number): { start: number; line: string } {
-  const start = pos === 0 ? 0 : text.lastIndexOf("\n", pos - 1) + 1, end = text.indexOf("\n", start);
-  return { start, line: text.slice(start, end === -1 ? text.length : end) };
-}
-const fencedAt = (before: string, line: string): boolean =>
-  FENCE_LINE.test(line) || before.split("\n").filter((l) => FENCE_LINE.test(l)).length % 2 === 1;
