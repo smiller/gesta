@@ -4,6 +4,15 @@ const TRAILER = "console by section: ";
    put each back by its place alone */
 export const dealt = <T>(sections: T[], [k, n]: [number, number]): T[] => sections.filter((_, i) => i % n === k);
 
+/* the sections named are taken before they are dealt: dealt first, a
+   window kept only the named ones it was dealt and the merge, putting each
+   back by its place, lost the rest (pin: heliumShards.test › the sections
+   a play names) */
+export const toPlay = <T>(sections: T[], name: (s: T) => string, only: string[] | null, shard?: [number, number]): T[] => {
+  const named = only ? sections.filter((s) => only.includes(name(s))) : sections;
+  return shard ? dealt(named, shard) : named;
+};
+
 export const shardTrailer = (bySection: string[][]): string => TRAILER + JSON.stringify(bySection) + "\n";
 
 interface Window { blocks: string[]; logs: string[][] }

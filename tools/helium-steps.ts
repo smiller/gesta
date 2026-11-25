@@ -1,7 +1,7 @@
 import type { Page, BrowserContext } from "./heliumPage.ts";
 import { bind, setSection, freshStart, SECTIONS, type RunOptions } from "./steps/kit.ts";
 import { startClock, report, type Clock } from "./steps/timing.ts";
-import { dealt } from "./heliumShards.ts";
+import { toPlay } from "./heliumShards.ts";
 import "./steps/launch.ts";
 import "./steps/references.ts";
 import "./steps/panels.ts";
@@ -26,7 +26,6 @@ async function settle(page: Page): Promise<void> {
   await page.bringToFront();
   await page.keyboard.press("Escape").catch(() => {});
 }
-const skipped = (opts: RunOptions, name: string): boolean => !!opts.only && !opts.only.includes(name);
 const firstLine = (e: unknown): string => String(e).split("\n")[0].slice(0, 2000);
 /* a start that throws fails its own section, not the run */
 async function started(page: Page, name: string): Promise<boolean> {
@@ -47,7 +46,7 @@ export async function runSteps(page: Page, ctx: BrowserContext, opts: RunOptions
   bind(page, ctx, opts);
   const clock = process.env.TIMING ? startClock(ctx) : null;
   const ordered = opts.reverse ? [...SECTIONS].reverse() : SECTIONS;
-  const order = (opts.shard ? dealt(ordered, opts.shard) : ordered).filter((s) => !skipped(opts, s[0]));
+  const order = toPlay(ordered, (s) => s[0], opts.only ?? null, opts.shard);
   for (const s of order) await playSection(page, s, clock);
   if (clock) report(clock);
   return order.map((s) => s[0]);

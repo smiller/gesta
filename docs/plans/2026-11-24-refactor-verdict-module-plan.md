@@ -29,3 +29,10 @@ decisions below.
   `helium-approve.ts` 190 lines to 112. The throwaway order edit printed
   the same 11 lines as at 18:08 under the old script, times scrubbed, and
   replayed corner and order both (18:29:38, marked replay); verify green.
+- 20:34 S30 (asked "Let's look at fixing S30"): a `STEPS=` play dealt over
+  windows dealt the sections first and filtered them second, so a window
+  kept only the named ones it was dealt and the merge, which puts each back
+  by its place, lost the rest. `toPlay` in `heliumShards.ts` takes the named
+  sections first, then deals. The round trip (named, dealt over 1, 2, 3 and
+  5 windows, merged) is tested; the 19:13 play of "editing" and "alerts and
+  surfaces" now prints both.

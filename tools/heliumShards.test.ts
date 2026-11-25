@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { dealt, merged, shardTrailer } from "./heliumShards.ts";
+import { dealt, merged, shardTrailer, toPlay } from "./heliumShards.ts";
 
 const block = (name: string, ...lines: string[]) => ["== " + name, ...lines].map((l) => l + "\n").join("");
 
@@ -21,4 +21,13 @@ describe("the verdict's sections in several windows", () => {
     const w0 = block("a", "a1"), w1 = block("b") + shardTrailer([[]]);
     expect(merged([w0, w1])).toBe(block("a", "a1") + block("b") + "console: (nothing)\n");
   });
+});
+
+it("the sections a play names, dealt over its windows and merged back, all come back in their order", () => {
+  const all = ["a", "b", "c", "d", "e", "f", "g"], only = ["b", "f"];
+  for (const n of [1, 2, 3, 5]) {
+    const outs = Array.from({ length: n }, (_, k) => toPlay(all, (s) => s, only, n > 1 ? [k, n] : undefined).map((s) => "== " + s + "\nline\n").join(""));
+    expect(merged(outs).split("\n").filter((l) => l.startsWith("== "))).toEqual(["== b", "== f"]);
+  }
+  expect(toPlay(all, (s) => s, null, [1, 3])).toEqual(["b", "e"]);
 });
