@@ -29,7 +29,6 @@ import { markdownMode } from "./editor/markdownMode.ts";
 import { screenTake, type ScreenTake } from "./ui/tabWrite.ts";
 import { alertWords, said, type Raise, type Said, type ErrorOwner } from "./model/alertText.ts";
 import { refuseCold } from "./ui/journalLoad.ts";
-import { countBefore, positionAt, carriedCount } from "./ui/viewCarets.ts";
 import { pageTop, pageTopCached } from "./ui/alertArea.ts";
 import { publish } from "./published.ts";
 
@@ -355,22 +354,10 @@ export function startSession(opts: SessionOptions): Session {
     }).then((moved) => afterTabWrite(ekey, verdict, moved));
   }
   /* the open entry drawn again from the cache, the caret where it was and
-     the focus kept: a reader may be mid-sentence. Carried by its count
-     across the text that changed: a host page losing a deleted sub-entry's
-     link above the caret put the caret that many letters late
-     (pin: viewCarets.test › keeps a caret before the change)
+     the focus kept: a reader may be mid-sentence
      (pin: sub-entries › deleted: back on the day, its link gone, the other tag left) */
-  type Caret = { flat: ReturnType<Surface["flat"]>; at: number };
-  function caretCarried(s: Surface, was: Caret): void {
-    const flat = s.flat();
-    s.placeCaret(positionAt(flat, carriedCount(was.flat.text, flat.text, countBefore(was.flat, was.at))) ?? s.end(), false);
-  }
   function redraw(): void {
-    const view = surface.current;
-    const was = view && opts.mount.contains(document.activeElement) ? { flat: view.flat(), at: view.caret() } : null;
-    open(current.date, current.tag);
-    const s = surface.current;
-    if (was && s) caretCarried(s, was);
+    surface.showAgain(opts.mount.contains(document.activeElement), () => open(current.date, current.tag));
   }
   /* repainted from the store ONLY where the store moved under it, after the
      debounce has landed: a reopen after an async write threw away keystrokes

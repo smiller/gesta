@@ -8,7 +8,7 @@ import { fenceRefusals } from "../model/fenceRefusals.ts";
 import { said, type ErrorOwner } from "../model/alertText.ts";
 import { directivesIn, directiveTrouble } from "../store/conventions.ts";
 import { splitKey } from "../store/keys.ts";
-import { countBefore, positionAt, arrivingCount, crossViewOffset, type Hold } from "../ui/viewCarets.ts";
+import { countBefore, positionAt, arrivingCount, carriedCount, crossViewOffset, type Hold } from "./viewCarets.ts";
 
 export interface Surface {
   /* the stream in markdown mode holds every fence line the one in HTML mode
@@ -88,6 +88,9 @@ export interface Surfaces {
   /* keepView: the same entry under a new key (a rename), not an arrival */
   show(md: string, ekey: string, keepView?: boolean): void;
   switchTo(md: boolean): void;
+  /* the caret held before `show` and carried onto the view it mounts, where
+     the focus was in the entry */
+  showAgain(focused: boolean, show: () => void): void;
 }
 
 export function surfaces(opts: SurfaceOptions): Surfaces {
@@ -264,10 +267,20 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
     opts.switched();
     placeCaret();
   }
+  /* carried by its count across the text that changed: a host page losing
+     a deleted sub-entry's link above the caret put the caret that many
+     letters late (pin: viewCarets.test › keeps a caret before the change) */
+  function showAgain(focused: boolean, again: () => void): void {
+    const was = focused && cur ? { flat: cur.flat(), at: cur.caret() } : null;
+    again();
+    if (!was || !cur) return;
+    const flat = cur.flat();
+    cur.placeCaret(positionAt(flat, carriedCount(was.flat.text, flat.text, countBefore(was.flat, was.at))) ?? cur.end(), false);
+  }
   return {
     get current() { return cur; },
     get md() { return markdownMode; },
     get forced() { return forced; },
-    show, switchTo,
+    show, switchTo, showAgain,
   };
 }

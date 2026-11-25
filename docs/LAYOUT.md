@@ -42,7 +42,8 @@ tools' switches. `tools/claudeLayout.test.ts` fails on a module under
     mark). ⌃⌘E: `replace.ts`.
   - THE SURFACE, `surface.ts`: what HTML mode (`htmlMode.ts`)
     and markdown mode (`markdownMode.ts`) share, and the switch, ⌃⌘M; no
-    DOM, tested over fake views. `placeKeeper.ts`: where an entry was left
+    DOM, tested over fake views; `viewCarets.ts`, a caret's count across
+    the two views and across a changed text. `placeKeeper.ts`: where an entry was left
     and the arrival back; no DOM.
   - Keys and acts: `typing.ts` (markdown as you type), `format.ts` (the
     format toolbar's acts), `markdownKeys.ts`, `codeKeys.ts`, `quoteKeys.ts`,
@@ -84,7 +85,7 @@ tools' switches. `tools/claudeLayout.test.ts` fails on a module under
   why it closed and what the one slot holds), `subEntries.ts`, `lifecycle.ts` (the six acts over
   entries, over ports), `keptState.ts` (what the browser keeps by entry
   key: places, folds, bookmarks, told once per act), `overlays.ts` (one thing open at a time),
-  `tabWrite.ts` (another tab's write: taken, left or said deleted), `viewCarets.ts`, `bookmarksModel.ts`, `backupsModel.ts`,
+  `tabWrite.ts` (another tab's write: taken, left or said deleted), `bookmarksModel.ts`, `backupsModel.ts`,
   `pickKeys.ts`, `richCopy.ts`, `clipboard.ts`, `counted.ts`,
   `heldKeys.ts`, `chords.ts` (every ⌃⌘ chord: its key, act, help
   line and whether the reader has it), `alertArea.ts` (the alert area

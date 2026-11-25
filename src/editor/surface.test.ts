@@ -306,3 +306,19 @@ describe("the view shown", () => {
     expect(sameShown(null, null)).toBe(true);
   });
 });
+
+describe("a show again", () => {
+  it("with the focus in the entry carries the caret across a changed text by its count: a word added before the caret moves it on", () => {
+    const w = world();
+    w.s.show("AB CD", "commonplace/A");
+    w.last().caretAt = posOf(parseMarkdown("AB CD"), "D");
+    w.s.showAgain(true, () => w.s.show("XY AB CD", "commonplace/A", true));
+    expect(w.log.filter((l) => l.startsWith("caret "))).toEqual(["caret " + posOf(parseMarkdown("XY AB CD"), "D") + " still"]);
+  });
+  it("without the focus in the entry places no caret", () => {
+    const w = world();
+    w.s.show("AB CD", "commonplace/A");
+    w.s.showAgain(false, () => w.s.show("XY AB CD", "commonplace/A", true));
+    expect(w.log.filter((l) => l.startsWith("caret "))).toEqual([]);
+  });
+});

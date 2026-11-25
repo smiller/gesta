@@ -31,3 +31,8 @@ Strong), then "yes" to the five decisions below.
   `:136` carry real differences, a text position meaning nothing in
   markdown mode; moving the flag behind the adapter only renames it.
   Candidate 5 kept on W.
+- 19:48 W6 built (asked "shall we pull in W6 and then review?", then "yes"
+  to its three decisions): `showAgain(focused, show)` in the surfaces holds
+  the caret, runs the show and carries the caret by its count; the
+  session's redraw is that one call. `viewCarets.ts` moved to `src/editor/`.
+  Two tests over the surfaces' fakes; verify green, the verdict as approved.
