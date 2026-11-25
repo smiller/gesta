@@ -8,6 +8,7 @@ import type { EditorView } from "prosemirror-view";
 import { schema } from "../model/schema.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
 import { said, type Said } from "../model/alertText.ts";
+import type { Shown } from "./surface.ts";
 
 export function linkRefusal(state: EditorState): Said | null {
   const $to = state.selection.$to;
@@ -39,4 +40,16 @@ export function insertLinkAfter(view: Pick<EditorView, "state" | "dispatch">, hr
   const { $to } = view.state.selection;
   const text = schema.text(label, [schema.marks.link.create({ href })]);
   view.dispatch(view.state.tr.insert($to.pos, text).scrollIntoView());
+}
+/* one rule for every act that puts a link after the caret, whichever view
+   shows: a new entry's link and a bookmark's alike (pin: insertLink.test ›
+   a link after the caret is refused alike in either act) */
+export function linkAfterRefusal(shown: Shown | null): Said | null {
+  if (!shown) return said("placeCursor");
+  if (shown.mode === "html") return linkRefusal(shown.view.state) ?? headingRefusal(shown.view.state);
+  return shown.lineIsHeading() ? said("noLinkInHeading") : null;
+}
+export function placeLinkAfter(shown: Shown, href: string, label: string, type: (text: string) => void): void {
+  if (shown.mode === "html") insertLinkAfter(shown.view, href, label);
+  else type(linkMarkdown(href, label));
 }

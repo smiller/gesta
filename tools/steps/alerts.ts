@@ -180,6 +180,16 @@ async function shortcutWithNoCursor(before: string): Promise<void> {
 }
 async function bookmarkLinkInMarkdownMode(): Promise<void> {
   await page.keyboard.press("Escape");
+  /* a heading's line refuses it in markdown mode, as it does a new entry's */
+  await write("commonplace/Heading Line", "# Heading Line\n\nx\n");
+  await view(true);
+  await R.markdownCaretTo(page, "Line");
+  await keep("bookmarks", '["2026-09-06","commonplace/Horace","commonplace/Links"]');
+  await page.keyboard.press("Control+Meta+b");
+  await rest(page);
+  await page.click(".bookmark-link[aria-label='Link to Links']", { timeout: 2000 }).catch(() => {});
+  await rest(page);
+  await log("a bookmark's link on a heading's line in markdown mode", { md: await stored(), corner: await corner() });
   await write("commonplace/Source Link", "x\n");
   await view(true);
   await R.markdownCaretTo(page, "x");

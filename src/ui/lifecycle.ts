@@ -15,7 +15,7 @@ import { pictureKey } from "../store/names.ts";
 import { unnamed, picturesOf } from "../store/pictures.ts";
 import { rootLabel } from "./rootListing.ts";
 import { retargetLinks, relabelLinks } from "../store/links.ts";
-import { linkRefusal, headingRefusal, cutsHeading, insertLinkAfter, linkMarkdown } from "../editor/insertLink.ts";
+import { cutsHeading, linkAfterRefusal, placeLinkAfter } from "../editor/insertLink.ts";
 import { cutMd, replaceWithLink } from "../editor/format.ts";
 import { htmlView, sameShown, type Shown } from "../editor/surface.ts";
 import { firstHeading } from "../store/headings.ts";
@@ -124,11 +124,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     if (!nsOf(c.date) && c.tag) return said("taggedHostsNothing");
     return onShelves(c.date, c.tag) ? SHELVES_EMPTY : null;
   }
-  function placeRefusal(inEntry: boolean, shown: Shown | null): Said | null {
-    if (!inEntry || !shown) return said("placeCursor");
-    if (shown.mode === "html") return linkRefusal(shown.view.state) ?? headingRefusal(shown.view.state);
-    return shown.lineIsHeading() ? said("noLinkInHeading") : null;
-  }
+  const placeRefusal = (inEntry: boolean, shown: Shown | null): Said | null => (inEntry ? linkAfterRefusal(shown) : said("placeCursor"));
   interface Placing { c: Current; spec: Spec; shown: Shown }
   const placeMoved = (p: Placing): boolean =>
     !sameShown(p.shown, deps.shown()) || (p.shown.mode === "markdown" && entryKey(session.current.date, session.current.tag) !== entryKey(p.c.date, p.c.tag));
@@ -136,8 +132,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     if (!landed) { ui.raise("entryNotCreated"); return; }
     if (placeMoved(p)) { ui.raise("linkNotPlaced"); return; }
     const label = mdLabel(p.spec.tag, "entry");
-    if (p.shown.mode === "html") insertLinkAfter(p.shown.view, p.spec.href, label);
-    else session.insertText(linkMarkdown(p.spec.href, label), true);
+    placeLinkAfter(p.shown, p.spec.href, label, (text) => { session.insertText(text, true); });
     return session.save.now().then(() => { ui.redraw(); session.goto(p.spec.href); });
   }
 

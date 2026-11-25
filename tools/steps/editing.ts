@@ -107,6 +107,15 @@ async function bookmarkLinkInCode(): Promise<void> {
   await rest(page);
   await log("a bookmark's link pressed in inline code", { md: await stored(), corner: await corner() });
   await page.keyboard.press("Escape");
+  /* a heading refuses a bookmark's link as it does a new entry's */
+  await write("commonplace/Heading Link", "# Heading Link\n\nprose\n");
+  await caretAt("Heading", 3);
+  await page.keyboard.press("Control+Meta+b");
+  await rest(page);
+  await page.click(".bookmark-link[aria-label='Link to Links']", { timeout: 2000 }).catch(() => {});
+  await rest(page);
+  await log("a bookmark's link pressed in a heading", { md: await stored(), corner: await corner() });
+  await page.keyboard.press("Escape");
   await write("commonplace/Paste Refused", "x\n");
   await caretAt("x", 1);
   await R.pasteText(page, "::: verse -1\nline one\n:::");

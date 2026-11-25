@@ -2,7 +2,9 @@ import { test, expect } from "vitest";
 import { EditorState, TextSelection } from "prosemirror-state";
 import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
-import { linkRefusal, headingRefusal, insertLinkAfter, linkMarkdown } from "./insertLink.ts";
+import { linkRefusal, headingRefusal, insertLinkAfter, linkMarkdown, linkAfterRefusal, placeLinkAfter } from "./insertLink.ts";
+import type { EditorView } from "prosemirror-view";
+import type { ReplacePort, Shown } from "./surface.ts";
 import { schema } from "../model/schema.ts";
 import { said } from "../model/alertText.ts";
 
@@ -38,4 +40,25 @@ test("linkMarkdown: the link as HTML mode's own link saves, escaped the same way
     expect(linkMarkdown(href, label)).toBe(serializeMarkdown(doc));
     expect(parseMarkdown(linkMarkdown(href, label)).eq(doc)).toBe(true);
   }
+});
+
+const html = (state: EditorState): Shown => ({ mode: "html", view: { state } as unknown as EditorView });
+const markdown = (heading: boolean): Shown => ({ mode: "markdown", replace: {} as ReplacePort, lineIsHeading: () => heading });
+test("a link after the caret is refused alike in either act: nowhere with nothing shown; in HTML mode inside code, a link or a heading; in markdown mode on a heading's line", () => {
+  expect(linkAfterRefusal(null)).toEqual(said("placeCursor"));
+  expect(linkAfterRefusal(html(at("plain text", "plain")))).toBeNull();
+  expect(linkAfterRefusal(html(at("see `code here` now", "code")))).toEqual(said("noLinkInCode"));
+  expect(linkAfterRefusal(html(at("see [the link](#x) now", "the li")))).toEqual(said("noLinkInLink"));
+  expect(linkAfterRefusal(html(at("# A Heading\n\nprose", "A He")))).toEqual(said("noLinkInHeading"));
+  expect(linkAfterRefusal(markdown(true))).toEqual(said("noLinkInHeading"));
+  expect(linkAfterRefusal(markdown(false))).toBeNull();
+});
+test("a link after the caret goes in as a link in HTML mode and is typed as its markdown in markdown mode", () => {
+  let state = at("plain text", "plain");
+  const view = { get state() { return state; }, dispatch: (tr: Parameters<EditorView["dispatch"]>[0]) => { state = state.apply(tr); } } as unknown as EditorView;
+  const typed: string[] = [];
+  placeLinkAfter({ mode: "html", view }, "#commonplace/Links", "Links", (t) => typed.push(t));
+  expect(serializeMarkdown(state.doc)).toBe("plain[Links](#commonplace/Links) text");
+  placeLinkAfter(markdown(false), "#commonplace/Links", "Links", (t) => typed.push(t));
+  expect(typed).toEqual([linkMarkdown("#commonplace/Links", "Links")]);
 });

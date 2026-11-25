@@ -3,12 +3,11 @@ import type { Journal } from "../store/reference.ts";
 import type { Screen } from "./screen.svelte.ts";
 import type { bookmarkStore } from "../store/bookmarkStore.ts";
 import { entryKey, entryHash } from "../store/keys.ts";
-import { linkRefusal, insertLinkAfter, linkMarkdown } from "../editor/insertLink.ts";
+import { linkAfterRefusal, placeLinkAfter } from "../editor/insertLink.ts";
 import { mdLabel } from "../store/reference.ts";
 import { bookmarkIndex, bookmarkParts, reachableBookmarks, aliasHolder, aliasRefusal, setBookmarkAlias, addBookmark, bookmarksFull, numberedBookmarks, type Bookmark } from "../store/bookmarks.ts";
 import { bookmarkRows, bookmarkFoot, bookmarkLabel, bookmarkLinkLabel, alreadyOn, typeAlias, resolveAlias, aliasCandidates, type Resolved } from "./bookmarksModel.ts";
 import type { Raise } from "../model/alertText.ts";
-import { htmlView } from "../editor/surface.ts";
 
 export type BookmarkAct = "jump" | "del" | "key" | "link";
 export interface BookmarkPanelDeps {
@@ -139,13 +138,12 @@ export function bookmarkActs(d: BookmarkPanelDeps): BookmarkPanel {
     closeOpened();
     session.focusText();
     if (key === hereKey()) { raise(alreadyOn(key, journal)); return; }
-    const view = htmlView(session.shown);
-    if (!cardCaret || !session.shown) { raise("placeCursor"); return; }
-    const why = view && linkRefusal(view.state);
+    const shown = session.shown;
+    if (!cardCaret || !shown) { raise("placeCursor"); return; }
+    const why = linkAfterRefusal(shown);
     if (why) { raise(why); return; }
     const p = bookmarkParts(key), href = entryHash(p.date, p.tag), label = mdLabel(bookmarkLinkLabel(key, journal), "entry");
-    if (view) insertLinkAfter(view, href, label);
-    else session.insertText(linkMarkdown(href, label), true);
+    placeLinkAfter(shown, href, label, (text) => { session.insertText(text, true); });
     session.save.now();
   };
   const act = (key: string, what: BookmarkAct): void => {

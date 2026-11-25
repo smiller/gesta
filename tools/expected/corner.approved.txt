@@ -512,6 +512,8 @@ a bare URL pasted: {"md":"see https://example.org/xit now","links":1,"cursor":"i
 editing: arrived at commonplace/Links: {"cursor":"at a line's start"}
 editing: arrived at commonplace/Inline Code Link: {"cursor":"at a line's start"}
 a bookmark's link pressed in inline code: {"md":"see `code here` now","corner":"no link inside a code block","cursor":"inside a line","screen":"commonplace/Inline Code Link · sel none · toolbar off · opened none · rows none · html · corner [whatever stood]"}
+editing: arrived at commonplace/Heading Link: {"cursor":"at a line's start"}
+a bookmark's link pressed in a heading: {"md":"# Heading Link\n\nprose","corner":"no link inside a heading — place your cursor below it","cursor":"inside a line","screen":"commonplace/Heading Link · sel none · toolbar off · opened none · rows none · html · corner [whatever stood]"}
 editing: arrived at commonplace/Paste Refused: {"cursor":"at a line's start"}
 a refused fence pasted: {"md":"x\n\n::: verse -1\nline one\n\\:::","corner":"::: verse -1 — -1 is not a starting line, so it stayed a paragraph","cursor":"at the end","screen":"commonplace/Paste Refused · sel none · toolbar off · opened none · rows none · html · corner [whatever stood]"}
 editing: arrived at commonplace/Source Curl: {"cursor":"at a line's start"}
@@ -554,6 +556,8 @@ a failed copy's error clicked: {"clipboard":"[*Links*](…)","cursor":"none","sc
 the tab's icon: {"icon":true,"cursor":"none","screen":"commonplace/Links · sel none · toolbar off · opened none · rows none · html · corner [whatever stood]"}
 alerts and surfaces: arrived at commonplace/Horace: {"cursor":"at a line's start"}
 a shortcut chosen with no cursor in the entry: {"corner":"place your cursor in the entry","unchanged":true,"cursor":"at a line's start","screen":"commonplace/Horace · sel none · toolbar off · opened none · rows none · html · corner [whatever stood]"}
+alerts and surfaces: arrived at commonplace/Heading Line: {"cursor":"at a line's start"}
+a bookmark's link on a heading's line in markdown mode: {"md":"# Heading Line\n\nx","corner":"no link inside a heading — place your cursor below it","cursor":"inside a line","screen":"commonplace/Heading Line · sel none · toolbar off · opened none · rows none · markdown · corner [whatever stood]"}
 alerts and surfaces: arrived at commonplace/Source Link: {"cursor":"at a line's start"}
 a bookmark's link in markdown mode: {"md":"x[Links](…)","cursor":"at the end","screen":"commonplace/Source Link · sel none · toolbar off · opened none · rows none · markdown · corner [whatever stood]"}
 Search opened before the warm: {"loading":"Still loading…","rows":true,"cursor":"at the end","screen":"commonplace/Source Link · sel none · toolbar off · opened none · rows none · html · corner [whatever stood]"}
