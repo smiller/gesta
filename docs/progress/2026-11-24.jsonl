@@ -132,3 +132,6 @@
 {"at":"2026-11-24T21:09","ev":"start","id":"W2"}
 {"at":"2026-11-24T21:13","ev":"done","id":"W2","commits":["5ba24be"],"note":"the menu draws menus.items(name), the list the selection walks"}
 {"at":"2026-11-24T21:13","ev":"start","id":"W1"}
+{"at":"2026-11-24T21:21","ev":"done","id":"W1","commits":["2c50dcd"],"note":"(b): an Acts interface typed by the factories in place of the stub; no early call measured"}
+{"at":"2026-11-24T21:21","ev":"add","id":"F9","list":"F","title":"A focus's wait ran out at a section's first arrival, where F7 ran out","detail":"Asked: found 21:18 (not asked), verify over W1: in refused fence, before its first arrival, 'a focus's wait ran out after 1000 ms' (go() in tools/steps/kit.ts:183, the focus into the entry after it opens); corner, order held to it; the unchanged replay passed (the pair in the ledger). The first focus run-out in 73 ledgered plays, 28 min after F7's fix took the seed check's 3 s save wait away. Why: the fresh start's page is still busy (the search index's write, F7), and the first step's tight wait now meets it (inferred). Done when: woken or held; a hold proposed: the fresh start waits for the page's startup writes to close, with a generous limit, before the section's first step."}
+{"at":"2026-11-24T21:21","ev":"watch","id":"F9","text":"a focus's wait ran out"}
