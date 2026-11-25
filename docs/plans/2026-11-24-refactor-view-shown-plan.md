@@ -25,3 +25,9 @@ Strong), then "yes" to the five decisions below.
   replace, not the value); six act modules, the lifecycle and `main.ts`
   read `shown`, their double checks dropped. Verify green, the four Helium
   runs ok with no approval.
+- 19:14 Candidate 3 built (d370c19): a bookmark's link refused in a heading
+  in both modes, as a new entry's (asked). Candidate 4 dismissed (asked):
+  the place keeper's markdown-mode branches at `placeKeeper.ts:36` and
+  `:136` carry real differences, a text position meaning nothing in
+  markdown mode; moving the flag behind the adapter only renames it.
+  Candidate 5 kept on W.

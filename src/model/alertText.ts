@@ -149,7 +149,7 @@ export const ALERTS = {
   taggedHostsNothing: warning("a tagged entry holds no entries of its own", "⌃⌘N on a day’s tagged entry."),
   noLinkInCode: warning("no link inside a code block", "A link placed with the cursor in code."),
   noLinkInLink: warning("no link inside a link", "A link placed with the cursor in a link."),
-  noLinkInHeading: warning("no link inside a heading — place your cursor below it", "A new entry’s link placed with the cursor in, or a selection cutting into, a heading."),
+  noLinkInHeading: warning("no link inside a heading — place your cursor below it", "A new entry’s or a bookmark’s link placed with the cursor in a heading, or a selection cutting into one."),
   keyShape: warning("a letter b to z, then letters or digits — a adds, a leading digit jumps", "A bookmark key given in a shape keys do not take."),
   keyTaken: warning((p: { key: string; label: string }) => "“" + echo(p.key) + "” already goes to " + echo(p.label), "A bookmark key given that another bookmark has."),
   proseTab: warning("⌃⌘M toggles markdown", "Tab in prose with nothing selected, or in an empty quote."),
