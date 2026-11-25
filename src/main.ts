@@ -25,25 +25,25 @@ import { mastheadModel } from "./ui/mastheadModel.ts";
 import { lifecycle } from "./ui/lifecycle.ts";
 import { keptState } from "./ui/keptState.ts";
 import { overlays } from "./ui/overlays.ts";
-import { bookmarkActs } from "./ui/bookmarkActs.ts";
-import { replaceActs } from "./ui/replaceActs.ts";
+import { bookmarkActs, type BookmarkPanel } from "./ui/bookmarkActs.ts";
+import { replaceActs, type ReplaceToolbar } from "./ui/replaceActs.ts";
 import { copyButton } from "./ui/copyButtonActs.ts";
-import { gotoToolbarActs } from "./ui/gotoToolbarActs.ts";
+import { gotoToolbarActs, type GotoToolbar } from "./ui/gotoToolbarActs.ts";
 import { folderActs } from "./ui/folderActs.ts";
-import { searchActs } from "./ui/searchActs.ts";
-import { gotoRowActs } from "./ui/gotoRowActs.ts";
+import { searchActs, type SearchRow } from "./ui/searchActs.ts";
+import { gotoRowActs, type GotoRow } from "./ui/gotoRowActs.ts";
 import { listenHeldKeys, plainChord } from "./ui/heldKeys.ts";
 import { pictureMoves } from "./store/pictures.ts";
 import { afterLoad } from "./store/toCommonplaces.ts";
 import { formatToolbar } from "./ui/formatToolbarActs.ts";
 import { backupsPanel } from "./ui/backupsPanelActs.ts";
-import { openerActs } from "./ui/openerActs.ts";
-import { menuActs } from "./ui/menuActs.ts";
+import { openerActs, type Openers } from "./ui/openerActs.ts";
+import { menuActs, type Menus } from "./ui/menuActs.ts";
 import { stepped } from "./ui/pickKeys.ts";
 import { menuArea, browserLayout, provideMenuArea } from "./editor/menuArea.ts";
 import { writeCap } from "./editor/fit.ts";
 import { chordAct, type ChordAct } from "./ui/chords.ts";
-import { isMenu, jRound, reasonOpened, type CloseReason, type MenuItem, type MenuName, type Opened } from "./ui/menuModel.ts";
+import { isMenu, jRound, reasonOpened, type CloseReason, type MenuName, type Opened } from "./ui/menuModel.ts";
 import { NS, asAddress } from "./store/keys.ts";
 import { parseShortcuts, filterShortcuts, type Shortcut } from "./store/shortcuts.ts";
 import { nsOf } from "./store/keys.ts";
@@ -96,28 +96,20 @@ function keepPicked(file: File): void {
   const p = alerts.progress("keepingBackup");
   keptBundle!.keep(file).then(() => location.reload(), (err: unknown) => { console.error("the backup could not be kept", err); p.fail(said("couldntKeepBackup", { why: failWhy(err) }), errText(err)); });
 }
-const acts = {
-  today: () => {}, walk: (_dir: "prev" | "next") => {}, export: () => {}, import: () => {}, backups: () => {}, resume: () => {}, sweep: () => {},
-  backupsPanel: () => {},
-  interval: (_n: number) => {}, opener: (_ns: Opened, _byKey?: boolean) => {}, newRoot: (_ns: MenuName) => {}, shelves: () => {},
-  create: () => {}, rename: () => {}, delete: () => {},
-  goto: { toggle: (_open: boolean) => {}, pick: (_level: number, _value: string, _ns?: string) => {} },
-  formatToolbar: (_act: string) => {},
-  copyBlock: () => {},
-  lines: (_open: boolean) => {},
-  shortcuts: { query: (_q: string) => {}, pick: (_i: number) => {}, walk: (_d: 1 | -1) => {}, enter: () => {}, edit: () => {}, draft: (_v: string) => {}, save: () => {}, escape: () => {} },
-  bookmarks: { key: (_e: KeyboardEvent) => {}, act: (_key: string, _what: "jump" | "del" | "key" | "link") => {}, draft: (_v: string) => {}, commit: (_v: string) => {} },
-  gotoToolbar: { toggle: () => {}, reask: () => {}, input: (_kind: "line" | "page" | "stanza", _v: string) => {}, enter: (_kind: "line" | "page" | "stanza", _v: string, _repeat: boolean) => {}, close: () => {}, dismiss: () => {} },
-  replace: { open: () => {}, find: (_v: string) => {}, with: (_v: string) => {}, next: (_back: boolean) => {}, one: () => {}, all: () => {}, close: () => {}, closeOver: () => {}, dismiss: () => {}, check: () => {} },
-  search: {
-    toggle: (_open: boolean) => {}, query: (_q: string) => {}, scope: (_at: number) => {}, walk: (_dir: 1 | -1) => {}, enter: () => {}, pick: (_i: number) => {},
-    hover: (_i: number) => {},
-  },
-  menus: {
-    open: (_name: MenuName) => {}, close: (_reason: CloseReason) => {}, key: (_e: KeyboardEvent) => false, hover: (_i: number) => {}, choose: (_i: number) => {},
-    mounted: (_right: number) => {}, answer: () => {}, items: (_name: MenuName): MenuItem[] => [],
-  },
-};
+/* every act the props and the keys reach, bound below as its factory is
+   made: the props call through it, so each act is found when it is used,
+   not when the props are handed over */
+interface Acts {
+  today(): void; walk(dir: WalkDir): void; export(): void; import(): void; backups(): void; resume(): void; sweep(): void;
+  interval(n: number): void; opener: Openers["opener"]; newRoot(ns: MenuName): void; shelves(): void;
+  create(): void; rename(): void; delete(): void;
+  goto: Pick<GotoRow, "toggle" | "pick">;
+  formatToolbar(act: string): void; copyBlock(): void; lines(open: boolean): void;
+  shortcuts: { query(q: string): void; pick(i: number): void; walk(d: 1 | -1): void; enter(): void; edit(): void; draft(v: string): void; save(): void; escape(): void };
+  bookmarks: Pick<BookmarkPanel, "key" | "act" | "draft" | "commit">;
+  gotoToolbar: GotoToolbar; replace: ReplaceToolbar; search: SearchRow; menus: Menus;
+}
+const acts = { shortcuts: {} } as Acts;
 const closeOpened = (reason: CloseReason = "displaced"): void => { if (isMenu(screen.opened)) acts.menus.close(reason); else screen.opened = null; };
 const overlay = overlays({
   opened: (by) => closeOpened(reasonOpened(by)),
@@ -322,14 +314,13 @@ const search = searchActs({
   opened: () => overlay.open("search"),
   focusRow: () => masthead.focusSearch(),
 });
-Object.assign(acts.search, search);
+acts.search = search;
 const goRow = gotoRowActs({
   gt: screen.goto, session, layer, journal,
   opened: () => overlay.open("goto"),
   focusRow: () => masthead.focusGoto(),
 });
-acts.goto.toggle = goRow.toggle;
-acts.goto.pick = goRow.pick;
+acts.goto = goRow;
 /* CUSTOM SHORTCUTS (⌃⌘S): a code → text table in ONE localStorage key,
    raw text verbatim, device-local. The panel filters by prefix as you
    type and Enter or a row inserts the highlighted expansion at the
@@ -405,10 +396,7 @@ const card = bookmarkActs({
   warmBlock: () => refuseCold(layer, raise),
   warmed: () => layer.warmed,
 });
-acts.bookmarks.key = card.key;
-acts.bookmarks.draft = card.draft;
-acts.bookmarks.commit = card.commit;
-acts.bookmarks.act = card.act;
+acts.bookmarks = card;
 const openBookmarks = card.open;
 const landing = landingActs({
   session, raise,
@@ -422,12 +410,12 @@ const gotoToolbar = gotoToolbarActs({
   focusBar: () => masthead.focusGotoToolbar(),
   listen: (type, f) => document.addEventListener(type, f, true),
 });
-Object.assign(acts.gotoToolbar, gotoToolbar);
-Object.assign(acts.replace, replaceActs({
+acts.gotoToolbar = gotoToolbar;
+acts.replace = replaceActs({
   rb: screen.replace, session, raise,
   opened: () => overlay.open("replace"),
   focusBar: () => masthead.focusReplace(),
-}));
+});
 /* the layout viewport's width on the root, as --client-w: 100vw
    counts a classic scrollbar's width and overflowed by it; observed on the
    root element, not the window's resize, because a scrollbar's arrival

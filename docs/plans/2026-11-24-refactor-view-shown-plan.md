@@ -64,3 +64,10 @@ Strong), then "yes" to the five decisions below.
   own list derived with `READER`, agreeing only because the two were set
   together. The menus' module answers `items(name)`; the menu draws that
   list. Tested; the verdict read as approved.
+- 21:20 W1 as (b) (asked "yes"): the 22-line stub of empty acts became an
+  `Acts` interface, its groups typed by their factories (search, the go to
+  and replace toolbars, the menus; a `Pick` of the go to row and the
+  bookmarks), bound by assignment. The stub's bodies were not load-bearing:
+  each stub function logged when called, and a whole corner run (1x, 5
+  windows) logged none. Its `backupsPanel` was dead, bound and called
+  nowhere. Verify's first play read F9 (below); its unchanged replay passed.
