@@ -123,3 +123,4 @@
 {"at":"2026-11-24T20:38","ev":"done","id":"S30","commits":["2f6ec64"],"note":"toPlay takes the named sections before dealing; the two-section play prints both"}
 {"at":"2026-11-24T20:38","ev":"stop","id":"S28","note":"the evidence gathered (tools/out/s28/refusals.md, 307,823 tokens): 11 refusals, every flagged line renamed; waits on the reader's judgement"}
 {"at":"2026-11-24T20:44","ev":"start","id":"S28"}
+{"at":"2026-11-24T20:46","ev":"done","id":"S28","commits":["6e40146"],"note":"(b): the tree-wide refusal leaves verify; npm run vocabulary, run when a word is retired"}
