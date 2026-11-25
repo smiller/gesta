@@ -40,7 +40,7 @@ const RELATIVE = /(?:from|import)\s*\(?\s*"(\.{1,2}\/[^"]+\.ts)"/g;
 /* a type-only import or export is stripped before the run: the file it
    names is never loaded (pin: heliumStamp.test › a type-only import is no
    code a run reads) */
-const TYPE_ONLY = /\b(?:import|export)\s+type\s+[^;]*?\bfrom\s*"[^"]+"/g;
+const TYPE_ONLY = /\b(?:import|export)\s+type\s+(?:\{[^}]*\}|\*(?:\s+as\s+\w+)?|\w+)\s*from\s*"[^"]+"/g;
 export function readByDrivers(drivers: string[], read: (path: string) => string | null): string[] {
   const seen = new Set<string>(), todo = [...drivers];
   for (let f = todo.pop(); f !== undefined; f = todo.pop()) {

@@ -182,6 +182,7 @@ async function played(v: Verdict, only: string[], replay: boolean): Promise<Play
   recorded(v, p);
   return p;
 }
+/* once over every run played, the replay's prints with the first's */
 function wakeOnce(v: Verdict, plays: Play[]): void {
   const outputs = plays.flatMap((p) => p.outputs);
   if (outputs.length) v.ports.wake(outputs.join("\n"));

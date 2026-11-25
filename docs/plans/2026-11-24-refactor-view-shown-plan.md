@@ -36,3 +36,13 @@ Strong), then "yes" to the five decisions below.
   the caret, runs the show and carries the caret by its count; the
   session's redraw is that one call. `viewCarets.ts` moved to `src/editor/`.
   Two tests over the surfaces' fakes; verify green, the verdict as approved.
+- 20:01 A29, `/code-review high 2dd06e1..HEAD`: 144,603 tokens; six
+  findings. Fixed: the type-only pattern anchored to the statement (an
+  unterminated `export type` swallowed the next import, latent: none in
+  the tree); the alert's description scoped the selection case to a new
+  entry's; two comments in helium-approve.ts described the verdict's
+  doing. Did not stand: `secs` from the play's start was A28's fix
+  (b661289), recorded above at 18:10; the kept-print test reads "differs"
+  (`compared` says "failed" only for a held run), now asserted. Kept for
+  the reader: in markdown mode a link after the caret is let into a code
+  fence, inline code or a link, where HTML mode refuses (pre-existing).

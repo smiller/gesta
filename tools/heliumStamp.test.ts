@@ -64,6 +64,8 @@ test("a type-only import is no code a run reads: the file it names is reached on
   };
   expect(readByDrivers(["tools/d.ts"], (f) => files[f] ?? null)).toEqual(["tools/a.ts", "tools/d.ts"]);
   expect(readByDrivers(DRIVERS, (f) => readFileSync(f, "utf8"))).not.toContain("tools/heliumLedger.ts");
+  const unterminated = { "tools/d.ts": ['export type Kind = "a" | "b"', 'import { seed } from "./seed.ts";'].join("\n"), "tools/seed.ts": "" };
+  expect(readByDrivers(["tools/d.ts"], (f) => unterminated[f as keyof typeof unterminated] ?? null)).toEqual(["tools/d.ts", "tools/seed.ts"]);
 });
 
 test("a run failed where a section failed, its fresh start failed, or it exited badly; and such a run is not approved", () => {

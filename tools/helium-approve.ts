@@ -82,16 +82,15 @@ async function play(name: string): Promise<string> {
   return playDealt({ name, script: tool.script, windows: WINDOWS, env: runEnv });
 }
 /* a child, not an import: imported, the progress tools were the run's
-   inputs, and an edit to the day's page replayed it; once over every run
-   played, and its failure said, a silent one leaving a watched item
-   asleep */
+   inputs, and an edit to the day's page replayed it; its failure said, a
+   silent one leaving a watched item asleep */
 function wake(print: string): void {
   const w = spawnSync("node", [fileURLToPath(new URL("./progress/wake.ts", import.meta.url))], { input: print, encoding: "utf8" });
   process.stdout.write(w.stdout ?? "");
   if (w.status !== 0) console.log("wake failed (" + (w.status ?? w.signal) + "): " + (w.stderr || w.error?.message || "").trim());
 }
-/* every play into the ledger, for a flake rate across sessions; a child,
-   as the wake is, so an edit to it is not the run's input */
+/* the ledger a child, as the wake is, so an edit to it is not the run's
+   input */
 const LEDGER = fileURLToPath(new URL("./heliumLedger.ts", import.meta.url));
 const ports: VerdictPorts = {
   player: { play, clear: (name) => { for (const w of windowsOf(name)) clearProfile(w); } },

@@ -99,7 +99,7 @@ Amber. Why an act just tried did nothing. It fades after ten seconds, or goes wh
 | `a tagged entry holds no entries of its own` | ⌃⌘N on a day’s tagged entry. |
 | `no link inside a code block` | A link placed with the cursor in code. |
 | `no link inside a link` | A link placed with the cursor in a link. |
-| `no link inside a heading — place your cursor below it` | A new entry’s or a bookmark’s link placed with the cursor in a heading, or a selection cutting into one. |
+| `no link inside a heading — place your cursor below it` | A new entry’s or a bookmark’s link placed with the cursor in a heading, or a new entry’s selection cutting into one. |
 | `a letter b to z, then letters or digits — a adds, a leading digit jumps` | A bookmark key given in a shape keys do not take. |
 | `“…” already goes to …` | A bookmark key given that another bookmark has. |
 | `⌃⌘M toggles markdown` | Tab in prose with nothing selected, or in an empty quote. |

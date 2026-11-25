@@ -141,6 +141,7 @@ test("order is held to corner played beside it: a reading changed on purpose dif
 test("a run that differs has its print kept under the failed runs and its received copy written", async () => {
   const f = fakes({ bridge: ["== b\nSECTION FAILED (b): boom\n"] }, { bridge: "== b\n1\n" });
   await verdict(asked(["bridge"]), f.ports);
+  expect(f.records[0].runs.bridge).toBe("differs");
   expect(f.files.received("bridge")).toBe("== b\nSECTION FAILED (b): boom\n");
   expect(readdirSync(f.d.failed).filter((n) => n.startsWith("bridge-"))).toHaveLength(1);
 });
