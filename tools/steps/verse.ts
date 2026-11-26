@@ -423,3 +423,40 @@ section("prose and verse paired", async () => {
   for (let i = 0; i < 20 && proseLabel === poemLabel; i++) { await rest(page); proseLabel = (await R.clipboardLines(page))[0]; }
   await log("⌃⌘R on the prose", { label: proseLabel });
 });
+
+section("passages", async () => {
+  /* the Euthyphro's opening and its 6c-d, as the backup has them: ⌃⌘G's one box, a passage drawn bare, and a reference by passage */
+  await writeAll({
+    "bookshelf/Plato": "# Plato\n\n- [Euthyphro](#bookshelf/Plato/Euthyphro)",
+    "bookshelf/Plato/Euthyphro": "# Euthyphro\n\n::: prose\n⟨2a⟩ ΕΥΘ. τί νεώτερον, ὦ Σώκρατες, γέγονεν, ὅτι σὺ τὰς ἐν Λυκείῳ καταλιπὼν διατριβὰς ἐνθάδε νῦν διατρίβεις περὶ τὴν τοῦ βασιλέως στοάν; οὐ γάρ που καὶ σοί γε δίκη τις οὖσα τυγχάνει πρὸς τὸν βασιλέα ὥσπερ ἐμοί. | *Euthyphro.* Why have you left the Lyceum, Socrates? and what are you doing in the Porch of the King Archon? Surely you cannot be concerned in a suit before the King, like myself?\nΣΩ. οὔτοι δὴ Ἀθηναῖοί γε, ὦ Εὐθύφρων, δίκην αὐτὴν καλοῦσιν ἀλλὰ γραφήν. | *Socrates.* Not in a suit, Euthyphro; impeachment is the word which the Athenians use.\n⟨2b⟩ ΕΥΘ. τί φῄς; γραφὴν σέ τις, ὡς ἔοικε, γέγραπται· οὐ γὰρ ἐκεῖνό γε καταγνώσομαι, ὡς σὺ ἕτερον. | *Euth.* What! I suppose that some one has been prosecuting you, for I cannot believe that you are the prosecutor of another.\nΣΩ. καὶ πόλεμον ἆρα ἡγῇ σὺ εἶναι τῷ ὄντι ἐν τοῖς θεοῖς πρὸς ἀλλήλους, καὶ ἔχθρας γε δεινὰς καὶ μάχας καὶ ἄλλα τοιαῦτα πολλά, οἷα λέγεταί τε ὑπὸ τῶν ποιητῶν, καὶ ὑπὸ τῶν ⟨6c⟩ ἀγαθῶν γραφέων τά τε ἄλλα ἱερὰ ἡμῖν καταπεποίκιλται, καὶ δὴ καὶ τοῖς μεγάλοις Παναθηναίοις ὁ πέπλος μεστὸς τῶν τοιούτων ποικιλμάτων ἀνάγεται εἰς τὴν ἀκρόπολιν; ταῦτα ἀληθῆ φῶμεν εἶναι, ὦ Εὐθύφρων; | *Soc.* And do you really believe that the gods fought with one another, and had dire quarrels, battles, and the like, as the poets say, and as you may see represented in the works of great artists? The temples are full of them; and notably the robe of Athene, which is carried up to the Acropolis at the great Panathenaea, is embroidered with them. Are all these tales of the gods true, Euthyphro?\nΕΥΘ. μὴ μόνον γε, ὦ Σώκρατες, ἀλλʼ ὅπερ ἄρτι εἶπον, καὶ ἄλλα σοι ἐγὼ πολλά, ἐάνπερ βούλῃ, περὶ τῶν θείων διηγήσομαι, ἃ σὺ ἀκούων εὖ οἶδʼ ὅτι ἐκπλαγήσῃ. | *Euth.* Yes, Socrates; and, as I was saying, I can tell you, if you would like to hear them, many other things about the gods which would quite amaze you.\nΣΩ. οὐκ ἂν θαυμάζοιμι. ἀλλὰ ταῦτα μέν μοι εἰς αὖθις ἐπὶ σχολῆς διηγήσῃ· νυνὶ δὲ ὅπερ ἄρτι σε ἠρόμην πειρῶ ⟨6d⟩ σαφέστερον εἰπεῖν. οὐ γάρ με, ὦ ἑταῖρε, τὸ πρότερον ἱκανῶς ἐδίδαξας ἐρωτήσαντα τὸ ὅσιον ὅτι ποτʼ εἴη, ἀλλά μοι εἶπες ὅτι τοῦτο τυγχάνει ὅσιον ὂν ὃ σὺ νῦν ποιεῖς, φόνου ἐπεξιὼν τῷ πατρί. | *Soc.* I dare say; and you shall tell me them at some other time when I have leisure. But just at present I would rather hear from you a more precise answer, which you have not as yet given, my friend, to the question, What is ‘piety’? When asked, you only replied, Doing as you do, charging your father with murder.\n:::",
+  });
+  await go("bookshelf/Plato/Euthyphro");
+  await settled(page);
+  await log("the gutter", await page.evaluate(() => [...document.querySelectorAll("#editor .page-label")].map((l) => getComputedStyle(l, "::after").content)));
+  const shown = () => page.evaluate(() => [...document.querySelectorAll(".goto-toolbar .ask:not([hidden]) label, .goto-toolbar .askor:not([hidden])")].map((l) => (l.textContent ?? "").trim()));
+  const landedOn = () => page.evaluate(() => document.querySelector("#editor .landed")?.getAttribute("data-page") ?? null);
+  await page.keyboard.press("Control+Meta+g");
+  await rest(page);
+  await log("⌃⌘G on the Euthyphro", { boxes: await shown() });
+  const enter = async (typed: string) => { await page.fill("#pageinput", typed); await page.press("#pageinput", "Enter"); };
+  for (const typed of ["6d", "6", "2B"]) {
+    await enter(typed);
+    await rest(page);
+    await log(`Go to passage ${typed}, Enter`, { landed: await landedOn() });
+  }
+  for (const typed of ["6e", "9", "6f"]) await log(`Go to passage ${typed}, Enter`, { said: await R.cornerAfter(page, () => enter(typed), /passage/) });
+  await page.keyboard.press("Escape");
+  await rest(page);
+  /* a row's translation, the row opening in 2a; then the two rows running from 6c into 6d, not the one before them, which
+     opens in 6b, a passage this text lacks */
+  await R.selectBetween(page, "Not in a suit", "Athenians use.");
+  await R.waitToolbar(page);
+  await R.cornerAfter(page, () => page.keyboard.press("Control+Meta+r"), /copied|copy/);
+  const first = (await R.clipboardLines(page))[0];
+  await log("⌃⌘R on Socrates’ first reply", { label: first });
+  await R.selectBetween(page, "Yes, Socrates; and, as I was saying", "murder.");
+  await page.keyboard.press("Control+Meta+r");
+  let second = first;
+  for (let i = 0; i < 20 && second === first; i++) { await rest(page); second = (await R.clipboardLines(page))[0]; }
+  await log("⌃⌘R from 6c into 6d", { label: second });
+});

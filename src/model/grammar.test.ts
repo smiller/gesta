@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { PAGE_CHARS_RE, PAGE_ONE, PAGE_ARABIC, PAGE_AT, pageToken } from "./grammar.ts";
+import { PAGE_CHARS_RE, PAGE_ONE, PAGE_ARABIC, PAGE_AT, PAGE_PASSAGE, pageToken } from "./grammar.ts";
 
 test("PAGE_ONE: arabic or roman, either case, never a mix", () => {
   expect(PAGE_ONE.test("8")).toBe(true);
@@ -10,6 +10,17 @@ test("PAGE_ONE: arabic or roman, either case, never a mix", () => {
   expect(PAGE_ONE.test("8x")).toBe(false);
   expect(PAGE_ONE.test("")).toBe(false);
   expect(PAGE_ONE.test("p8")).toBe(false);
+});
+
+test("a passage is a page's digits and one section letter, a to e, lower case", () => {
+  for (const label of ["2a", "6e", "509d", "1094a"]) {
+    expect(PAGE_ONE.test(label)).toBe(true);
+    expect(PAGE_PASSAGE.test(label)).toBe(true);
+    expect(PAGE_AT.exec(pageToken(label) + " rest")?.[1]).toBe(label);
+  }
+  for (const label of ["2", "xiv", "2f", "2A", "2ab", "a2"]) expect(PAGE_PASSAGE.test(label)).toBe(false);
+  expect(PAGE_ONE.test("2f")).toBe(false);
+  expect(PAGE_ONE.test("2A")).toBe(false);
 });
 
 test("PAGE_CHARS_RE: the alphabet without the grammar — what a MIX still passes", () => {

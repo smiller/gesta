@@ -389,3 +389,31 @@ describe("what each box finds", () => {
     expect(idOf(stanzas, "1", PROSIMETRUM, "page")).toBe("noPageNumbers");
   });
 });
+
+const EUTHYPHRO = parseMarkdown("::: prose\n⟨2a⟩ ΕΥΘ. τί νεώτερον, ὦ Σώκρατες | *Euthyphro.* Why have you left the Lyceum, Socrates?\nΣΩ. οὔτοι δὴ Ἀθηναῖοί γε ⟨2b⟩ δίκην | *Socrates.* Not in a suit, Euthyphro.\n⟨6a⟩ ΣΩ. ἆρά γε τοῦτʼ ἔστιν | *Soc.* May not this be the reason?\nπειρῶ ⟨6d⟩ σαφέστερον εἰπεῖν | *Soc.* I would rather hear a more precise answer.\n:::");
+const passageAt = (doc: Node, typed: string): string => {
+  const a = ask(doc, LINES, { page: typed }, FRESH, "toolbar");
+  return "pos" in a ? String(doc.nodeAt(a.pos)!.attrs.label) : alertWords(a.said);
+};
+describe("passages", () => {
+  it("an entry holding passages asks for one in a single box, whatever its work's convention", () => {
+    for (const c of [LINES, PROSIMETRUM, PARAGRAPHS]) expect(toolbarFor(EUTHYPHRO, c)).toMatchObject({ kind: "page", pageLabel: "Go to passage" });
+  });
+  it("a passage lands on its label, case-blind; a page alone on its first passage", () => {
+    expect(passageAt(EUTHYPHRO, "6d")).toBe("6d");
+    expect(passageAt(EUTHYPHRO, " 6D ")).toBe("6d");
+    expect(passageAt(EUTHYPHRO, "2b")).toBe("2b");
+    expect(passageAt(EUTHYPHRO, "6")).toBe("6a");
+  });
+  it("a passage not there is named back with its page's passages, or the entry's where the page is not there", () => {
+    expect(passageAt(EUTHYPHRO, "6e")).toBe("no passage 6e — page 6 runs 6a-d");
+    expect(passageAt(EUTHYPHRO, "2c")).toBe("no passage 2c — page 2 runs 2a-b");
+    expect(passageAt(EUTHYPHRO, "9")).toBe("no passage 9 — the passages here are 2a-6d");
+    expect(passageAt(EUTHYPHRO, "9a")).toBe("no passage 9a — the passages here are 2a-6d");
+  });
+  it("the box is a passage's: empty, or given what is not a passage, it says so", () => {
+    expect(passageAt(EUTHYPHRO, " ")).toBe("type a passage number");
+    expect(passageAt(EUTHYPHRO, "xiv")).toBe("xiv is not a passage number");
+    expect(passageAt(EUTHYPHRO, "6f")).toBe("6f is not a passage number");
+  });
+});

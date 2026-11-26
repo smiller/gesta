@@ -5,12 +5,16 @@ here names a thing a reader of the app would recognise; how the code does it
 lives in the code.
 
 **Passage**:
-The rows a selection means: every row the selection puts a word, or part of
-one, into, whole and in both columns; in a dual-language block, also the
+A stretch of a work's text. Named by where it stands: a Stephanus passage,
+`6d`, begun in its text by a page label with a letter, `⟨6d⟩`, which the
+Go to toolbar's one box, Go to passage, finds, and a reference names bare,
+"2a-c". Or made by a selection: every row the selection puts a word, or part
+of one, into, whole and in both columns; in a dual-language block, also the
 Latin the selected sentence stands beside. What ⌃⌘R quotes, what the column
 marks show beyond the selection, and what Ref (all) is offered on. In a block
 numbered on both sides, Ref quotes the passage's translation column alone.
-_Avoid_: selection (what the hand made, not what it means), quote, excerpt.
+_Avoid_: selection (what the hand made, not what it means), quote, excerpt,
+section (for a Stephanus passage).
 
 **Reference**:
 What ⌃⌘R makes: a link to the entry, labelled with where the passage stands

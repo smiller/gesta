@@ -14,8 +14,9 @@
 import type { Node } from "prosemirror-model";
 import { lineUnits, blocksOf, paintsLines, blockUnits, paragraphAt, type Unit } from "./numbering.ts";
 import { schema } from "../model/schema.ts";
-import { hasPages, pages } from "./pages.ts";
-import { PAGE_ONE, PAGE_ARABIC, PAGE_CHARS_RE } from "../model/grammar.ts";
+import { hasPages, pages, type Page } from "./pages.ts";
+import { PAGE_ONE, PAGE_ARABIC, PAGE_CHARS_RE, PAGE_PASSAGE } from "../model/grammar.ts";
+import { pageLabel } from "../store/reference.ts";
 import type { Conventions } from "../store/conventions.ts";
 import { said, type Said } from "../model/alertText.ts";
 type Asked = Pick<Conventions, "byBookChapterAndParagraph" | "byChapterAndVerse" | "proseByParagraphVerseByLine">;
@@ -160,6 +161,26 @@ function askCheck(ask: string, kind: "line" | "page", lineNoun = "line"): Said |
   return kind === "page" && PAGE_CHARS_RE.test(a) ? said("romanOrArabic") : said("notANumber", { typed: a, noun });
 }
 
+/* AN ENTRY HOLDING PASSAGES ASKS FOR NOTHING ELSE: its one box takes a page
+   alone too, landing on the page's first passage (pin: goto.test › an entry
+   holding passages asks for one in a single box) (pin: goto.test › a passage
+   lands on its label) */
+const passagesOf = (doc: Node): Page[] => pages(doc).filter((l) => PAGE_PASSAGE.test(l.label));
+const pageNumber = (passage: string): string => /^\d+/.exec(passage)![0];
+const runs = (list: Page[]): string => pageLabel(list[0].label, list[list.length - 1].label);
+function passageRefusal(all: Page[], asked: string): Said {
+  const onPage = all.filter((l) => pageNumber(l.label) === pageNumber(asked));
+  return onPage.length ? said("noPassage", { passage: asked, page: pageNumber(asked), runs: runs(onPage) }) : said("noPassageHere", { passage: asked, runs: runs(all) });
+}
+function passageAnswer(doc: Node, typed: string, standing: Standing): Answer {
+  const asked = typed.trim().toLowerCase();
+  if (!asked) return refused(said("typeNumber", { noun: "passage" }));
+  if (!/^\d+[a-e]?$/.test(asked)) return refused(said("notANumber", { typed: typed.trim(), noun: "passage" }));
+  const all = passagesOf(doc);
+  const hit = all.find((l) => l.label === asked || (pageNumber(l.label) === asked));
+  return hit ? placed({ pos: hit.pos }, standing) : refused(passageRefusal(all, asked));
+}
+
 /* a stanza ask is `N` (stanza N, at its first line) or `N.M` (its line M).
    A stanza number names one place — the stanzas are numbered in the text,
    each once — so there is nothing to cycle (pin: goto.test › a stanza
@@ -212,7 +233,7 @@ const WORDS = {
 } as const;
 const wordsFor = (c: Asked) => WORDS[c.byBookChapterAndParagraph ? "paragraph" : c.byChapterAndVerse ? "verse" : c.proseByParagraphVerseByLine ? "proseAndVerse" : "line"];
 const lineLabel = (c: Asked): "Line" | "Verse" | "Paragraph" => wordsFor(c).label;
-type ToolbarLabels = { kind: AskKind; label: "Line" | "Verse" | "Paragraph" | "Verse Line"; pageLabel: "Page" | "Paragraph" | "Prose Paragraph" };
+type ToolbarLabels = { kind: AskKind; label: "Line" | "Verse" | "Paragraph" | "Verse Line"; pageLabel: "Page" | "Paragraph" | "Prose Paragraph" | "Go to passage" };
 /* a work of prose by paragraph and verse by line asks its verse by line and
    its prose by paragraph, each box only where the entry holds that form, the
    form named only where both stand */
@@ -230,6 +251,7 @@ const byForm = (doc: Node, c: Asked): boolean => c.proseByParagraphVerseByLine &
 const findsOf = (doc: Node, c: Asked): Finds => (byForm(doc, c) ? { line: "number", page: "paragraph" } : { line: hasStanzas(doc) ? "stanza" : "number", page: "page" });
 function boxesOf(doc: Node | null, c: Asked): ToolbarLabels {
   if (!doc) return { kind: "none", label: lineLabel(c), pageLabel: "Page" };
+  if (passagesOf(doc).length) return { kind: "page", label: lineLabel(c), pageLabel: "Go to passage" };
   return findsOf(doc, c).page === "paragraph" ? proseAndVerse(doc) : { kind: askKind(doc), label: lineLabel(c), pageLabel: "Page" };
 }
 /* the toolbar as this entry asks it: which boxes, their labels, what is said
@@ -310,6 +332,7 @@ function lineAnswer(doc: Node, c: Asked, typed: string, standing: Standing, from
 export type Words = { line: string } | { page: string } | { stanza: string; line: string };
 export function ask(doc: Node, c: Asked, words: Words, standing: Standing, from: "toolbar" | "link"): Answer {
   const finds = findsOf(doc, c);
+  if ("page" in words && passagesOf(doc).length) return passageAnswer(doc, words.page, standing);
   if ("page" in words) return finds.page === "paragraph" ? paragraphAnswer(doc, words.page, standing) : pageAnswer(doc, c, words.page, standing);
   if ("stanza" in words) return boxesAnswer(doc, words.stanza, words.line, standing);
   return finds.line === "stanza" ? stanzaAnswer(doc, words.line, standing) : lineAnswer(doc, c, words.line, standing, from);

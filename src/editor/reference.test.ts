@@ -207,6 +207,18 @@ test("the leaf range is read from the page the selection is on; a leaf inside a 
   expect(rangeOf(doc, e, f)).toBe("p. 62");
 });
 
+const PLATO = parseMarkdown("# Euthyphro\n\n::: prose\n⟨2a⟩ ΕΥΘ. τί νεώτερον, ὦ Σώκρατες | *Euthyphro.* Why have you left the Lyceum, Socrates?\nΣΩ. οὔτοι δὴ Ἀθηναῖοί γε ⟨2b⟩ δίκην | *Socrates.* Not in a suit, Euthyphro.\n⟨3a⟩ ΕΥΘ. τί φῄς | *Euth.* What!\n:::");
+const platoLabel = (needle: string, end?: string): string => {
+  const out = referencePayload(state(PLATO, ...span(PLATO, needle, end)), { date: "bookshelf", tag: "Plato/Euthyphro" }, journalOf({ "bookshelf/Plato": "# Plato" }));
+  return "refused" in out ? out.refused : out.label;
+};
+test("a reference is named by the passages its rows run through, after the work's title, in place of the rows' count", () => {
+  expect(platoLabel("Why have")).toBe("Plato, *Euthyphro*, 2a");
+  expect(platoLabel("Not in a suit")).toBe("Plato, *Euthyphro*, 2a-b");
+  expect(platoLabel("δίκην")).toBe("Plato, *Euthyphro*, 2a-b");
+  expect(platoLabel("Why have", "What!")).toBe("Plato, *Euthyphro*, 2a-3a");
+});
+
 test("selectionLink: the text and which occurrence it is", () => {
   const doc = parseMarkdown("the cat sat. the cat sat again.");
   const [a, b] = span(doc, "cat sat again");

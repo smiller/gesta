@@ -130,6 +130,8 @@ Amber. Why an act just tried did nothing. It fades after ten seconds, or goes wh
 | `no paragraph … — the paragraphs here are …–…` | ⌃⌘G, or a link to a line, with a paragraph number not on the page. |
 | `no page numbers here` | ⌃⌘G with a page, on an entry with no page labels. |
 | `no page … here` | ⌃⌘G with a page not in the entry. |
+| `no passage … — page … runs …` | ⌃⌘G with a passage its page does not hold. |
+| `no passage … — the passages here are …` | ⌃⌘G with a passage on a page the entry does not hold. |
 | `type a … number` | Enter in the Go to toolbar with its box empty, or a link to a line that names no number. |
 | `use roman or arabic characters, not both` | A page typed with roman and arabic characters together. |
 | `… is not a … number` | A box of the Go to toolbar, or a link to a line, given what is not its kind of number. |

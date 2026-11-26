@@ -180,6 +180,8 @@ export const ALERTS = {
   noParagraph: warning((p: { n: number; low: number; high: number }) => "no paragraph " + p.n + " — the paragraphs here are " + p.low + "–" + p.high, "⌃⌘G, or a link to a line, with a paragraph number not on the page."),
   noPageNumbers: warning("no page numbers here", "⌃⌘G with a page, on an entry with no page labels."),
   noPage: warning((p: { page: string }) => "no page " + echo(p.page) + " here", "⌃⌘G with a page not in the entry."),
+  noPassage: warning((p: { passage: string; page: string; runs: string }) => "no passage " + echo(p.passage) + " — page " + p.page + " runs " + p.runs, "⌃⌘G with a passage its page does not hold."),
+  noPassageHere: warning((p: { passage: string; runs: string }) => "no passage " + echo(p.passage) + " — the passages here are " + p.runs, "⌃⌘G with a passage on a page the entry does not hold."),
   typeNumber: warning((p: { noun: string }) => "type a " + p.noun + " number", "Enter in the Go to toolbar with its box empty, or a link to a line that names no number."),
   romanOrArabic: warning("use roman or arabic characters, not both", "A page typed with roman and arabic characters together."),
   notANumber: warning((p: { typed: string; noun: string }) => PHRASES.notANumber({ ...p, typed: echo(p.typed) }), "A box of the Go to toolbar, or a link to a line, given what is not its kind of number."),

@@ -20,7 +20,7 @@ export const CHORDS: readonly Chord[] = [
   chord("k", "search", "search — open the masthead’s “Search” row; again, search everything; on everything, close it"),
   chord("l", "lines", "line numbering — open the masthead’s “Line numbering” row (on an entry with verse)"),
   chord("i", "editor", "add ⟨line⟩ so the line counts as a numbered line and not a stage direction"),
-  chord("g", "gotoToolbar", "go to a line, or a page number (on an entry with a gutter)"),
+  chord("g", "gotoToolbar", "go to a line, a page number, or a passage (on an entry with a gutter)"),
   chord("t", "today", "go to today’s entry"),
   chord("n", "create", "new — a tagged entry for the day, a sub-entry of the commonplace, a book under the author", false),
   chord("b", "bookmarks", "bookmarks — open a panel with links to the entries you have bookmarked", false),

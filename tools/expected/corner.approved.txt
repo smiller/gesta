@@ -686,6 +686,18 @@ Prose Paragraph 1, Enter: {"landed":"Ora, tornando al proposito, ","cursor":"on 
 Verse Line 2, Enter: {"landed":"e con lui vade a madonna dav","boxes":{"line":"2","paragraph":""},"cursor":"on input","screen":"bookshelf/Dante/Vita Nuova/12 · sel none · toolbar off · opened none · rows goto-toolbar · html · corner [whatever stood]"}
 ⌃⌘R on the poem's second line: {"label":"[Dante, *Vita Nuova*, 12, Ballata, i’ voi che tu ritrovi Amore, 2](…):","cursor":"selected 33","screen":"bookshelf/Dante/Vita Nuova/12 · sel 33 chars · toolbar on · opened none · rows none · html · corner [whatever stood]"}
 ⌃⌘R on the prose: {"label":"[Dante, *Vita Nuova*, 12, para 1](…):","cursor":"selected 26","screen":"bookshelf/Dante/Vita Nuova/12 · sel 26 chars · toolbar on · opened none · rows none · html · corner [whatever stood]"}
+== passages
+passages: arrived at bookshelf/Plato/Euthyphro: {"cursor":"at a line's start"}
+the gutter: {"value":["\"2a\"","\"2b\"","\"6c\"","\"6d\""],"cursor":"at a line's start","screen":"bookshelf/Plato/Euthyphro · sel none · toolbar off · opened none · rows none · html · corner [whatever stood]"}
+⌃⌘G on the Euthyphro: {"boxes":["Go to passage"],"cursor":"on input","screen":"bookshelf/Plato/Euthyphro · sel none · toolbar off · opened none · rows goto-toolbar · html · corner [whatever stood]"}
+Go to passage 6d, Enter: {"landed":"6d","cursor":"on input","screen":"bookshelf/Plato/Euthyphro · sel none · toolbar off · opened none · rows goto-toolbar · html · corner [whatever stood]"}
+Go to passage 6, Enter: {"landed":"6c","cursor":"on input","screen":"bookshelf/Plato/Euthyphro · sel none · toolbar off · opened none · rows goto-toolbar · html · corner [whatever stood]"}
+Go to passage 2B, Enter: {"landed":"2b","cursor":"on input","screen":"bookshelf/Plato/Euthyphro · sel none · toolbar off · opened none · rows goto-toolbar · html · corner [whatever stood]"}
+Go to passage 6e, Enter: {"said":"no passage 6e — page 6 runs 6c-d","cursor":"on input","screen":"bookshelf/Plato/Euthyphro · sel none · toolbar off · opened none · rows goto-toolbar · html · corner [whatever stood]"}
+Go to passage 9, Enter: {"said":"no passage 9 — the passages here are 2a-6d","cursor":"on input","screen":"bookshelf/Plato/Euthyphro · sel none · toolbar off · opened none · rows goto-toolbar · html · corner [whatever stood]"}
+Go to passage 6f, Enter: {"said":"6f is not a passage number","cursor":"on input","screen":"bookshelf/Plato/Euthyphro · sel none · toolbar off · opened none · rows goto-toolbar · html · corner [whatever stood]"}
+⌃⌘R on Socrates’ first reply: {"label":"[Plato, *Euthyphro*, 2a](…):","cursor":"selected 74","screen":"bookshelf/Plato/Euthyphro · sel 74 chars · toolbar on · opened none · rows none · html · corner [whatever stood]"}
+⌃⌘R from 6c into 6d: {"label":"[Plato, *Euthyphro*, 6c-d](…):","cursor":"selected 754","screen":"bookshelf/Plato/Euthyphro · sel 754 chars · toolbar on · opened none · rows none · html · corner [whatever stood]"}
 == a link to a line
 a link to a line, clicked: {"landed":"three","selected":"","address":"line=3","said":"","cursor":"at a line's start","screen":"bookshelf/Statius/Book 1 · sel none · toolbar off · opened none · rows none · html · corner [whatever stood]"}
 a link to a line, the next click: {"landed":null,"selected":"","address":"line=3","said":"","cursor":"at a line's start","screen":"bookshelf/Statius/Book 1 · sel none · toolbar off · opened none · rows none · html · corner [whatever stood]"}

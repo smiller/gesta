@@ -1,5 +1,5 @@
 import { isDayKey, titlesRoots, nsOf, entryKey, dateLabel } from "./keys.ts";
-import { PAGE_ARABIC } from "../model/grammar.ts";
+import { PAGE_ARABIC, PAGE_PASSAGE } from "../model/grammar.ts";
 import { conventionsOf, type Conventions, type Directives } from "./conventions.ts";
 
 /* WHAT STANDS BEFORE THE PIECES, three answers: a BOOK names its author as
@@ -60,7 +60,14 @@ export function elideRange(from: number, to: number): string {
   return a.slice(0, -2) === b.slice(0, -2) ? a + "-" + b.slice(-2) : whole;
 }
 const plainArabic = (s: string): boolean => PAGE_ARABIC.test(s) && String(+s) === s;
+const pageOf = (passage: string): string => passage.slice(0, -1);
+/* a passage never takes "p." (pin: reference.test › pageLabel: a passage is named bare) */
+function passageLabel(from: string, to?: string | null): string {
+  if (!to || from === to) return from;
+  return from + "-" + (pageOf(from) === pageOf(to) ? to.slice(-1) : to);
+}
 export function pageLabel(from: string, to?: string | null): string {
+  if (PAGE_PASSAGE.test(from)) return passageLabel(from, to);
   if (!to || from === to) return "p. " + from;
   return "pp. " + ([from, to].every(plainArabic) ? elideRange(+from, +to) : from + "-" + to);
 }
@@ -180,8 +187,10 @@ function placeRange(parts: Piece[], { kind, text }: Place): void {
   else if (deepest?.n !== undefined) deepest.n += "." + text;
   else parts.push({ n: text });
 }
+/* (pin: reference.test › referenceLabel: a passage stands in for every level below the work) */
 function placePage(parts: Piece[], page: PageRange, books: boolean, numbered: string | undefined): Piece[] {
-  if (books && numbered !== undefined) return parts;
+  const numberStands = books && numbered !== undefined;
+  if (numberStands && !PAGE_PASSAGE.test(page.from)) return parts;
   const out = books ? parts.slice(0, 1) : parts;
   out.push({ plain: pageLabel(page.from, page.to) });
   return out;

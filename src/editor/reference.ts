@@ -1,6 +1,7 @@
 import type { Node } from "prosemirror-model";
 import type { EditorState } from "prosemirror-state";
 import { schema } from "../model/schema.ts";
+import { PAGE_PASSAGE } from "../model/grammar.ts";
 import { blockUnits, paragraphAt, paragraphOf, hasFacing, type Unit, type Side } from "./numbering.ts";
 import { elideRange, referenceLabel, mdLabel, type Journal, type PageRange, type Place } from "../store/reference.ts";
 import { conventionsOf, type Conventions } from "../store/conventions.ts";
@@ -136,10 +137,21 @@ function throughPage(doc: Node, pageList: Page[], from: number, to: number): Pag
    than any label inside it: the last page at or before the start, or the
    next one when nothing but whitespace stands between; and the last page
    the selection reaches ink past */
-function pageRange({ doc, from, to }: Passage): PageRange | null {
+function pageRange({ doc, from, to }: Pick<Passage, "doc" | "from" | "to">): PageRange | null {
   const pageList = pages(doc), at = startPage(doc, pageList, from, to);
   if (!at) return null;
   return { from: at.label, to: (throughPage(doc, pageList, from, to) || at).label };
+}
+/* A PASSAGE WINS OVER THE ROWS' COUNT, read over the rows the reference
+   quotes, whole and in both columns: read over the words selected, the
+   translation of a row opening in one passage was named by the next (pin:
+   reference.test › a reference is named by the passages its rows run through) */
+function passagesOver(p: Passage): PageRange | null {
+  const rows = p.lines();
+  if (!rows.length) return null;
+  const last = rows[rows.length - 1];
+  const range = pageRange({ doc: p.doc, from: Math.min(p.from, rows[0].pos), to: Math.max(p.to, last.pos + last.node.nodeSize) });
+  return range && PAGE_PASSAGE.test(range.from) ? range : null;
 }
 /* counted as a literal substring (pin: reference.test › selectionLink) */
 export function selectionLink(doc: Node, from: number, to: number): Highlight | null {
@@ -194,7 +206,9 @@ function payloadOver(p: Passage, at: EntryAt, journal: Journal, all: boolean): P
   const said = conventionsOf(at.date, at.tag, journal);
   const quoted = quotation(p, { halves: said.byHalfLine, paragraphs: said.byBookChapterAndParagraph || said.proseByParagraphVerseByLine, all });
   if ("refused" in quoted) return quoted;
-  const label = referenceLabel(at.date, at.tag, { place: rangeOver(p, said), page: pageRange(p), facing: facingRange(p) }, journal);
+  const page = passagesOver(p) ?? pageRange(p);
+  const place = page && PAGE_PASSAGE.test(page.from) ? null : rangeOver(p, said);
+  const label = referenceLabel(at.date, at.tag, { place, page, facing: facingRange(p) }, journal);
   const url = entryLinkUrl(at.date, at.tag, hl);
   return { text: "[" + mdLabel(label, label) + "](" + url + "):\n\n" + quoted.text, label, url, passage: quoted.text };
 }

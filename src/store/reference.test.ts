@@ -58,6 +58,14 @@ test("elideRange: Chicago 9.61's bands, the last one narrowed", () => {
   expect(elideRange(11564, 11615)).toBe("11564-11615");
 });
 
+test("pageLabel: a passage is named bare, a range on one page by its letters, across pages whole", () => {
+  expect(pageLabel("2a")).toBe("2a");
+  expect(pageLabel("2a", "2a")).toBe("2a");
+  expect(pageLabel("2a", "2c")).toBe("2a-c");
+  expect(pageLabel("2d", "3a")).toBe("2d-3a");
+  expect(pageLabel("509d", "510b")).toBe("509d-510b");
+});
+
 test("pageLabel: arabic elides, roman and zero-padded never", () => {
   expect(pageLabel("8")).toBe("p. 8");
   expect(pageLabel("8", "8")).toBe("p. 8");
@@ -124,6 +132,11 @@ test("referenceLabel: the corpus table, author then pieces", () => {
   expect(referenceLabel(NS_BOOK.key, "Boethius/Consolatio/Book 3/3m9", { place: null }, journal)).toBe("Boethius, *De consolatione philosophiae*, 3m9");
   expect(referenceLabel(NS_BOOK.key, "Housman, A. E/Last Poems/25. The Oracles", { place: null }, journal)).toBe("Housman, *Last Poems*, *25. The Oracles*");
   expect(referenceLabel(NS_BOOK.key, "Blake, William/Songs of Innocence/A Cradle Song", { place: null }, journal)).toBe("Blake, *Songs of Innocence*, *A Cradle Song*");
+});
+
+test("referenceLabel: a passage stands in for every level below the work, a numbered book's too", () => {
+  expect(referenceLabel(NS_BOOK.key, "Plato/Republic/Book 6", { place: null, page: { from: "509d", to: "511e" } }, journal)).toBe("Plato, *Republic*, 509d-511e");
+  expect(referenceLabel(NS_BOOK.key, "Milton, John/Paradise Lost/Book 1", { place: null, page: { from: "22", to: "22" } }, journal)).toBe("Milton, *Paradise Lost*, 1");
 });
 
 test("referenceLabel: the line range dots onto a numeral run and commas after a title; a page stands in only for a titled division", () => {

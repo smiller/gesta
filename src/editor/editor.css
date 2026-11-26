@@ -227,6 +227,9 @@ main { max-width: 760px; margin: 0 auto; padding: 0 24px 24px; }
   -webkit-user-select: none;
   pointer-events: none;
 }
+.page.paged .page-label[data-passage]::after {
+  content: attr(data-page);
+}
 .page :is(div.note, div.margin-note) .page-label::before, .page :is(div.note, div.margin-note) .page-label::after { content: none; }
 
 /* ---------- the verse block: a run of lines, paired or not ---------- */
