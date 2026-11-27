@@ -41,3 +41,6 @@
 {"at":"2026-11-27T16:19","ev":"add","id":"A32.1.1","list":"A","title":"One module for the Stephanus number","parent":"A32.1","detail":"Asked: candidate 1 of the A32.1 run, chosen with 'Let's do 1, then 2.'; grilled, all yes. Why: the form, its page and its run were spelled in five modules, the precedence split across the editor and the store. Done when: src/model/stephanus.ts answers all four, no other module tests the regex, located() alone decides precedence, the Helium verdict unchanged, accepted."}
 {"at":"2026-11-27T16:19","ev":"start","id":"A32.1.1"}
 {"at":"2026-11-27T16:31","ev":"done","id":"A32.1.1","commits":["5bb58da"]}
+{"at":"2026-11-27T16:39","ev":"add","id":"A32.1.2","list":"A","title":"The Backups panel follows the runner itself","parent":"A32.1","detail":"Asked: candidate 2 of the A32.1 run ('Let's do 1, then 2.'), grilled, 'yes'. Why: the panel's state was copied from four sites in three modules, re-read with its pictures after every backup run, its picture URLs alive past its close, and the runner reached by a lazy getter. Done when: the runner says onChange on a real change only, the panel holds its state and its pictures exactly while open, the four sites gone, the Helium verdict unchanged, accepted."}
+{"at":"2026-11-27T16:39","ev":"start","id":"A32.1.2"}
+{"at":"2026-11-27T18:11","ev":"done","id":"A32.1.2","commits":["2b5dd45"]}
