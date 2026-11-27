@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { backupsStatus, backupsFolder, offersChange } from "./backupsModel.ts";
+import { backupsStatus, backupsFolder, offersChange, offersSetup, offersResume, changeInStatus, unusedWords } from "./backupsModel.ts";
 import { screenState } from "./screen.svelte.ts";
 
 const with_ = (patch: Partial<ReturnType<typeof screenState>["backups"]>) => ({ ...screenState(5).backups, ...patch });
@@ -43,5 +43,28 @@ describe("the change-folder link", () => {
     expect(offersChange(with_({ configured: true, warm: "loading" }))).toBe(false);
     expect(offersChange(with_({ warm: "ok" }))).toBe(false);
     expect(offersChange(with_({ canPick: false, configured: true, warm: "ok" }))).toBe(false);
+  });
+});
+
+describe("the panel's other controls", () => {
+  it("set up where a picker exists and no folder is; resume where a configured folder is in trouble", () => {
+    expect(offersSetup(with_({}))).toBe(true);
+    expect(offersSetup(with_({ configured: true }))).toBe(false);
+    expect(offersSetup(with_({ canPick: false }))).toBe(false);
+    expect(offersResume(with_({ configured: true, trouble: "backups paused" }))).toBe(true);
+    expect(offersResume(with_({ configured: true }))).toBe(false);
+    expect(offersResume(with_({ canPick: false, configured: true, trouble: "x" }))).toBe(false);
+  });
+  it("the change link stands in the status line only where no folder line holds it", () => {
+    expect(changeInStatus(with_({ configured: true, warm: "ok" }))).toBe(true);
+    expect(changeInStatus(with_({ configured: true, warm: "ok", folder: "gesta-backups" }))).toBe(false);
+    expect(changeInStatus(with_({ configured: true, warm: "loading" }))).toBe(false);
+  });
+});
+
+describe("the unused pictures' words", () => {
+  it("counted in the heading, and the button names one picture or these N", () => {
+    expect(unusedWords(1)).toEqual({ heading: "1 unused picture.", button: "Remove this picture" });
+    expect(unusedWords(3)).toEqual({ heading: "3 unused pictures.", button: "Remove these 3 pictures" });
   });
 });

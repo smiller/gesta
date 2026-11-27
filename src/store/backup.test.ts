@@ -6,11 +6,18 @@ import type { Dir } from "./fsa.ts";
 
 afterEach(() => { vi.useRealTimers(); });
 
-/* a folder whose permission check answers with `answers`, one call after another; `null` never answers */
-function folder(answers: (PermissionState | null)[]): Dir & { asked: number } {
+/* a folder whose permission check answers with `answers`, one call after another: `null` never answers, a
+   [state, ms] pair answers that late; a request for permission is granted */
+function folder(answers: (PermissionState | null | [PermissionState, number])[]): Dir & { asked: number } {
   const d = {
     kind: "directory", name: "gesta-backups", asked: 0,
-    queryPermission: () => { const a = answers[Math.min(d.asked++, answers.length - 1)]; return a === null ? new Promise<PermissionState>(() => {}) : Promise.resolve(a); },
+    queryPermission: () => {
+      const a = answers[Math.min(d.asked++, answers.length - 1)];
+      if (a === null) return new Promise<PermissionState>(() => {});
+      if (Array.isArray(a)) return new Promise<PermissionState>((r) => setTimeout(() => r(a[0]), a[1]));
+      return Promise.resolve(a);
+    },
+    requestPermission: () => Promise.resolve("granted" as PermissionState),
   };
   return d as unknown as Dir & { asked: number };
 }
@@ -51,4 +58,37 @@ test("the folder's name is known once a run has read it", async () => {
   expect(b.folder).toBeNull();
   await b.runBackup();
   expect(b.folder).toBe("gesta-backups");
+});
+
+test("a resume granted in the click runs without asking the permission check again", async () => {
+  vi.useFakeTimers();
+  const h = folder([null]);
+  const { b, raised } = await runner(h);
+  const run = b.runBackup();
+  await vi.advanceTimersByTimeAsync(PERMISSION_MS);
+  await run;
+  await b.resumeBackups();
+  expect(h.asked).toBe(1);
+  expect(raised).toContain("backingUp");
+});
+
+test("a permission check answering granted after the wait unpauses and runs", async () => {
+  vi.useFakeTimers();
+  const h = folder([["granted", PERMISSION_MS + 1000], "granted"]);
+  const { b, troubles, raised } = await runner(h);
+  const run = b.runBackup();
+  await vi.advanceTimersByTimeAsync(PERMISSION_MS);
+  await run;
+  expect(troubles.at(-1)).toBe(PAUSED_MSG);
+  await vi.advanceTimersByTimeAsync(1000);
+  expect(troubles.at(-1)).toBe("");
+  expect(raised).toContain("backingUp");
+});
+
+test("a folder just picked runs without asking the permission check", async () => {
+  const h = folder([null]);
+  const { b, raised } = await runner(h);
+  await b.setupBackupFolder();
+  expect(h.asked).toBe(0);
+  expect(raised).toContain("backingUp");
 });

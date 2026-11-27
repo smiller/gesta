@@ -4,7 +4,7 @@ import { screenState } from "./screen.svelte.ts";
 import { memImageStore } from "../store/store.ts";
 
 const settle = () => new Promise((r) => setTimeout(r, 0));
-async function panel(cache: Record<string, string>, stored: string[], hold = false) {
+async function panel(cache: Record<string, string>, stored: string[], hold = false, flushes: (() => Promise<boolean>)[] = []) {
   const images = memImageStore();
   for (const k of stored) await images.set(k, new Uint8Array([1]));
   const bk = screenState(5).backups;
@@ -13,19 +13,19 @@ async function panel(cache: Record<string, string>, stored: string[], hold = fal
   const held: (() => void)[] = [];
   const p = backupsPanel({
     bk, canPick: () => true, reader: false, backup: () => ({ configured: true, trouble: "", folder: "gesta-backups" }),
-    layer: { cache, warmed: true, storeReadFailed: false }, images, flushSave: () => Promise.resolve(true), raise: (() => {}) as never, confirm: () => true,
+    layer: { cache, warmed: true, storeReadFailed: false }, images, flushSave: () => (flushes.shift() ?? (() => Promise.resolve(true)))(), raise: (() => {}) as never, confirm: () => true,
     showPicture: (key) => { shown.push(key); const src = "blob:" + ++n; return hold ? new Promise((r) => held.push(() => r(src))) : Promise.resolve(src); }, releasePicture: (url) => { released.push(url); },
   });
   return { p, bk, shown, released, held };
 }
 
 describe("the backups panel's unused pictures", () => {
-  it("each picture no entry names, by its own name, shown from the store", async () => {
+  it("each picture no entry names, kept by its store key, named by its own name, shown from the store", async () => {
     const { p, bk, shown } = await panel({ "2026-10-30": "a day ![](2026-10-30-img-2.webp)" }, ["journal/2026/2026-10-30-img-1.webp", "journal/2026/2026-10-30-img-2.webp"]);
     p.read();
     await settle(); await settle();
     expect(shown).toEqual(["journal/2026/2026-10-30-img-1.webp"]);
-    expect(bk.unused).toEqual([{ name: "2026-10-30-img-1.webp", src: "blob:1" }]);
+    expect(bk.unused).toEqual([{ key: "journal/2026/2026-10-30-img-1.webp", name: "2026-10-30-img-1.webp", src: "blob:1" }]);
   });
   it("a read again lets the pictures it showed before go", async () => {
     const { p, released } = await panel({ "2026-10-30": "a day" }, ["journal/2026/2026-10-30-img-1.webp"]);
@@ -45,5 +45,17 @@ describe("the backups panel's unused pictures", () => {
     await settle();
     expect(released).toEqual(["blob:1"]);
     expect(bk.unused.map((x) => x.src)).toEqual([null]);
+  });
+  it("two reads overlapping let the first list's pictures go when the second lands", async () => {
+    let late = (): void => {};
+    const second = () => new Promise<boolean>((r) => { late = () => r(true); });
+    const { p, bk, released } = await panel({ "2026-10-30": "a day" }, ["journal/2026/2026-10-30-img-1.webp"], false, [() => Promise.resolve(true), second]);
+    p.read();
+    p.read();
+    await settle(); await settle();
+    expect(bk.unused.map((x) => x.src)).toEqual(["blob:1"]);
+    late();
+    await settle(); await settle();
+    expect(released).toEqual(["blob:1"]);
   });
 });

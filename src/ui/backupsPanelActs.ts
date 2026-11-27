@@ -34,7 +34,8 @@ export function backupsPanel(d: BackupsPanelDeps): BackupsPanel {
   };
   const letGo = (): void => { for (const p of bk.unused) if (p.src) d.releasePicture(p.src); };
   const shown = (keys: string[]): void => {
-    bk.unused = keys.map((k) => ({ name: k.slice(k.lastIndexOf("/") + 1), src: null }));
+    letGo();
+    bk.unused = keys.map((k) => ({ key: k, name: k.slice(k.lastIndexOf("/") + 1), src: null }));
     const list = bk.unused;
     /* a picture read after the panel was read again belongs to no list it shows (pin: backupsPanelActs.test › a picture arriving after) */
     keys.forEach((k, i) => d.showPicture(k).then((src) => {

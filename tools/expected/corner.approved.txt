@@ -688,7 +688,7 @@ Verse Line 2, Enter: {"landed":"e con lui vade a madonna dav","boxes":{"line":"2
 ⌃⌘R on the prose: {"label":"[Dante, *Vita Nuova*, 12, para 1](…):","cursor":"selected 26","screen":"bookshelf/Dante/Vita Nuova/12 · sel 26 chars · toolbar on · opened none · rows none · html · corner [whatever stood]"}
 == passages
 passages: arrived at bookshelf/Plato/Euthyphro: {"cursor":"at a line's start"}
-the gutter: {"value":["\"2a\"","\"2b\"","\"6c\"","\"6d\""],"cursor":"at a line's start","screen":"bookshelf/Plato/Euthyphro · sel none · toolbar off · opened none · rows none · html · corner [whatever stood]"}
+the gutter: {"value":["\"2a\"","\"2b\"","\"6c\"","\"6d\"","none"],"cursor":"at a line's start","screen":"bookshelf/Plato/Euthyphro · sel none · toolbar off · opened none · rows none · html · corner [whatever stood]"}
 ⌃⌘G on the Euthyphro: {"boxes":["Go to passage"],"cursor":"on input","screen":"bookshelf/Plato/Euthyphro · sel none · toolbar off · opened none · rows goto-toolbar · html · corner [whatever stood]"}
 Go to passage 6d, Enter: {"landed":"6d","cursor":"on input","screen":"bookshelf/Plato/Euthyphro · sel none · toolbar off · opened none · rows goto-toolbar · html · corner [whatever stood]"}
 Go to passage 6, Enter: {"landed":"6c","cursor":"on input","screen":"bookshelf/Plato/Euthyphro · sel none · toolbar off · opened none · rows goto-toolbar · html · corner [whatever stood]"}

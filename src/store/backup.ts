@@ -85,26 +85,41 @@ export function backupRunner(opts: BackupOptions): Backup {
   /* self-sealing: resolves on both arms, never rejects, so the launch and
      idle callers need no catch. Gated on the warm: never back up a blank
      or unread cache. */
-  function runBackup(): Promise<void> {
+  function runBackup(grantedNow = false): Promise<void> {
     if (running) return running;
     if (!layer.warmed || layer.storeReadFailed) return Promise.resolve();
-    const run = (handle ? Promise.resolve(handle) : store.get() as Promise<Dir | null>).then(withFolder).catch(runFailed)
+    const run = (handle ? Promise.resolve(handle) : store.get() as Promise<Dir | null>).then((h) => withFolder(h, grantedNow)).catch(runFailed)
       .then(() => { running = null; }, () => { running = null; });
     running = run;
     return run;
   }
-  function withFolder(h: Dir | null): Promise<void> | void {
+  function withFolder(h: Dir | null, grantedNow: boolean): Promise<void> | void {
     /* a folder picked while we read: the newer pick wins, and this run
        is dropped rather than guarded line by line */
     if (handle && handle !== h) return;
     handle = h;
     configured = !!h;
     if (!h) { writeRaw(BACKUP_ON, null); setTrouble(""); return; }
+    /* a click has just granted it, a resume's or the pick's: asking again can
+       hang as the first ask did (pin: backup.test › a resume granted in the click) */
+    if (grantedNow) return granted(h);
     /* no gesture behind a launch or idle run, so only a handle already
        granted writes; a 'prompt' handle (a file:// tab after a restart)
        surfaces the paused affordance, whose click is the gesture */
-    return answered(h.queryPermission({ mode: "readwrite" })).then((perm) => (perm === "granted" ? granted(h) : setTrouble(PAUSED_MSG)));
+    const asked = h.queryPermission({ mode: "readwrite" });
+    return answered(asked).then((perm) => {
+      if (perm === "unanswered") grantedLate(h, asked);
+      return perm === "granted" ? granted(h) : setTrouble(PAUSED_MSG);
+    });
   }
+  /* a slow answer of granted lifts the pause it caused (pin: backup.test › a
+     permission check answering granted after the wait) */
+  function grantedLate(h: Dir, asked: Promise<PermissionState>): void {
+    asked.then((perm) => {
+      if (perm === "granted" && pausedOn(h)) { setTrouble(""); void runBackup(); }
+    }, () => {});
+  }
+  const pausedOn = (h: Dir): boolean => h === handle && trouble === PAUSED_MSG;
   /* Helium's queryPermission has hung unanswered, and every later run waited
      behind it with nothing on screen: unanswered in time is taken as not
      granted, and the paused affordance asks (pin: backup.test › a permission
@@ -225,7 +240,7 @@ export function backupRunner(opts: BackupOptions): Backup {
         writeRaw(BACKUP_SIG, null);   /* the first backup writes everything */
         writeRaw(BACKUP_DATED, null);
         setTrouble("");
-        return Promise.resolve(running).then(runBackup);
+        return Promise.resolve(running).then(() => runBackup(true));
       });
     }).catch((err: unknown) => {
       if (err && (err as Error).name === "AbortError") return;
@@ -239,7 +254,7 @@ export function backupRunner(opts: BackupOptions): Backup {
     if (!picker) return Promise.resolve();
     if (!handle) return setupBackupFolder();
     return handle.requestPermission({ mode: "readwrite" }).then((perm) => {
-      if (perm === "granted") { setTrouble(""); return runBackup(); }
+      if (perm === "granted") { setTrouble(""); return runBackup(true); }
       setTrouble(PAUSED_MSG);
     }).catch((err: unknown) => {
       if (err && (err as Error).name === "AbortError") return;

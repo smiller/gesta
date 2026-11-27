@@ -230,7 +230,9 @@ main { max-width: 760px; margin: 0 auto; padding: 0 24px 24px; }
 .page.paged .page-label[data-passage]::after {
   content: attr(data-page);
 }
-.page :is(div.note, div.margin-note) .page-label::before, .page :is(div.note, div.margin-note) .page-label::after { content: none; }
+/* the passage rule above outweighs a plain note rule, so a note's passage is named again here (pin: passages › the gutter) */
+.page :is(div.note, div.margin-note) .page-label::before, .page :is(div.note, div.margin-note) .page-label::after,
+.page.paged :is(div.note, div.margin-note) .page-label[data-passage]::after { content: none; }
 
 /* ---------- the verse block: a run of lines, paired or not ---------- */
 .page .verse { margin-top: 1.2em; margin-bottom: 1.2em; }

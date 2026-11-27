@@ -10,7 +10,7 @@ const draw = (patch: Partial<ReturnType<typeof screenState>["backups"]>): string
 };
 describe("Backups", () => {
   it("unused pictures are said, each shown with its name, then offered for removal; too many at once says why none go; none offers nothing", () => {
-    const pic = (name: string, src: string | null) => ({ name, src });
+    const pic = (name: string, src: string | null, key = "journal/2026/" + name) => ({ key, name, src });
     const three = draw({ warm: "ok", unused: [pic("2026-10-30-img-1.webp", "blob:a"), pic("2026-11-12-img-2.webp", "blob:b"), pic("x-img-1.webp", null)] });
     expect(three).toContain("<strong>3 unused pictures.</strong> Pictures stored in Gesta that no entry shows — most often one pasted and then deleted from the text. No backup holds them, so removing them is for good.");
     expect(three).toMatch(/<img[^>]*src="blob:a"[^>]*>\s*<figcaption[^>]*>2026-10-30-img-1\.webp<\/figcaption>/);
@@ -25,6 +25,8 @@ describe("Backups", () => {
     expect(over).toContain("40 such pictures — more than half of all stored, which looks like a journal read short rather than a tidy-up, so none are offered for removal.");
     expect(over).not.toContain("Remove");
     expect(draw({ warm: "ok" })).not.toContain("picture");
+    const twins = draw({ warm: "ok", unused: [pic("Introduction-img-1.webp", "blob:a", "bookshelf/A/Introduction-img-1.webp"), pic("Introduction-img-1.webp", "blob:b", "bookshelf/B/Introduction-img-1.webp")] });
+    expect(twins.match(/<figure/g)?.length).toBe(2);
   });
   it("unconfigured: the setup button and no status; configured and in: the folder backed up to and a change link; trouble: Resume, the reason and the folder", () => {
     const none = draw({ warm: "ok" });

@@ -7,6 +7,18 @@ export function backupsStatus(b: Screen["backups"]): { text: string; trouble: bo
   if (b.configured) return b.folder ? null : { text: "Automatic backups are on.", trouble: false };
   return null;
 }
+export function offersSetup(b: Screen["backups"]): boolean {
+  return b.canPick && !b.configured;
+}
+export function offersResume(b: Screen["backups"]): boolean {
+  return b.canPick && b.configured && !!b.trouble;
+}
+export function changeInStatus(b: Screen["backups"]): boolean {
+  return offersChange(b) && !backupsFolder(b);
+}
+export function unusedWords(n: number): { heading: string; button: string } {
+  return { heading: n === 1 ? "1 unused picture." : n + " unused pictures.", button: n === 1 ? "Remove this picture" : "Remove these " + n + " pictures" };
+}
 export function offersChange(b: Screen["backups"]): boolean {
   return b.canPick && b.configured && b.warm === "ok";
 }

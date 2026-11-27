@@ -4,12 +4,12 @@
      folder it makes into a fresh Gesta; there is no in-app restore. -->
 <script lang="ts">
   import type { Screen } from "./screen.svelte.ts";
-  import { backupsStatus, backupsFolder, offersChange } from "./backupsModel.ts";
-  import { counted } from "./counted.ts";
+  import { backupsStatus, backupsFolder, offersSetup, offersResume, changeInStatus, unusedWords } from "./backupsModel.ts";
   let { backups, onSetup, onResume, onSweep }: { backups: Screen["backups"]; onSetup: () => void; onResume: () => void; onSweep: () => void } = $props();
   const status = $derived(backupsStatus(backups));
   const folder = $derived(backupsFolder(backups));
-  const change = $derived(offersChange(backups));
+  const change = $derived(changeInStatus(backups));
+  const words = $derived(unusedWords(backups.unused.length));
   const UNUSED = "Pictures stored in Gesta that no entry shows — most often one pasted and then deleted from the text. No backup holds them, so removing them is for good.";
 </script>
 
@@ -17,19 +17,19 @@
 <section class="helppanel backups" role="dialog" aria-label="Backups">
   <h2>Backups</h2>
   <div class="backups-auto">
-    {#if backups.canPick && !backups.configured}<button type="button" onclick={onSetup}>Set up automatic backups…</button>{/if}
-    {#if backups.canPick && backups.configured && backups.trouble}<button type="button" onclick={onResume}>Resume backups</button>{/if}
-    {#if status}<p class="backups-status" class:trouble={status.trouble}>{status.text}{#if change && !folder}{" "}<button type="button" class="backups-change" onclick={onSetup}>change folder…</button>{/if}</p>{/if}
+    {#if offersSetup(backups)}<button type="button" onclick={onSetup}>Set up automatic backups…</button>{/if}
+    {#if offersResume(backups)}<button type="button" onclick={onResume}>Resume backups</button>{/if}
+    {#if status}<p class="backups-status" class:trouble={status.trouble}>{status.text}{#if change}{" "}<button type="button" class="backups-change" onclick={onSetup}>change folder…</button>{/if}</p>{/if}
     {#if folder}<p class="backups-status">{folder.lead} <strong>{folder.name}</strong>. <button type="button" class="backups-change" onclick={onSetup}>change folder…</button></p>{/if}
   </div>
   {#if backups.unused.length}
-    <p class="backups-status"><strong>{counted(backups.unused.length, " unused picture", " unused pictures")}.</strong> {UNUSED}</p>
+    <p class="backups-status"><strong>{words.heading}</strong> {UNUSED}</p>
     <div class="backups-pictures">
-      {#each backups.unused as p (p.name)}
+      {#each backups.unused as p (p.key)}
         <figure>{#if p.src}<img src={p.src} alt="" />{:else}<div class="backups-picture-pending"></div>{/if}<figcaption>{p.name}</figcaption></figure>
       {/each}
     </div>
-    <div class="backups-auto"><button type="button" onclick={onSweep}>Remove {backups.unused.length === 1 ? "this picture" : "these " + backups.unused.length + " pictures"}</button></div>
+    <div class="backups-auto"><button type="button" onclick={onSweep}>{words.button}</button></div>
   {:else if backups.overHalf}
     <p class="backups-status">{UNUSED}</p>
     <p class="backups-status trouble">{backups.overHalf} such pictures — more than half of all stored, which looks like a journal read short rather than a tidy-up, so none are offered for removal.</p>

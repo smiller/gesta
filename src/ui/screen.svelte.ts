@@ -46,7 +46,7 @@ export interface Screen {
   bookmarks: { rows: BookmarkRow[]; foot: { full: true } | { full: false; name: string } | null; editing: string; draft: string; buf: string; unreadable: boolean; opening: number };
   shortcuts: { query: string; rows: Shortcut[]; active: number; empty: string; editing: boolean; draft: string; dirty: boolean };
   /* `unused` the pictures no entry names; `overHalf` that count where it is more than half of them */
-  backups: { canPick: boolean; configured: boolean; trouble: string; folder: string | null; warm: "ok" | "loading" | "failed"; unused: { name: string; src: string | null }[]; overHalf: number };
+  backups: { canPick: boolean; configured: boolean; trouble: string; folder: string | null; warm: "ok" | "loading" | "failed"; unused: { key: string; name: string; src: string | null }[]; overHalf: number };
   gotoToolbar: { open: boolean; kind: AskKind; line: string; page: string; stanza: string; lineLabel: string; pageLabel: string };
   /* ⌃⌘E's toolbar: `count` the line after Find, `any` whether there is a match to replace */
   replace: { open: boolean; find: string; with: string; count: string; any: boolean };
