@@ -47,3 +47,6 @@
 {"at":"2026-11-27T18:19","ev":"add","id":"A32.1.3","list":"A","title":"The runner's trouble as a kind, its words from the alert table","parent":"A32.1","detail":"Asked: candidate 4 of the A32.1 run, 'All yes' to build it next, grilled, 'yes'. Why: the pill's sentence was the runner's state; pausedOn compared it, so a rewording would stop the late grant; three sentences sat outside the alert table. Done when: the runner says none/paused/incomplete/failed/blocked, the words in a TROUBLE table written to docs/alerts.md as The pill, the verdict unchanged, accepted."}
 {"at":"2026-11-27T18:19","ev":"start","id":"A32.1.3"}
 {"at":"2026-11-27T18:23","ev":"done","id":"A32.1.3","commits":["dcdb54e"]}
+{"at":"2026-11-27T18:26","ev":"add","id":"A32.1.4","list":"A","title":"The Backups panel's lines from one function","parent":"A32.1","detail":"Asked: candidate 3 of the A32.1 run, 'All yes', grilled, 'yes'. Why: six one-line predicates composed in the template, the panel's words in two places, and the Helium reading taking the unused-pictures heading as the status. Done when: backupsLines(state) returns the lines by role, the template draws them, Helium reads by role, every state's render unchanged, accepted."}
+{"at":"2026-11-27T18:26","ev":"start","id":"A32.1.4"}
+{"at":"2026-11-27T18:41","ev":"done","id":"A32.1.4","commits":["1156c91"]}
