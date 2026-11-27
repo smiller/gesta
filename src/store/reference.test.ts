@@ -139,6 +139,11 @@ test("referenceLabel: a passage stands in for every level below the work, a numb
   expect(referenceLabel(NS_BOOK.key, "Milton, John/Paradise Lost/Book 1", { place: null, page: { from: "22", to: "22" } }, journal)).toBe("Milton, *Paradise Lost*, 1");
 });
 
+test("referenceLabel: a Stephanus number wins over the rows' count handed beside it", () => {
+  expect(referenceLabel(NS_BOOK.key, "Plato/Euthyphro", { place: { kind: "numbers", text: "1-4" }, page: { from: "2a", to: "2c" } }, journal)).toBe("Plato, *Euthyphro*, 2a-c");
+  expect(referenceLabel(NS_BOOK.key, "Milton, John/Paradise Lost/Book 1", { place: { kind: "numbers", text: "3" }, page: { from: "9", to: "9" } }, journal)).toBe("Milton, *Paradise Lost*, 1.3");
+});
+
 test("referenceLabel: the line range dots onto a numeral run and commas after a title; a page stands in only for a titled division", () => {
   expect(referenceLabel(NS_BOOK.key, "Milton, John/Paradise Lost/Book 1", { place: { kind: "numbers", text: "254-55" } }, journal)).toBe("Milton, *Paradise Lost*, 1.254-55");
   expect(referenceLabel(NS_BOOK.key, "Blake, William/Songs of Innocence/A Cradle Song", { place: { kind: "numbers", text: "1-4" } }, journal)).toBe("Blake, *Songs of Innocence*, *A Cradle Song*, 1-4");

@@ -53,12 +53,12 @@ test("a link's DOM, which copies are made from, carries its address alone", () =
   expect(schema.marks.link.spec.toDOM!(schema.marks.link.create({ href: "#commonplace/Horace" }), true)).toEqual(["a", { href: "#commonplace/Horace" }, 0]);
 });
 
-test("a page label says whether it is a passage, which the gutter draws bare", async () => {
-  expect(schema.nodes.page_label.spec.toDOM!(schema.nodes.page_label.create({ label: "2a" }))).toEqual(["span", { class: "page-label", "data-page": "2a", "data-passage": "" }]);
+test("a page label says whether it is a Stephanus number, which the gutter draws bare", async () => {
+  expect(schema.nodes.page_label.spec.toDOM!(schema.nodes.page_label.create({ label: "2a" }))).toEqual(["span", { class: "page-label", "data-page": "2a", "data-stephanus": "" }]);
   expect(schema.nodes.page_label.spec.toDOM!(schema.nodes.page_label.create({ label: "212" }))).toEqual(["span", { class: "page-label", "data-page": "212" }]);
   const { readFileSync } = await import("node:fs");
   const css = readFileSync(new URL("../editor/editor.css", import.meta.url), "utf8");
-  expect(css).toMatch(/\.page\.paged \.page-label\[data-passage\]::after \{\s*content: attr\(data-page\);/);
+  expect(css).toMatch(/\.page\.paged \.page-label\[data-stephanus\]::after \{\s*content: attr\(data-page\);/);
 });
 
 test("a skipped line number is never selected, and stands only in verse", () => {

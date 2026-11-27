@@ -227,12 +227,12 @@ main { max-width: 760px; margin: 0 auto; padding: 0 24px 24px; }
   -webkit-user-select: none;
   pointer-events: none;
 }
-.page.paged .page-label[data-passage]::after {
+.page.paged .page-label[data-stephanus]::after {
   content: attr(data-page);
 }
-/* the passage rule above outweighs a plain note rule, so a note's passage is named again here (pin: passages › the gutter) */
+/* the Stephanus rule above outweighs a plain note rule, so a note's Stephanus number is named again here (pin: passages › the gutter) */
 .page :is(div.note, div.margin-note) .page-label::before, .page :is(div.note, div.margin-note) .page-label::after,
-.page.paged :is(div.note, div.margin-note) .page-label[data-passage]::after { content: none; }
+.page.paged :is(div.note, div.margin-note) .page-label[data-stephanus]::after { content: none; }
 
 /* ---------- the verse block: a run of lines, paired or not ---------- */
 .page .verse { margin-top: 1.2em; margin-bottom: 1.2em; }

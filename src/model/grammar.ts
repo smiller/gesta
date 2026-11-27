@@ -34,14 +34,13 @@ export const GRID_OPEN = /^\s*:::\s*grid(?:\s+0*[1-9]\d*)?\s*$/;
    printing xxiv (pin: grammar.test › PAGE_ONE: arabic or roman, either case) */
 export const PAGE_ARABIC_SRC = "[0-9]";
 export const PAGE_ROMAN_SRC = "[ivxlcdmIVXLCDM]";
-/* A PASSAGE: a page's digits and one letter, Stephanus's a to e (Bekker's
-   a and b among them), lower case alone, so `8x` stays a mix (pin:
-   grammar.test › a passage is a page's digits) */
-export const PAGE_PASSAGE_SRC = `${PAGE_ARABIC_SRC}+[a-e]`;
-export const PAGE_PASSAGE = new RegExp(`^${PAGE_PASSAGE_SRC}$`);
+/* A STEPHANUS NUMBER: a page's digits and one letter, a to e, lower case
+   alone, so `8x` stays a mix (pin: grammar.test › a Stephanus number is a
+   page label) */
+export const STEPHANUS_SRC = `${PAGE_ARABIC_SRC}+[a-e]`;
 /* non-capturing, so a splice that is not itself parenthesized cannot
    silently mean ^arabic OR roman$ */
-export const PAGE_NUM_SRC = `(?:${PAGE_PASSAGE_SRC}|${PAGE_ARABIC_SRC}+|${PAGE_ROMAN_SRC}+)`;
+export const PAGE_NUM_SRC = `(?:${STEPHANUS_SRC}|${PAGE_ARABIC_SRC}+|${PAGE_ROMAN_SRC}+)`;
 export const PAGE_ONE = new RegExp(`^${PAGE_NUM_SRC}$`);
 export const PAGE_ARABIC = new RegExp(`^${PAGE_ARABIC_SRC}+$`);
 export const PAGE_CHARS_RE = new RegExp("^(?:" + PAGE_ARABIC_SRC + "|" + PAGE_ROMAN_SRC + ")+$");

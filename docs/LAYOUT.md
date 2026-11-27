@@ -6,7 +6,9 @@ tools' switches. `tools/claudeLayout.test.ts` fails on a module under
 
 - `src/model/` — the document model, no DOM: `schema.ts` (nodes, marks,
   `MARK_ORDER`), `grammar.ts` (the line regexes, a page label's
-  grammar, and the pure string transforms both arms share), `table.ts` (a markdown table's lines: where one
+  grammar, and the pure string transforms both arms share), `stephanus.ts`
+  (a Stephanus number: whether a label is one, its page, what a typed ask
+  is, how a run is named), `table.ts` (a markdown table's lines: where one
   starts, its cells read and written), `parse.ts`, `serialize.ts`, `tokens.ts`
   (syntax highlighting's tokenizer), `fenceRefusals.ts` (the `:::` lines a
   parse left as paragraphs, with their reasons), `trim.ts` (a name or what was typed, cut at a cap),

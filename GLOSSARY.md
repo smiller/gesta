@@ -5,16 +5,23 @@ here names a thing a reader of the app would recognise; how the code does it
 lives in the code.
 
 **Passage**:
-A stretch of a work's text. Named by where it stands: a Stephanus passage,
-`6d`, begun in its text by a page label with a letter, `⟨6d⟩`, which the
-Go to toolbar's one box, Go to passage, finds, and a reference names bare,
-"2a-c". Or made by a selection: every row the selection puts a word, or part
+A stretch of a work's text. Named by where it stands: in Plato, by the
+Stephanus number it begins at. Or made by a selection: every row the selection puts a word, or part
 of one, into, whole and in both columns; in a dual-language block, also the
 Latin the selected sentence stands beside. What ⌃⌘R quotes, what the column
 marks show beyond the selection, and what Ref (all) is offered on. In a block
 numbered on both sides, Ref quotes the passage's translation column alone.
-_Avoid_: selection (what the hand made, not what it means), quote, excerpt,
-section (for a Stephanus passage).
+_Avoid_: selection (what the hand made, not what it means), quote, excerpt.
+
+**Stephanus number**:
+Where a passage of Plato begins, by the page and section of Stephanus's
+edition: a page's digits and one letter, a to e, `6d`. Marked in the text by
+a page label, `⟨6d⟩`, which the gutter draws bare; the Go to toolbar's one
+box, Go to passage, finds it, or the first on a page, `6`; a reference names
+the numbers its rows run through bare, "2a-c", "2d-3a", in place of their
+count.
+_Avoid_: section, Stephanus passage, Stephanus reference (a reference is
+what ⌃⌘R makes).
 
 **Reference**:
 What ⌃⌘R makes: a link to the entry, labelled with where the passage stands

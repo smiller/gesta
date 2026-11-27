@@ -1,5 +1,5 @@
 import { Schema, type NodeSpec, type MarkSpec, type Node as PMNode } from "prosemirror-model";
-import { PAGE_PASSAGE } from "./grammar.ts";
+import { isStephanus } from "./stephanus.ts";
 
 /* THE MARK NESTING ORDER, outermost first, for marks covering the same
    run. Bold OUTSIDE italic, not CommonMark's em-outside: ***x*** must come
@@ -149,7 +149,7 @@ const nodes: Record<string, NodeSpec> = {
     inline: true, group: "inline",
     attrs: { label: {} },
     parseDOM: [{ tag: "span.page-label", getAttrs: (dom) => ({ label: dom.getAttribute("data-page") }) }],
-    toDOM: (n) => ["span", { class: "page-label", "data-page": n.attrs.label, ...(PAGE_PASSAGE.test(String(n.attrs.label)) ? { "data-passage": "" } : {}) }],
+    toDOM: (n) => ["span", { class: "page-label", "data-page": n.attrs.label, ...(isStephanus(String(n.attrs.label)) ? { "data-stephanus": "" } : {}) }],
   },
 };
 

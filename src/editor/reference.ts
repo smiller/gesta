@@ -1,7 +1,7 @@
 import type { Node } from "prosemirror-model";
 import type { EditorState } from "prosemirror-state";
 import { schema } from "../model/schema.ts";
-import { PAGE_PASSAGE } from "../model/grammar.ts";
+import { isStephanus } from "../model/stephanus.ts";
 import { blockUnits, paragraphAt, paragraphOf, hasFacing, type Unit, type Side } from "./numbering.ts";
 import { elideRange, referenceLabel, mdLabel, type Journal, type PageRange, type Place } from "../store/reference.ts";
 import { conventionsOf, type Conventions } from "../store/conventions.ts";
@@ -142,16 +142,16 @@ function pageRange({ doc, from, to }: Pick<Passage, "doc" | "from" | "to">): Pag
   if (!at) return null;
   return { from: at.label, to: (throughPage(doc, pageList, from, to) || at).label };
 }
-/* A PASSAGE WINS OVER THE ROWS' COUNT, read over the rows the reference
-   quotes, whole and in both columns: read over the words selected, the
-   translation of a row opening in one passage was named by the next (pin:
-   reference.test › a reference is named by the passages its rows run through) */
-function passagesOver(p: Passage): PageRange | null {
+/* THE STEPHANUS NUMBERS ARE READ OVER THE ROWS the reference quotes, whole
+   and in both columns: read over the words selected, the translation of a
+   row opening in one passage was named by the next (pin: reference.test › a
+   reference is named by the passages its rows run through) */
+function stephanusOver(p: Passage): PageRange | null {
   const rows = p.lines();
   if (!rows.length) return null;
   const last = rows[rows.length - 1];
   const range = pageRange({ doc: p.doc, from: Math.min(p.from, rows[0].pos), to: Math.max(p.to, last.pos + last.node.nodeSize) });
-  return range && PAGE_PASSAGE.test(range.from) ? range : null;
+  return range && isStephanus(range.from) ? range : null;
 }
 /* counted as a literal substring (pin: reference.test › selectionLink) */
 export function selectionLink(doc: Node, from: number, to: number): Highlight | null {
@@ -206,9 +206,8 @@ function payloadOver(p: Passage, at: EntryAt, journal: Journal, all: boolean): P
   const said = conventionsOf(at.date, at.tag, journal);
   const quoted = quotation(p, { halves: said.byHalfLine, paragraphs: said.byBookChapterAndParagraph || said.proseByParagraphVerseByLine, all });
   if ("refused" in quoted) return quoted;
-  const page = passagesOver(p) ?? pageRange(p);
-  const place = page && PAGE_PASSAGE.test(page.from) ? null : rangeOver(p, said);
-  const label = referenceLabel(at.date, at.tag, { place, page, facing: facingRange(p) }, journal);
+  const page = stephanusOver(p) ?? pageRange(p);
+  const label = referenceLabel(at.date, at.tag, { place: rangeOver(p, said), page, facing: facingRange(p) }, journal);
   const url = entryLinkUrl(at.date, at.tag, hl);
   return { text: "[" + mdLabel(label, label) + "](" + url + "):\n\n" + quoted.text, label, url, passage: quoted.text };
 }
