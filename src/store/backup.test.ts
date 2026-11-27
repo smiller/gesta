@@ -44,3 +44,11 @@ test("a permission check answered in time is waited for", async () => {
   expect(troubles.at(-1)).toBe(PAUSED_MSG);
   expect(h.asked).toBe(1);
 });
+
+test("the folder's name is known once a run has read it", async () => {
+  const h = folder(["prompt"]);
+  const { b } = await runner(h);
+  expect(b.folder).toBeNull();
+  await b.runBackup();
+  expect(b.folder).toBe("gesta-backups");
+});

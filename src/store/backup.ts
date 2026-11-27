@@ -42,6 +42,7 @@ export interface BackupOptions {
 export interface Backup {
   readonly configured: boolean;
   readonly trouble: string;
+  readonly folder: string | null;
   runBackup(): Promise<void>;
   scheduleBackup(): void;
   firePendingBackup(): Promise<void> | null;
@@ -247,6 +248,7 @@ export function backupRunner(opts: BackupOptions): Backup {
   }
   return {
     get configured() { return configured; },
+    get folder() { return handle?.name ?? null; },
     get trouble() { return trouble; },
     runBackup, scheduleBackup, firePendingBackup, setupBackupFolder, resumeBackups,
   };

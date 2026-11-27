@@ -12,7 +12,7 @@ export interface BackupsPanelDeps {
   bk: Screen["backups"];
   canPick(): boolean;
   reader: boolean;
-  backup: () => Pick<Backup, "configured" | "trouble">;
+  backup: () => Pick<Backup, "configured" | "trouble" | "folder">;
   layer: Pick<EntryLayer, "cache" | "warmed" | "storeReadFailed">;
   images: Pick<ImageStore, "keys" | "del">;
   flushSave: Session["save"]["flush"];
@@ -32,7 +32,7 @@ export function backupsPanel(d: BackupsPanelDeps): BackupsPanel {
   };
   const read = (): void => {
     const b = d.backup();
-    Object.assign(bk, { canPick: d.canPick(), configured: b.configured, trouble: b.trouble, warm: warmth(), unused: 0, overHalf: 0 });
+    Object.assign(bk, { canPick: d.canPick(), configured: b.configured, trouble: b.trouble, folder: b.folder, warm: warmth(), unused: 0, overHalf: 0 });
     if (d.reader || bk.warm !== "ok") return;
     plannedSweep().then((plan) => {
       bk.unused = plan.drop.length;

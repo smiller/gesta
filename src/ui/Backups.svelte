@@ -4,21 +4,22 @@
      folder it makes into a fresh Gesta; there is no in-app restore. -->
 <script lang="ts">
   import type { Screen } from "./screen.svelte.ts";
-  import { backupsStatus } from "./backupsModel.ts";
+  import { backupsStatus, backupsFolder, offersChange } from "./backupsModel.ts";
   import { counted } from "./counted.ts";
   let { backups, onSetup, onResume, onSweep }: { backups: Screen["backups"]; onSetup: () => void; onResume: () => void; onSweep: () => void } = $props();
   const status = $derived(backupsStatus(backups));
+  const folder = $derived(backupsFolder(backups));
+  const change = $derived(offersChange(backups));
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_element_to_interactive_role -->
 <section class="helppanel backups" role="dialog" aria-label="Backups">
   <h2>Backups</h2>
   <div class="backups-auto">
-    {#if backups.canPick}
-      <button type="button" onclick={onSetup}>{backups.configured ? "Change backup folder…" : "Set up automatic backups…"}</button>
-      {#if backups.configured && backups.trouble}<button type="button" onclick={onResume}>Resume backups</button>{/if}
-    {/if}
-    {#if status}<p class="backups-status" class:trouble={status.trouble}>{status.text}</p>{/if}
+    {#if backups.canPick && !backups.configured}<button type="button" onclick={onSetup}>Set up automatic backups…</button>{/if}
+    {#if backups.canPick && backups.configured && backups.trouble}<button type="button" onclick={onResume}>Resume backups</button>{/if}
+    {#if status}<p class="backups-status" class:trouble={status.trouble}>{status.text}{#if change && !folder}{" "}<button type="button" class="backups-change" onclick={onSetup}>change folder…</button>{/if}</p>{/if}
+    {#if folder}<p class="backups-status">{folder.lead} <strong>{folder.name}</strong>. <button type="button" class="backups-change" onclick={onSetup}>change folder…</button></p>{/if}
   </div>
   {#if backups.unused}
     <div class="backups-auto"><button type="button" onclick={onSweep}>Remove {counted(backups.unused, " unused picture", " unused pictures")}</button></div>
@@ -50,6 +51,7 @@
   .backups-auto { margin: 0 0 1em; }
   .backups-auto button { margin-right: 0.5em; font-family: var(--sans); font-size: 0.85em; color: var(--accent); background: none; border: 1px solid var(--rule); border-radius: 4px; padding: 3px 10px; cursor: pointer; }
   .backups-auto button:hover { border-color: var(--accent); }
+  .backups-auto button.backups-change { border: none; padding: 0; margin: 0 0 0 0.1em; font-size: 1em; text-decoration: underline; }
   .backups-status { font-size: 0.85em; color: var(--muted); margin: 0.6em 0 0; }
   .backups-status.trouble { color: var(--accent); }
   .backups-note { font-size: 0.85em; color: var(--muted); margin: 0.4em 0 1em; }
