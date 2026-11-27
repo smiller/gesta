@@ -239,6 +239,16 @@ export const ALERTS = {
   bundleOpened: success((p: { n: number }) => entriesText(p.n), "The reader: the backup opened, its entries counted."),
 };
 
+/* the backup's trouble: one set of words wherever it is drawn */
+export type Trouble = "none" | "paused" | "incomplete" | "failed" | "blocked";
+export const TROUBLE: Record<Exclude<Trouble, "none">, { words: string; when: string }> = {
+  paused: { words: "backups paused — click to resume", when: "The backup folder’s permission is not granted, after a restart or a check that never answered; a click asks for it." },
+  incomplete: { words: "backup incomplete — click to retry", when: "A backup ran, but some files did not reach the folder; a click runs it again." },
+  failed: { words: "backup failed — click to retry", when: "A backup failed for a reason a retry may clear; a click runs it again." },
+  blocked: { words: "backup blocked — two entries share a filename", when: "Two entries would write one file in the backup folder; the error beside it names them." },
+};
+export const troubleWords = (t: Trouble): string => (t === "none" ? "" : TROUBLE[t].words);
+
 export type AlertId = keyof typeof ALERTS;
 export type ParamsOf<I extends AlertId> = (typeof ALERTS)[I]["words"] extends (p: infer P) => string ? P : never;
 type Bare<I extends AlertId> = [ParamsOf<I>] extends [never] ? true : false;

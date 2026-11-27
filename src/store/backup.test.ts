@@ -1,5 +1,5 @@
 import { test, expect, vi, afterEach } from "vitest";
-import { backupRunner, PAUSED_MSG, PERMISSION_MS, type BackupState } from "./backup.ts";
+import { backupRunner, PERMISSION_MS, type BackupState } from "./backup.ts";
 import { memBackupStore, memImageStore } from "./store.ts";
 import type { EntryLayer } from "./entries.ts";
 import type { Dir } from "./fsa.ts";
@@ -24,7 +24,7 @@ function folder(answers: (PermissionState | null | [PermissionState, number])[])
 async function runner(h: Dir) {
   const store = memBackupStore();
   await store.set(h as unknown as FileSystemDirectoryHandle);
-  const troubles: string[] = [], raised: string[] = [], changes: BackupState[] = [];
+  const troubles: BackupState["trouble"][] = [], raised: string[] = [], changes: BackupState[] = [];
   const layer = { warmed: true, storeReadFailed: false, cache: { "2026-11-27": "a day" } } as unknown as EntryLayer;
   const b = backupRunner({ layer, images: memImageStore(), store, picker: () => Promise.resolve(h), raise: ((k: string) => { raised.push(k); }) as never, onChange: (c) => { changes.push(c); troubles.push(c.trouble); } });
   return { b, troubles, raised, changes };
@@ -34,9 +34,9 @@ test("the runner says whether a folder is set up, its name and its trouble, each
   vi.useFakeTimers();
   const h = folder(["prompt"]);
   const { b, changes } = await runner(h);
-  expect(changes).toEqual([{ configured: false, trouble: "", folder: null }]);
+  expect(changes).toEqual([{ configured: false, trouble: "none", folder: null }]);
   await b.runBackup();
-  expect(changes.slice(1)).toEqual([{ configured: true, trouble: "", folder: "gesta-backups" }, { configured: true, trouble: PAUSED_MSG, folder: "gesta-backups" }]);
+  expect(changes.slice(1)).toEqual([{ configured: true, trouble: "none", folder: "gesta-backups" }, { configured: true, trouble: "paused", folder: "gesta-backups" }]);
 });
 
 test("a run ending as the one before it did says nothing new", async () => {
@@ -44,7 +44,7 @@ test("a run ending as the one before it did says nothing new", async () => {
   const h = folder(["prompt", "prompt"]);
   const { b, changes } = await runner(h);
   await b.runBackup();
-  expect(changes.at(-1)?.trouble).toBe(PAUSED_MSG);
+  expect(changes.at(-1)?.trouble).toBe("paused");
   const said = changes.length;
   await b.runBackup();
   expect(h.asked).toBe(2);
@@ -58,7 +58,7 @@ test("a permission check that never answers pauses the backups, and the next run
   const run = b.runBackup();
   await vi.advanceTimersByTimeAsync(PERMISSION_MS);
   await run;
-  expect(troubles.at(-1)).toBe(PAUSED_MSG);
+  expect(troubles.at(-1)).toBe("paused");
   expect(raised).not.toContain("backingUp");
   await b.runBackup();
   expect(h.asked).toBe(2);
@@ -69,7 +69,7 @@ test("a permission check answered in time is waited for", async () => {
   const h = folder(["prompt"]);
   const { b, troubles } = await runner(h);
   await b.runBackup();
-  expect(troubles.at(-1)).toBe(PAUSED_MSG);
+  expect(troubles.at(-1)).toBe("paused");
   expect(h.asked).toBe(1);
 });
 
@@ -100,9 +100,9 @@ test("a permission check answering granted after the wait unpauses and runs", as
   const run = b.runBackup();
   await vi.advanceTimersByTimeAsync(PERMISSION_MS);
   await run;
-  expect(troubles.at(-1)).toBe(PAUSED_MSG);
+  expect(troubles.at(-1)).toBe("paused");
   await vi.advanceTimersByTimeAsync(1000);
-  expect(troubles.at(-1)).toBe("");
+  expect(troubles.at(-1)).toBe("none");
   expect(raised).toContain("backingUp");
 });
 

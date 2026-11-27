@@ -6,15 +6,15 @@ const with_ = (patch: Partial<ReturnType<typeof screenState>["backups"]>) => ({ 
 
 describe("the backups status", () => {
   it("a browser with no folder picker says there is no way to write a copy, as no trouble", () => {
-    expect(backupsStatus(with_({ canPick: false, configured: true, trouble: "x" }))).toEqual({ text: expect.stringContaining("need a Chromium browser"), trouble: false });
+    expect(backupsStatus(with_({ canPick: false, configured: true, trouble: "failed" }))).toEqual({ text: expect.stringContaining("need a Chromium browser"), trouble: false });
   });
   it("configured before the journal is in: still loading, or failed until a reload, as trouble", () => {
     expect(backupsStatus(with_({ configured: true, warm: "loading" }))).toEqual({ text: expect.stringContaining("Still loading"), trouble: true });
     expect(backupsStatus(with_({ configured: true, warm: "failed" }))).toEqual({ text: expect.stringContaining("paused until you reload"), trouble: true });
   });
-  it("configured and in: the trouble's own words when there is one, else on, said by the folder's line once it is named", () => {
-    expect(backupsStatus(with_({ configured: true, warm: "ok", trouble: "backups paused" }))).toEqual({ text: "backups paused", trouble: true });
-    expect(backupsStatus(with_({ configured: true, warm: "ok", trouble: "backups paused", folder: "gesta-backups" }))).toEqual({ text: "backups paused", trouble: true });
+  it("configured and in: the trouble's words when there is one, else on, said by the folder's line once it is named", () => {
+    expect(backupsStatus(with_({ configured: true, warm: "ok", trouble: "paused" }))).toEqual({ text: "backups paused — click to resume", trouble: true });
+    expect(backupsStatus(with_({ configured: true, warm: "ok", trouble: "blocked", folder: "gesta-backups" }))).toEqual({ text: "backup blocked — two entries share a filename", trouble: true });
     expect(backupsStatus(with_({ configured: true, warm: "ok" }))).toEqual({ text: "Automatic backups are on.", trouble: false });
     expect(backupsStatus(with_({ configured: true, warm: "ok", folder: "gesta-backups" }))).toBeNull();
   });
@@ -27,7 +27,7 @@ describe("the backups status", () => {
 describe("the backup folder's line", () => {
   it("names the folder backed up to, or, in trouble, the folder that stands", () => {
     expect(backupsFolder(with_({ configured: true, warm: "ok", folder: "gesta-backups" }))).toEqual({ lead: "Backing up to", name: "gesta-backups" });
-    expect(backupsFolder(with_({ configured: true, warm: "ok", folder: "gesta-backups", trouble: "backups paused" }))).toEqual({ lead: "Folder:", name: "gesta-backups" });
+    expect(backupsFolder(with_({ configured: true, warm: "ok", folder: "gesta-backups", trouble: "paused" }))).toEqual({ lead: "Folder:", name: "gesta-backups" });
   });
   it("is not drawn with no name yet, no folder, a journal not in, or no picker", () => {
     expect(backupsFolder(with_({ configured: true, warm: "ok" }))).toBeNull();
@@ -51,9 +51,9 @@ describe("the panel's other controls", () => {
     expect(offersSetup(with_({}))).toBe(true);
     expect(offersSetup(with_({ configured: true }))).toBe(false);
     expect(offersSetup(with_({ canPick: false }))).toBe(false);
-    expect(offersResume(with_({ configured: true, trouble: "backups paused" }))).toBe(true);
+    expect(offersResume(with_({ configured: true, trouble: "paused" }))).toBe(true);
     expect(offersResume(with_({ configured: true }))).toBe(false);
-    expect(offersResume(with_({ canPick: false, configured: true, trouble: "x" }))).toBe(false);
+    expect(offersResume(with_({ canPick: false, configured: true, trouble: "failed" }))).toBe(false);
   });
   it("the change link stands in the status line only where no folder line holds it", () => {
     expect(changeInStatus(with_({ configured: true, warm: "ok" }))).toBe(true);

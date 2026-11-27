@@ -18,6 +18,14 @@ test("the page has a table per kind, its rows each alert of that kind, and the p
   expect(page).toContain("## Phrases");
 });
 
+test("the pill's words follow the success table, each kind of trouble a row", () => {
+  const page = alertsPage();
+  expect(page.indexOf("## Success")).toBeLessThan(page.indexOf("## The pill"));
+  expect(page.indexOf("## The pill")).toBeLessThan(page.indexOf("## Phrases"));
+  expect(page).toContain("| `backups paused — click to resume` |");
+  expect(page).toContain("| `backup blocked — two entries share a filename` |");
+});
+
 test("docs/alerts.md is the page the table writes: `node tools/alertsPage.ts` writes it again", () => {
   expect(readFileSync("docs/alerts.md", "utf8")).toBe(alertsPage());
 });

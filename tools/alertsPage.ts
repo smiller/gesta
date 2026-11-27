@@ -1,5 +1,5 @@
 import { writeFileSync } from "node:fs";
-import { ALERTS, PHRASES, type AlertId, type Kind } from "../src/model/alertText.ts";
+import { ALERTS, PHRASES, TROUBLE, type AlertId, type Kind } from "../src/model/alertText.ts";
 
 /* drawn as … once runs of it are one, so a … the words themselves write stays apart */
 const VARY = "\uE000";
@@ -37,10 +37,14 @@ function kindSection([kind, title, about]: [Kind, string, string]): string[] {
   const ids = (Object.keys(ALERTS) as AlertId[]).filter((id) => ALERTS[id].kind === kind);
   return ["", "## " + title, "", about, "", "| Words | When |", "|---|---|", ...ids.map((id) => row(shown(ALERTS[id].words), ALERTS[id].when))];
 }
+function pillSection(): string[] {
+  const rows = Object.values(TROUBLE).map((t) => row(t.words, t.when));
+  return ["", "## The pill", "", "The backup’s trouble, at the corner until a run completes, and the Backups panel’s status while it stands. A click on the pill resumes or retries.", "", "| Words | When |", "|---|---|", ...rows];
+}
 function phraseSection(): string[] {
   const names = Object.keys(PHRASES) as (keyof typeof PHRASES)[];
   return ["", "## Phrases", "", "Words that stand inside the alerts above, never alone: which of several blocks a landing is in, a refused fence’s reason, a directive’s trouble, a filename clash.", "", "| Words | Name |", "|---|---|", ...names.map((n) => row(shown(PHRASES[n]), "`" + n + "`"))];
 }
-export const alertsPage = (): string => [...HEAD, ...KINDS.flatMap(kindSection), ...phraseSection(), ""].join("\n");
+export const alertsPage = (): string => [...HEAD, ...KINDS.flatMap(kindSection), ...pillSection(), ...phraseSection(), ""].join("\n");
 
 if (import.meta.url === "file://" + process.argv[1]) writeFileSync("docs/alerts.md", alertsPage());

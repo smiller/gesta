@@ -267,12 +267,12 @@ describe("progress", () => {
 });
 
 describe("the paused pill", () => {
-  it("carries the backup's trouble text, empty when healthy", () => {
-    expect(n.state.trouble).toBe("");
-    n.setTrouble("backups paused — click to resume");
-    expect(n.state.trouble).toBe("backups paused — click to resume");
-    n.setTrouble("");
-    expect(n.state.trouble).toBe("");
+  it("carries the backup's trouble, none when healthy", () => {
+    expect(n.state.trouble).toBe("none");
+    n.setTrouble("paused");
+    expect(n.state.trouble).toBe("paused");
+    n.setTrouble("none");
+    expect(n.state.trouble).toBe("none");
   });
 });
 

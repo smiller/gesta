@@ -44,9 +44,9 @@ describe("Alerts", () => {
     expect(html).toMatch(/class="alert info[^"]*show[^"]*">1 word/);
     expect(html).toMatch(/class="alert success[^"]*show[^"]*">Link copied/);
   });
-  it("trouble draws the pill with its text", () => {
+  it("trouble draws the pill with its kind's words", () => {
     const a = alertLedger(() => Promise.resolve());
-    a.setTrouble("backups paused — click to resume");
+    a.setTrouble("paused");
     const html = draw(a);
     expect(html).toMatch(/<button class="backup-paused[^"]*">backups paused — click to resume<\/button>/);
     expect(html).not.toMatch(/backup-paused[^>]*hidden/);

@@ -16,7 +16,7 @@ async function panel(cache: Record<string, string>, stored: string[], hold = fal
     layer: { cache, warmed: true, storeReadFailed: false }, images, flushSave: () => (flushes.shift() ?? (() => Promise.resolve(true)))(), raise: (() => {}) as never, confirm: () => true,
     showPicture: (key) => { shown.push(key); const src = "blob:" + ++n; return hold ? new Promise((r) => held.push(() => r(src))) : Promise.resolve(src); }, releasePicture: (url) => { released.push(url); },
   });
-  p.changed({ configured: true, trouble: "", folder: "gesta-backups" });
+  p.changed({ configured: true, trouble: "none", folder: "gesta-backups" });
   return { p, bk, shown, released, held };
 }
 async function lateArrival(end: (p: BackupsPanel) => void) {
@@ -84,15 +84,15 @@ describe("the backups panel, open and closed", () => {
     const { p, bk, shown } = await panel({ "2026-10-30": "a day" }, ONE);
     p.open();
     await settle(); await settle();
-    p.changed({ configured: true, trouble: "backups paused — click to resume", folder: "gesta-backups" });
+    p.changed({ configured: true, trouble: "paused", folder: "gesta-backups" });
     await settle(); await settle();
     expect(shown.length).toBe(1);
-    expect(bk.trouble).toBe("backups paused — click to resume");
+    expect(bk.trouble).toBe("paused");
     expect(bk.unused.map((x) => x.src)).toEqual(["blob:1"]);
   });
   it("a change while closed is there at the next open", async () => {
     const { p, bk } = await panel({ "2026-10-30": "a day" }, ONE);
-    p.changed({ configured: true, trouble: "", folder: "elsewhere" });
+    p.changed({ configured: true, trouble: "none", folder: "elsewhere" });
     p.open();
     expect(bk.folder).toBe("elsewhere");
   });

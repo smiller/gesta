@@ -1,9 +1,12 @@
 import type { Screen } from "./screen.svelte.ts";
+import { troubleWords } from "../model/alertText.ts";
+
+const inTrouble = (b: Screen["backups"]): boolean => b.trouble !== "none";
 
 export function backupsStatus(b: Screen["backups"]): { text: string; trouble: boolean } | null {
   if (!b.canPick) return { text: "Automatic folder backups need a Chromium browser (Helium or Chrome). Export needs one too, so here there is no way to write a copy out.", trouble: false };
   if (b.configured && b.warm !== "ok") return { text: b.warm === "failed" ? "Couldn’t load entries — backups are paused until you reload." : "Still loading — backups start once the journal is in.", trouble: true };
-  if (b.configured && b.trouble) return { text: b.trouble, trouble: true };
+  if (b.configured && inTrouble(b)) return { text: troubleWords(b.trouble), trouble: true };
   if (b.configured) return b.folder ? null : { text: "Automatic backups are on.", trouble: false };
   return null;
 }
@@ -11,7 +14,7 @@ export function offersSetup(b: Screen["backups"]): boolean {
   return b.canPick && !b.configured;
 }
 export function offersResume(b: Screen["backups"]): boolean {
-  return b.canPick && b.configured && !!b.trouble;
+  return b.canPick && b.configured && inTrouble(b);
 }
 export function changeInStatus(b: Screen["backups"]): boolean {
   return offersChange(b) && !backupsFolder(b);
@@ -24,5 +27,5 @@ export function offersChange(b: Screen["backups"]): boolean {
 }
 export function backupsFolder(b: Screen["backups"]): { lead: string; name: string } | null {
   if (!offersChange(b) || !b.folder) return null;
-  return { lead: b.trouble ? "Folder:" : "Backing up to", name: b.folder };
+  return { lead: inTrouble(b) ? "Folder:" : "Backing up to", name: b.folder };
 }

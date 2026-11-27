@@ -5,7 +5,7 @@ import "./ui/ui.css";
 import { mount } from "svelte";
 import { idbEntryStore, idbImageStore, idbBackupStore, memEntryStore, dexieKeyedStore, type ImageStore } from "./store/store.ts";
 import { readBundle, bundleImages, bundleKeeper, heldLabel, READER_DB, READER_STORE, type BundleRow } from "./store/bundle.ts";
-import { backupRunner, PAUSED_MSG } from "./store/backup.ts";
+import { backupRunner } from "./store/backup.ts";
 import { entryLayer } from "./store/entries.ts";
 import type { Dir } from "./store/fsa.ts";
 import { failWhy, errText } from "./store/files.ts";
@@ -542,7 +542,7 @@ primed.then(held).then(() => layer.warm()).then(() => loadWatch.landed(layer)).t
   /* `?corner=pill` draws the paused pill on a profile with no backup
      folder, AFTER the launch run, which clears the trouble of an
      unconfigured backup: the one state no headless run reaches */
-  if (!READER) backup.runBackup().then(() => { if (q.get("corner") === "pill") alerts.setTrouble(PAUSED_MSG); });
+  if (!READER) backup.runBackup().then(() => { if (q.get("corner") === "pill") alerts.setTrouble("paused"); });
 });
 const folders = folderActs({
   session, layer, images, alerts, picker: () => win.showDirectoryPicker?.bind(window), count, refreshMasthead,

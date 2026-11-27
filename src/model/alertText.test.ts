@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { ALERTS, PHRASES, alertWords, alertKind, alertMs, said, type AlertId } from "./alertText.ts";
+import { ALERTS, PHRASES, TROUBLE, troubleWords, alertWords, alertKind, alertMs, said, type AlertId } from "./alertText.ts";
 
 test("an alert's words by its id: fixed words as they are, words with parameters filled in", () => {
   expect(alertWords(said("saved"))).toBe("saved");
@@ -44,4 +44,13 @@ test("an alert quoting what was typed, a page or a name cuts it at 24 characters
   expect(alertWords(said("thereAlreadyWithSubs", { name: long }))).toBe("“" + cut + "” is there already and has sub-entries of its own");
   expect(alertWords(said("shelvesTaken", { name: long }))).toBe("“" + cut + "” is the shelves’ own name");
   expect(PHRASES.notANumber({ typed: long, noun: "stanza" })).toBe(long + " is not a stanza number");
+});
+
+test("the backup's trouble: every kind but none has its words and says when it shows; none has no words", () => {
+  for (const t of ["paused", "incomplete", "failed", "blocked"] as const) {
+    expect(troubleWords(t)).toBe(TROUBLE[t].words);
+    expect(TROUBLE[t].words.trim()).not.toBe("");
+    expect(TROUBLE[t].when.trim()).not.toBe("");
+  }
+  expect(troubleWords("none")).toBe("");
 });

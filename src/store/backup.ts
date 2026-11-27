@@ -9,12 +9,11 @@ import { exportEntries, archiveRoots } from "./exportEntries.ts";
 import type { EntryLayer } from "./entries.ts";
 import type { ImageStore, BackupStore } from "./store.ts";
 import type { Dir } from "./fsa.ts";
-import { type Raise } from "../model/alertText.ts";
+import { type Raise, type Trouble } from "../model/alertText.ts";
 
 export const BACKUP_SIG = NS + "backup.sig";
 export const BACKUP_DATED = NS + "backup.dated";
 export const BACKUP_ON = NS + "backup.on";
-export const PAUSED_MSG = "backups paused — click to resume";
 /* the idle debounce — 10 min, deliberately long: a folder write is heavier
    than a store put, and the dedup skips the no-change case anyway */
 export const IDLE_MS = 600000;
@@ -39,9 +38,8 @@ export interface BackupOptions {
      twice the same (pin: backup.test › a run ending as the one before) */
   onChange: (state: BackupState) => void;
 }
-/* `trouble` "" is healthy, else the reason the last run did not complete,
-   click-to-resume; never said while no folder is set up */
-export interface BackupState { configured: boolean; trouble: string; folder: string | null }
+/* `trouble` is why the last run did not complete, "none" while no folder is set up */
+export interface BackupState { configured: boolean; trouble: Trouble; folder: string | null }
 export interface Backup extends Readonly<BackupState> {
   runBackup(): Promise<void>;
   scheduleBackup(): void;
@@ -79,15 +77,15 @@ export function backupRunner(opts: BackupOptions): Backup {
   let configured = !!readRaw(BACKUP_ON);   /* every hint read and written inside try: reaching localStorage throws where it is refused (pin: entries left and renamed › a commonplace opened with localStorage refused) */
   let handle: Dir | null = null;   /* cached so a resume can requestPermission SYNCHRONOUSLY in the click */
   let running: Promise<void> | null = null;   /* the single-flight latch */
-  let trouble = "";
+  let trouble: Trouble = "none";
   let timer: ReturnType<typeof setTimeout> | null = null;
   let said = "";
   function announce(): void {
-    const state: BackupState = { configured, trouble: configured ? trouble : "", folder: handle?.name ?? null };
+    const state: BackupState = { configured, trouble: configured ? trouble : "none", folder: handle?.name ?? null };
     const now = JSON.stringify(state);
     if (now !== said) { said = now; opts.onChange(state); }
   }
-  function setTrouble(msg: string): void { trouble = msg || ""; announce(); }
+  function setTrouble(t: Trouble): void { trouble = t; announce(); }
   /* self-sealing: resolves on both arms, never rejects, so the launch and
      idle callers need no catch. Gated on the warm: never back up a blank
      or unread cache. */
@@ -106,7 +104,7 @@ export function backupRunner(opts: BackupOptions): Backup {
     handle = h;
     configured = !!h;
     announce();
-    if (!h) { writeRaw(BACKUP_ON, null); setTrouble(""); return; }
+    if (!h) { writeRaw(BACKUP_ON, null); setTrouble("none"); return; }
     /* a click has just granted it, a resume's or the pick's: asking again can
        hang as the first ask did (pin: backup.test › a resume granted in the click) */
     if (grantedNow) return granted(h);
@@ -116,17 +114,17 @@ export function backupRunner(opts: BackupOptions): Backup {
     const asked = h.queryPermission({ mode: "readwrite" });
     return answered(asked).then((perm) => {
       if (perm === "unanswered") grantedLate(h, asked);
-      return perm === "granted" ? granted(h) : setTrouble(PAUSED_MSG);
+      return perm === "granted" ? granted(h) : setTrouble("paused");
     });
   }
   /* a slow answer of granted lifts the pause it caused (pin: backup.test › a
      permission check answering granted after the wait) */
   function grantedLate(h: Dir, asked: Promise<PermissionState>): void {
     asked.then((perm) => {
-      if (perm === "granted" && pausedOn(h)) { setTrouble(""); void runBackup(); }
+      if (perm === "granted" && pausedOn(h)) { setTrouble("none"); void runBackup(); }
     }, () => {});
   }
-  const pausedOn = (h: Dir): boolean => h === handle && trouble === PAUSED_MSG;
+  const pausedOn = (h: Dir): boolean => h === handle && trouble === "paused";
   /* Helium's queryPermission has hung unanswered, and every later run waited
      behind it with nothing on screen: unanswered in time is taken as not
      granted, and the paused affordance asks (pin: backup.test › a permission
@@ -141,7 +139,7 @@ export function backupRunner(opts: BackupOptions): Backup {
     const today = todayKey(), sig = backupSig(layer.cache), lastSig = readRaw(BACKUP_SIG) ?? null;
     const datedWas = readRaw(BACKUP_DATED) ?? null;
     const plan = backupPlan(today, sig, { dated: datedWas, sig: lastSig, ours: committedSig !== null && lastSig === committedSig });
-    if (!plan.writeMirror && !plan.dated) { setTrouble(""); return; }
+    if (!plan.writeMirror && !plan.dated) { setTrouble("none"); return; }
     raise("backingUp");
     /* the census's walk in the SAME tick as the export's snapshot: the
        export yields for seconds, and a walk taken after it reads the
@@ -177,8 +175,8 @@ export function backupRunner(opts: BackupOptions): Backup {
     if (c.plan.writeMirror && whole) { writeRaw(BACKUP_SIG, c.sig); committedSig = c.sig; }
   }
   function report(failures: Failure[], incomplete: boolean): void {
-    if (incomplete) { setTrouble("backup incomplete — click to retry"); return; }
-    setTrouble("");
+    if (incomplete) { setTrouble("incomplete"); return; }
+    setTrouble("none");
     if (failures.length) reportLeftovers(failures);
     else raise("backedUp");
   }
@@ -213,12 +211,12 @@ export function backupRunner(opts: BackupOptions): Backup {
      throws the same error on every retry */
   function runFailed(err: unknown): void {
     if (isCollision(err)) {
-      setTrouble("backup blocked — two entries share a filename");
+      setTrouble("blocked");
       raise("backupBlocked", { why: (err as Error).message }, { caught: err, copy: (err as Error).message });
       return;
     }
     console.error("backup failed", err);
-    setTrouble(fsaFatal(err) ? PAUSED_MSG : "backup failed — click to retry");
+    setTrouble(fsaFatal(err) ? "paused" : "failed");
   }
   function scheduleBackup(): void {
     if (!configured || !picker) return;
@@ -246,7 +244,7 @@ export function backupRunner(opts: BackupOptions): Backup {
         writeRaw(BACKUP_ON, "1");
         writeRaw(BACKUP_SIG, null);   /* the first backup writes everything */
         writeRaw(BACKUP_DATED, null);
-        setTrouble("");
+        setTrouble("none");
         return Promise.resolve(running).then(() => runBackup(true));
       });
     }).catch((err: unknown) => {
@@ -261,8 +259,8 @@ export function backupRunner(opts: BackupOptions): Backup {
     if (!picker) return Promise.resolve();
     if (!handle) return setupBackupFolder();
     return handle.requestPermission({ mode: "readwrite" }).then((perm) => {
-      if (perm === "granted") { setTrouble(""); return runBackup(true); }
-      setTrouble(PAUSED_MSG);
+      if (perm === "granted") { setTrouble("none"); return runBackup(true); }
+      setTrouble("paused");
     }).catch((err: unknown) => {
       if (err && (err as Error).name === "AbortError") return;
       console.error("resume backups failed", err);

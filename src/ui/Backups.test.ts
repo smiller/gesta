@@ -38,13 +38,13 @@ describe("Backups", () => {
     expect(on).not.toContain("Resume backups");
     const unnamed = draw({ configured: true, warm: "ok" });
     expect(unnamed).toMatch(/<p class="backups-status[^"]*">Automatic backups are on\. <button[^>]*backups-change[^>]*>change folder…<\/button><\/p>/);
-    const paused = draw({ configured: true, warm: "ok", folder: "gesta-backups", trouble: "backups paused — click to resume" });
+    const paused = draw({ configured: true, warm: "ok", folder: "gesta-backups", trouble: "paused" });
     expect(paused).toContain("Resume backups");
     expect(paused).toMatch(/backups-status[^"]*trouble[^"]*">backups paused — click to resume<\/p>/);
     expect(paused).toMatch(/Folder: <strong>gesta-backups<\/strong>\. <button[^>]*>change folder…/);
   });
   it("an unloaded journal outranks the rest, the folder and its change link with it; no picker says so and offers nothing", () => {
-    const loading = draw({ configured: true, warm: "loading", trouble: "x", folder: "gesta-backups" });
+    const loading = draw({ configured: true, warm: "loading", trouble: "failed", folder: "gesta-backups" });
     expect(loading).toContain("Still loading — backups start once the journal is in.");
     expect(loading).not.toContain("change folder");
     expect(loading).not.toContain("gesta-backups");

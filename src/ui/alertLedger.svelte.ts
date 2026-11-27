@@ -1,6 +1,6 @@
 import { errText } from "../store/files.ts";
 import type { Fading, LiveAlerts, SaidLog } from "../published.ts";
-import { asSaid, alertWords, alertKind, alertMs, alertBackground, type AlertId, type Kind, type Raise, type RaiseOpts, type OwnerOpts, type ErrorOwner, type Said, type SaidOf, type BareIdOf } from "../model/alertText.ts";
+import { asSaid, alertWords, alertKind, alertMs, alertBackground, type AlertId, type Kind, type Raise, type RaiseOpts, type OwnerOpts, type ErrorOwner, type Said, type SaidOf, type BareIdOf, type Trouble } from "../model/alertText.ts";
 
 export interface Line { text: string; shown: boolean }
 export interface AlertState {
@@ -16,8 +16,8 @@ export interface AlertState {
   error: Line;
   /* why an act did nothing: until it fades, is clicked, replaced, or cleared by another entry */
   warning: Line;
-  /* the backup's trouble, "" when healthy — drawn as the pill */
-  trouble: string;
+  /* drawn as the pill */
+  trouble: Trouble;
   log: SaidLog;
 }
 export type { Kind } from "../model/alertText.ts";
@@ -41,7 +41,7 @@ export interface Alerts {
   click(kind: Kind): void;
   /* the ×: closes the alert without copying */
   dismiss(kind: Kind): void;
-  setTrouble(msg: string): void;
+  setTrouble(t: Trouble): void;
 }
 /* what each kind holds while it is live, for the headless tools to read
    without waiting on what is drawn (pin: alertLedger.test › each kind present only while live) */
@@ -69,7 +69,7 @@ interface Standing { owner: object | null; text: string; copy: string }
 export type Told = (kind: Kept, text: string) => void;
 export function alertLedger(copyText: (text: string) => Promise<void>, told: Told = () => {}): Alerts {
   const line = (text = ""): Line => ({ text, shown: false });
-  const state = $state<AlertState>({ info: line(), success: line(), latest: "info", busy: false, error: line(), warning: line(), trouble: "", log: { n: 0, recent: [] } });
+  const state = $state<AlertState>({ info: line(), success: line(), latest: "info", busy: false, error: line(), warning: line(), trouble: "none", log: { n: 0, recent: [] } });
   const timers: Record<Fading, ReturnType<typeof setTimeout> | null> = { info: null, success: null };
   /* each fading place's generation, bumped on every change to it: a late
      clipboard answer stays quiet once a newer success moved in */
@@ -241,7 +241,7 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
   };
   return {
     get state() { return state; },
-    clearWarning, raise, owner, progress, setTrouble: (msg) => { state.trouble = msg || ""; },
+    clearWarning, raise, owner, progress, setTrouble: (t) => { state.trouble = t; },
     click: (kind) => CLICKS[kind](),
     dismiss: (kind) => CLOSES[kind](),
   };

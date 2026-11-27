@@ -6,6 +6,7 @@
 <script lang="ts">
   import { liveAlerts, saidLog, type Alerts, type Kind } from "./alertLedger.svelte.ts";
   import { publish } from "../published.ts";
+  import { troubleWords } from "../model/alertText.ts";
   let { alerts, onResume }: { alerts: Alerts; onResume: () => void } = $props();
   $effect(() => { publish("alerts", liveAlerts(alerts.state)); });
   $effect(() => { publish("saidLog", saidLog(alerts.state)); });
@@ -22,7 +23,7 @@
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <span class="alert {kind}" class:show={alerts.state[kind].shown} onclick={() => alerts.click(kind)}>{alerts.state[kind].text}<span class="close" title="Close" onclick={(e) => { e.stopPropagation(); alerts.dismiss(kind); }}></span></span>
 {/snippet}
-<button class="backup-paused" hidden={!alerts.state.trouble} onclick={onResume}>{alerts.state.trouble}</button>
+<button class="backup-paused" hidden={alerts.state.trouble === "none"} onclick={onResume}>{troubleWords(alerts.state.trouble)}</button>
 
 <style>
   /* the alert area: stuck under the masthead, and always one alert tall, so

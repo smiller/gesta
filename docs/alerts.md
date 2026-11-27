@@ -200,6 +200,17 @@ Green. Something done worked. It fades on its own; a click on it copies its word
 | `indexed … entries` | Search’s index built. |
 | `… entries` | The reader: the backup opened, its entries counted. |
 
+## The pill
+
+The backup’s trouble, at the corner until a run completes, and the Backups panel’s status while it stands. A click on the pill resumes or retries.
+
+| Words | When |
+|---|---|
+| `backups paused — click to resume` | The backup folder’s permission is not granted, after a restart or a check that never answered; a click asks for it. |
+| `backup incomplete — click to retry` | A backup ran, but some files did not reach the folder; a click runs it again. |
+| `backup failed — click to retry` | A backup failed for a reason a retry may clear; a click runs it again. |
+| `backup blocked — two entries share a filename` | Two entries would write one file in the backup folder; the error beside it names them. |
+
 ## Phrases
 
 Words that stand inside the alerts above, never alone: which of several blocks a landing is in, a refused fence’s reason, a directive’s trouble, a filename clash.
