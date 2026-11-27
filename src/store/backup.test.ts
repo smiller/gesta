@@ -1,5 +1,5 @@
 import { test, expect, vi, afterEach } from "vitest";
-import { backupRunner, PAUSED_MSG, PERMISSION_MS } from "./backup.ts";
+import { backupRunner, PAUSED_MSG, PERMISSION_MS, type BackupState } from "./backup.ts";
 import { memBackupStore, memImageStore } from "./store.ts";
 import type { EntryLayer } from "./entries.ts";
 import type { Dir } from "./fsa.ts";
@@ -24,11 +24,32 @@ function folder(answers: (PermissionState | null | [PermissionState, number])[])
 async function runner(h: Dir) {
   const store = memBackupStore();
   await store.set(h as unknown as FileSystemDirectoryHandle);
-  const troubles: string[] = [], raised: string[] = [];
+  const troubles: string[] = [], raised: string[] = [], changes: BackupState[] = [];
   const layer = { warmed: true, storeReadFailed: false, cache: { "2026-11-27": "a day" } } as unknown as EntryLayer;
-  const b = backupRunner({ layer, images: memImageStore(), store, picker: () => Promise.resolve(h), raise: ((k: string) => { raised.push(k); }) as never, onTrouble: (m) => troubles.push(m) });
-  return { b, troubles, raised };
+  const b = backupRunner({ layer, images: memImageStore(), store, picker: () => Promise.resolve(h), raise: ((k: string) => { raised.push(k); }) as never, onChange: (c) => { changes.push(c); troubles.push(c.trouble); } });
+  return { b, troubles, raised, changes };
 }
+
+test("the runner says whether a folder is set up, its name and its trouble, each time one of them changes", async () => {
+  vi.useFakeTimers();
+  const h = folder(["prompt"]);
+  const { b, changes } = await runner(h);
+  expect(changes).toEqual([{ configured: false, trouble: "", folder: null }]);
+  await b.runBackup();
+  expect(changes.slice(1)).toEqual([{ configured: true, trouble: "", folder: "gesta-backups" }, { configured: true, trouble: PAUSED_MSG, folder: "gesta-backups" }]);
+});
+
+test("a run ending as the one before it did says nothing new", async () => {
+  vi.useFakeTimers();
+  const h = folder(["prompt", "prompt"]);
+  const { b, changes } = await runner(h);
+  await b.runBackup();
+  expect(changes.at(-1)?.trouble).toBe(PAUSED_MSG);
+  const said = changes.length;
+  await b.runBackup();
+  expect(h.asked).toBe(2);
+  expect(changes.length).toBe(said);
+});
 
 test("a permission check that never answers pauses the backups, and the next run asks again", async () => {
   vi.useFakeTimers();

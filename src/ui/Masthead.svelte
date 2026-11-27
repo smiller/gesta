@@ -35,7 +35,7 @@
     replace: { onFind: (value: string) => void; onWith: (value: string) => void; onNext: (back: boolean) => void; onOne: () => void; onAll: () => void; onClose: () => void };
     bookmarks: { onKey: (e: KeyboardEvent) => void; onAct: (key: string, what: "jump" | "del" | "key" | "link") => void; onDraft: (value: string) => void; onCommit: (value: string) => void };
     shortcuts: { onQuery: (q: string) => void; onPick: (i: number) => void; onWalk: (dir: 1 | -1) => void; onEnter: () => void; onEdit: () => void; onDraft: (v: string) => void; onSave: () => void; onEscape: () => void };
-    backups: { onSetup: () => void; onResume: () => void; onSweep: () => void };
+    backups: { onSetup: () => void; onResume: () => void; onSweep: () => void; onOpen: () => void; onClose: () => void };
   } = $props();
   let shortcutsPanel: { focusInput(): void } | undefined = $state();
   export function focusShortcuts(): void { shortcutsPanel?.focusInput(); }

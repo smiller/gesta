@@ -148,7 +148,7 @@ const masthead = mount(Masthead, { target: document.body, anchor: document.query
   gotoToolbar: { onInput: (kind: "line" | "page" | "stanza", v: string) => acts.gotoToolbar.input(kind, v), onEnter: (kind: "line" | "page" | "stanza", v: string, repeat: boolean) => acts.gotoToolbar.enter(kind, v, repeat), onClose: () => acts.gotoToolbar.close() },
   replace: { onFind: (v: string) => acts.replace.find(v), onWith: (v: string) => acts.replace.with(v), onNext: (back: boolean) => acts.replace.next(back), onOne: () => acts.replace.one(), onAll: () => acts.replace.all(), onClose: () => acts.replace.close() },
   shortcuts: { onQuery: (q: string) => acts.shortcuts.query(q), onPick: (i: number) => acts.shortcuts.pick(i), onWalk: (d: 1 | -1) => acts.shortcuts.walk(d), onEnter: () => acts.shortcuts.enter(), onEdit: () => acts.shortcuts.edit(), onDraft: (v: string) => acts.shortcuts.draft(v), onSave: () => acts.shortcuts.save(), onEscape: () => acts.shortcuts.escape() },
-  backups: { onSetup: () => acts.backups(), onResume: () => acts.resume(), onSweep: () => acts.sweep() },
+  backups: { onSetup: () => acts.backups(), onResume: () => acts.resume(), onSweep: () => acts.sweep(), onOpen: () => bkPanel.open(), onClose: () => bkPanel.close() },
   bookmarks: { onKey: (e: KeyboardEvent) => acts.bookmarks.key(e), onAct: (key: string, what: "jump" | "del" | "key" | "link") => acts.bookmarks.act(key, what), onDraft: (v: string) => acts.bookmarks.draft(v), onCommit: (v: string) => acts.bookmarks.commit(v) },
   search: {
     onToggle: (open: boolean) => acts.search.toggle(open), onQuery: (q: string) => acts.search.query(q), onScope: (at: number) => acts.search.scope(at),
@@ -220,22 +220,21 @@ const win = window as unknown as { showDirectoryPicker?: (opts?: { mode?: "read"
 /* the backup's status line is an info, each step restarting the clock,
    and an error outranks it */
 const bkPanel = backupsPanel({
-  bk: screen.backups, canPick: () => !!win.showDirectoryPicker, reader: READER, backup: () => backup,
+  bk: screen.backups, canPick: () => !!win.showDirectoryPicker, reader: READER,
   layer, images, raise, confirm: (text) => confirm(text), flushSave: () => session.save.flush(),
   showPicture: (key) => images.get(key).then((row) => (row ? URL.createObjectURL(pictureBlob(key, row.bytes)) : null)),
   releasePicture: (url) => URL.revokeObjectURL(url),
 });
-const readBackups = bkPanel.read;
 acts.sweep = bkPanel.sweep;
 const backup = backupRunner({
   layer, images, store: idbBackupStore(),
   picker: win.showDirectoryPicker ? () => win.showDirectoryPicker!({ mode: "readwrite" }) : null,
   raise,
-  onTrouble: (msg) => { alerts.setTrouble(msg); if (screen.opened === "backups") readBackups(); },
+  onChange: (state) => { alerts.setTrouble(state.trouble); bkPanel.changed(state); },
 });
 armBackup = () => backup.scheduleBackup();
-acts.backups = () => { backup.setupBackupFolder().then(readBackups); };
-acts.resume = () => { backup.resumeBackups().then(readBackups); };
+acts.backups = () => { void backup.setupBackupFolder(); };
+acts.resume = () => { void backup.resumeBackups(); };
 /* the masthead reads the open entry: recomputed when the entry or the
    text the store holds changes — an open, a landed save, an import's
    re-render — never per keystroke, since a day's tag list is a walk over
@@ -451,7 +450,7 @@ acts.create = () => { life.create(); };
 acts.rename = () => { life.rename(); };
 acts.delete = () => { life.remove(); };
 const openers = openerActs({
-  screen, layer, journal, session, closeOpened, openBookmarks, openShortcuts, readBackups,
+  screen, layer, journal, session, closeOpened, openBookmarks, openShortcuts, rereadBackups: bkPanel.reread,
   menus: { open: (name) => acts.menus.open(name), close: (reason) => acts.menus.close(reason), answer: () => acts.menus.answer() },
   open: (opening) => overlay.open(opening),
 });

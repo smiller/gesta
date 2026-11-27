@@ -20,7 +20,7 @@ export interface OpenerDeps {
   closeOpened(): void;
   openBookmarks(): void;
   openShortcuts(): void;
-  readBackups(): void;
+  rereadBackups(): void;
 }
 export interface Openers {
   opener(ns: Opened, byKey?: boolean): void;
@@ -49,7 +49,7 @@ export function openerActs(d: OpenerDeps): Openers {
     help: () => { d.open("help"); screen.opened = "help"; },
     bookmarks: () => d.openBookmarks(),
     shortcuts: () => d.openShortcuts(),
-    backups: () => { d.open("backups"); d.readBackups(); screen.opened = "backups"; },
+    backups: () => { d.open("backups"); screen.opened = "backups"; },
   };
   /* an opener TOGGLES its own menu or panel and displaces any other; the
      chord that opened a panel closes it with the keys back in the text, an opener clicked
@@ -73,7 +73,7 @@ export function openerActs(d: OpenerDeps): Openers {
       if (el?.matches(":hover")) el.addEventListener("mouseleave", again, { once: true });
       else again();
     }
-    if (ns === "backups") d.readBackups();
+    if (ns === "backups") d.rereadBackups();
   };
   const back = (was: Element | null): void => {
     if (shown(was) && !was.matches("body, #editor, #editor *")) was.focus({ preventScroll: true });

@@ -3,9 +3,12 @@
      most needs it true. Recovery is unzipping an archive and importing the
      folder it makes into a fresh Gesta; there is no in-app restore. -->
 <script lang="ts">
+  import { onMount } from "svelte";
   import type { Screen } from "./screen.svelte.ts";
   import { backupsStatus, backupsFolder, offersSetup, offersResume, changeInStatus, unusedWords } from "./backupsModel.ts";
-  let { backups, onSetup, onResume, onSweep }: { backups: Screen["backups"]; onSetup: () => void; onResume: () => void; onSweep: () => void } = $props();
+  let { backups, onSetup, onResume, onSweep, onOpen, onClose }: { backups: Screen["backups"]; onSetup: () => void; onResume: () => void; onSweep: () => void; onOpen: () => void; onClose: () => void } = $props();
+  /* the panel stands exactly while this is mounted, however it is closed */
+  onMount(() => { onOpen(); return onClose; });
   const status = $derived(backupsStatus(backups));
   const folder = $derived(backupsFolder(backups));
   const change = $derived(changeInStatus(backups));

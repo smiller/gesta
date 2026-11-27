@@ -35,14 +35,14 @@ export interface BackupOptions {
   store: BackupStore;
   picker: (() => Promise<Dir>) | null;
   raise: Raise;
-  /* the ONE writer of the trouble state: "" is healthy, else the reason the
-     last run did not complete, click-to-resume */
-  onTrouble: (msg: string) => void;
+  /* said once as the runner is made, then each time a field changes, never
+     twice the same (pin: backup.test › a run ending as the one before) */
+  onChange: (state: BackupState) => void;
 }
-export interface Backup {
-  readonly configured: boolean;
-  readonly trouble: string;
-  readonly folder: string | null;
+/* `trouble` "" is healthy, else the reason the last run did not complete,
+   click-to-resume; never said while no folder is set up */
+export interface BackupState { configured: boolean; trouble: string; folder: string | null }
+export interface Backup extends Readonly<BackupState> {
   runBackup(): Promise<void>;
   scheduleBackup(): void;
   firePendingBackup(): Promise<void> | null;
@@ -81,7 +81,13 @@ export function backupRunner(opts: BackupOptions): Backup {
   let running: Promise<void> | null = null;   /* the single-flight latch */
   let trouble = "";
   let timer: ReturnType<typeof setTimeout> | null = null;
-  function setTrouble(msg: string): void { trouble = msg || ""; opts.onTrouble(configured ? trouble : ""); }
+  let said = "";
+  function announce(): void {
+    const state: BackupState = { configured, trouble: configured ? trouble : "", folder: handle?.name ?? null };
+    const now = JSON.stringify(state);
+    if (now !== said) { said = now; opts.onChange(state); }
+  }
+  function setTrouble(msg: string): void { trouble = msg || ""; announce(); }
   /* self-sealing: resolves on both arms, never rejects, so the launch and
      idle callers need no catch. Gated on the warm: never back up a blank
      or unread cache. */
@@ -99,6 +105,7 @@ export function backupRunner(opts: BackupOptions): Backup {
     if (handle && handle !== h) return;
     handle = h;
     configured = !!h;
+    announce();
     if (!h) { writeRaw(BACKUP_ON, null); setTrouble(""); return; }
     /* a click has just granted it, a resume's or the pick's: asking again can
        hang as the first ask did (pin: backup.test › a resume granted in the click) */
@@ -261,6 +268,7 @@ export function backupRunner(opts: BackupOptions): Backup {
       console.error("resume backups failed", err);
     });
   }
+  announce();
   return {
     get configured() { return configured; },
     get folder() { return handle?.name ?? null; },
