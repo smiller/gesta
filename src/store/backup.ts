@@ -18,6 +18,7 @@ export const PAUSED_MSG = "backups paused — click to resume";
 /* the idle debounce — 10 min, deliberately long: a folder write is heavier
    than a store put, and the dedup skips the no-change case anyway */
 export const IDLE_MS = 600000;
+export const PERMISSION_MS = 5000;
 /* a compact fingerprint over the entry BODIES alone, sorted; the backup
    bookkeeping is volatile and none of it is written to the folder, and
    hashing it made the signature differ every run. VERSIONED: bumping it
@@ -101,7 +102,17 @@ export function backupRunner(opts: BackupOptions): Backup {
     /* no gesture behind a launch or idle run, so only a handle already
        granted writes; a 'prompt' handle (a file:// tab after a restart)
        surfaces the paused affordance, whose click is the gesture */
-    return h.queryPermission({ mode: "readwrite" }).then((perm) => (perm === "granted" ? granted(h) : setTrouble(PAUSED_MSG)));
+    return answered(h.queryPermission({ mode: "readwrite" })).then((perm) => (perm === "granted" ? granted(h) : setTrouble(PAUSED_MSG)));
+  }
+  /* Helium's queryPermission has hung unanswered, and every later run waited
+     behind it with nothing on screen: unanswered in time is taken as not
+     granted, and the paused affordance asks (pin: backup.test › a permission
+     check that never answers) */
+  function answered(perm: Promise<PermissionState>): Promise<PermissionState | "unanswered"> {
+    return new Promise((resolve, reject) => {
+      const late = setTimeout(() => resolve("unanswered"), PERMISSION_MS);
+      perm.then((p) => { clearTimeout(late); resolve(p); }, (err: unknown) => { clearTimeout(late); reject(err); });
+    });
   }
   function granted(h: Dir): Promise<void> | void {
     const today = todayKey(), sig = backupSig(layer.cache), lastSig = readRaw(BACKUP_SIG) ?? null;
