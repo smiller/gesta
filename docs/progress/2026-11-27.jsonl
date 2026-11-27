@@ -33,3 +33,11 @@
 {"at":"2026-11-27T14:43","ev":"start","id":"A33"}
 {"at":"2026-11-27T14:43","ev":"start","id":"A32"}
 {"at":"2026-11-27T14:56","ev":"done","id":"A32","commits":["929c4cf"]}
+{"at":"2026-11-27T14:56","ev":"add","id":"A33.1","list":"A","title":"The architecture run over the batch's files","parent":"A33","detail":"Asked: /improve-codebase-architecture tools/out/arch-files.txt, typed at 14:56. Why: CLAUDE.md's architecture run, beside each batch's review. Done when: every candidate built or set aside, its cost recorded."}
+{"at":"2026-11-27T14:56","ev":"start","id":"A33.1"}
+{"at":"2026-11-27T14:57","ev":"drop","id":"A33.1","note":"duplicate of A32.1, added by the prompt hook"}
+{"at":"2026-11-27T14:56","ev":"start","id":"A32.1"}
+{"at":"2026-11-27T15:00","ev":"add","id":"S35","list":"S","title":"A paste can take an unused picture's name and overwrite it","detail":"Found by the A32.1 architecture run (READ src/session.ts:146, src/store/names.ts:201): nextImageName picks the next -img-N from the names the text shows, never the store, so after img-1 is deleted from the text (kept, unused) the next paste is named img-1 and images.set overwrites it; an undo of the deletion would then show the new picture. Why: a picture silently replaced. Done when: reproduced by a test, and a paste's name is free in the store as well as the text."}
+{"at":"2026-11-27T16:19","ev":"add","id":"A32.1.1","list":"A","title":"One module for the Stephanus number","parent":"A32.1","detail":"Asked: candidate 1 of the A32.1 run, chosen with 'Let's do 1, then 2.'; grilled, all yes. Why: the form, its page and its run were spelled in five modules, the precedence split across the editor and the store. Done when: src/model/stephanus.ts answers all four, no other module tests the regex, located() alone decides precedence, the Helium verdict unchanged, accepted."}
+{"at":"2026-11-27T16:19","ev":"start","id":"A32.1.1"}
+{"at":"2026-11-27T16:31","ev":"done","id":"A32.1.1","commits":["5bb58da"]}
