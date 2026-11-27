@@ -29,3 +29,7 @@
 {"at":"2026-11-27T14:40","ev":"done","id":"U34","commits":["0821e5b"]}
 {"at":"2026-11-27T14:41","ev":"add","id":"A32","list":"A","title":"Batch review 32b7579..6e633fd: Stephanus passages, backups (S33, U33, U34)","detail":"Owed: the batch since A31 touches DOM seams (main.ts, session.ts). Why: REVIEWS, BY BATCH. Done when: /code-review high over the range has run, its findings fixed in one commit, its cost recorded."}
 {"at":"2026-11-27T14:41","ev":"add","id":"A32.1","list":"A","title":"Architecture run over the batch's files","parent":"A32","detail":"Owed beside A32's review: /improve-codebase-architecture over the batch's changed files (tools/out/arch-files.txt). Done when: every candidate built, kept on W, or dismissed."}
+{"at":"2026-11-27T14:43","ev":"add","id":"A33","list":"A","title":"The batch review: /code-review at HIGH over 32b7579..6e633fd","detail":"Asked: /code-review high 32b7579..6e633fd, typed at 14:43. Why: CLAUDE.md's batch review, owed when a batch touches a DOM seam or closes a phase. Done when: its findings land in one fix commit and its cost is recorded in the plan."}
+{"at":"2026-11-27T14:43","ev":"start","id":"A33"}
+{"at":"2026-11-27T14:43","ev":"start","id":"A32"}
+{"at":"2026-11-27T14:56","ev":"done","id":"A32","commits":["929c4cf"]}
