@@ -20,3 +20,5 @@
 {"at":"2026-11-27T13:41","ev":"start","id":"S33"}
 {"at":"2026-11-27T13:48","ev":"done","id":"S33","commits":["55a11c0"]}
 {"at":"2026-11-27T13:48","ev":"add","id":"S34","list":"S","title":"Export reports 5 pictures missing on three journal days","detail":"Seen 2026-11-27 in an export run while tracing S33: journal/2018/2018-09-29.md 3 missing, journal/2020/2020-05-17.md 1, journal/2020/2020-05-29.md 1. Why: a picture an entry shows but the store cannot give is lost from every backup and export. Done when: each is found (in the backup's folder, an archive, or gone) and restored or its reference settled with the reader."}
+{"at":"2026-11-27T13:49","ev":"start","id":"U33"}
+{"at":"2026-11-27T13:58","ev":"done","id":"U33","commits":["0474264"]}
