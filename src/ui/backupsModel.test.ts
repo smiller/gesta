@@ -1,70 +1,42 @@
 import { describe, it, expect } from "vitest";
-import { backupsStatus, backupsFolder, offersChange, offersSetup, offersResume, changeInStatus, unusedWords } from "./backupsModel.ts";
+import { backupsLines } from "./backupsModel.ts";
 import { screenState } from "./screen.svelte.ts";
 
-const with_ = (patch: Partial<ReturnType<typeof screenState>["backups"]>) => ({ ...screenState(5).backups, ...patch });
+const lines = (patch: Partial<ReturnType<typeof screenState>["backups"]>) => backupsLines({ ...screenState(5).backups, ...patch });
+const SETUP = { role: "setup", text: "Set up automatic backups…" };
+const RESUME = { role: "resume", text: "Resume backups" };
+const pic = (name: string) => ({ key: "journal/2026/" + name, name, src: null });
+const ABOUT = "Pictures stored in Gesta that no entry shows — most often one pasted and then deleted from the text. No backup holds them, so removing them is for good.";
 
-describe("the backups status", () => {
-  it("a browser with no folder picker says there is no way to write a copy, as no trouble", () => {
-    expect(backupsStatus(with_({ canPick: false, configured: true, trouble: "failed" }))).toEqual({ text: expect.stringContaining("need a Chromium browser"), trouble: false });
+describe("the backups panel's lines", () => {
+  it("no folder set up: the setup button alone, the journal in or not", () => {
+    expect(lines({ warm: "ok" })).toEqual({ top: [SETUP], unused: null, overHalf: null });
+    expect(lines({ warm: "loading" }).top).toEqual([SETUP]);
   });
-  it("configured before the journal is in: still loading, or failed until a reload, as trouble", () => {
-    expect(backupsStatus(with_({ configured: true, warm: "loading" }))).toEqual({ text: expect.stringContaining("Still loading"), trouble: true });
-    expect(backupsStatus(with_({ configured: true, warm: "failed" }))).toEqual({ text: expect.stringContaining("paused until you reload"), trouble: true });
+  it("on: the folder backed up to with its change link; before its name is known, on, with the link in that line", () => {
+    expect(lines({ configured: true, warm: "ok", folder: "gesta-backups" }).top).toEqual([{ role: "folder", lead: "Backing up to", name: "gesta-backups" }]);
+    expect(lines({ configured: true, warm: "ok" }).top).toEqual([{ role: "status", text: "Automatic backups are on.", trouble: false, change: true }]);
   });
-  it("configured and in: the trouble's words when there is one, else on, said by the folder's line once it is named", () => {
-    expect(backupsStatus(with_({ configured: true, warm: "ok", trouble: "paused" }))).toEqual({ text: "backups paused — click to resume", trouble: true });
-    expect(backupsStatus(with_({ configured: true, warm: "ok", trouble: "blocked", folder: "gesta-backups" }))).toEqual({ text: "backup blocked — two entries share a filename", trouble: true });
-    expect(backupsStatus(with_({ configured: true, warm: "ok" }))).toEqual({ text: "Automatic backups are on.", trouble: false });
-    expect(backupsStatus(with_({ configured: true, warm: "ok", folder: "gesta-backups" }))).toBeNull();
+  it("in trouble: Resume, the trouble's words, and the folder that stands", () => {
+    expect(lines({ configured: true, warm: "ok", folder: "gesta-backups", trouble: "paused" }).top).toEqual([
+      RESUME, { role: "status", text: "backups paused — click to resume", trouble: true, change: false }, { role: "folder", lead: "Folder:", name: "gesta-backups" },
+    ]);
+    expect(lines({ configured: true, warm: "ok", trouble: "blocked" }).top).toEqual([RESUME, { role: "status", text: "backup blocked — two entries share a filename", trouble: true, change: true }]);
   });
-  it("not configured: nothing to say", () => {
-    expect(backupsStatus(with_({ warm: "ok" }))).toBeNull();
-    expect(backupsStatus(with_({ warm: "loading" }))).toBeNull();
+  it("a journal not in outranks the rest, the folder and its change link with it", () => {
+    expect(lines({ configured: true, warm: "loading", folder: "gesta-backups", trouble: "failed" }).top).toEqual([RESUME, { role: "status", text: "Still loading — backups start once the journal is in.", trouble: true, change: false }]);
+    expect(lines({ configured: true, warm: "failed" }).top).toEqual([{ role: "status", text: "Couldn’t load entries — backups are paused until you reload.", trouble: true, change: false }]);
   });
-});
-
-describe("the backup folder's line", () => {
-  it("names the folder backed up to, or, in trouble, the folder that stands", () => {
-    expect(backupsFolder(with_({ configured: true, warm: "ok", folder: "gesta-backups" }))).toEqual({ lead: "Backing up to", name: "gesta-backups" });
-    expect(backupsFolder(with_({ configured: true, warm: "ok", folder: "gesta-backups", trouble: "paused" }))).toEqual({ lead: "Folder:", name: "gesta-backups" });
+  it("no folder picker: says there is no way to write a copy, as no trouble, and offers nothing", () => {
+    const said = { role: "status", text: "Automatic folder backups need a Chromium browser (Helium or Chrome). Export needs one too, so here there is no way to write a copy out.", trouble: false, change: false };
+    expect(lines({ canPick: false, configured: true, warm: "ok", folder: "gesta-backups", trouble: "failed" }).top).toEqual([said]);
+    expect(lines({ canPick: false, warm: "ok" }).top).toEqual([said]);
   });
-  it("is not drawn with no name yet, no folder, a journal not in, or no picker", () => {
-    expect(backupsFolder(with_({ configured: true, warm: "ok" }))).toBeNull();
-    expect(backupsFolder(with_({ warm: "ok", folder: "gesta-backups" }))).toBeNull();
-    expect(backupsFolder(with_({ configured: true, warm: "loading", folder: "gesta-backups" }))).toBeNull();
-    expect(backupsFolder(with_({ canPick: false, configured: true, warm: "ok", folder: "gesta-backups" }))).toBeNull();
+  it("unused pictures: counted in the heading, said what they are, and the button names this one or these N", () => {
+    expect(lines({ warm: "ok", unused: [pic("a-img-1.webp")] }).unused).toEqual({ heading: "1 unused picture.", about: ABOUT, button: "Remove this picture" });
+    expect(lines({ warm: "ok", unused: [pic("a-img-1.webp"), pic("b-img-1.webp"), pic("c-img-1.webp")], overHalf: 4 })).toMatchObject({ unused: { heading: "3 unused pictures.", button: "Remove these 3 pictures" }, overHalf: null });
   });
-});
-
-describe("the change-folder link", () => {
-  it("is offered once a folder is configured and the journal is in, where a picker exists", () => {
-    expect(offersChange(with_({ configured: true, warm: "ok" }))).toBe(true);
-    expect(offersChange(with_({ configured: true, warm: "loading" }))).toBe(false);
-    expect(offersChange(with_({ warm: "ok" }))).toBe(false);
-    expect(offersChange(with_({ canPick: false, configured: true, warm: "ok" }))).toBe(false);
-  });
-});
-
-describe("the panel's other controls", () => {
-  it("set up where a picker exists and no folder is; resume where a configured folder is in trouble", () => {
-    expect(offersSetup(with_({}))).toBe(true);
-    expect(offersSetup(with_({ configured: true }))).toBe(false);
-    expect(offersSetup(with_({ canPick: false }))).toBe(false);
-    expect(offersResume(with_({ configured: true, trouble: "paused" }))).toBe(true);
-    expect(offersResume(with_({ configured: true }))).toBe(false);
-    expect(offersResume(with_({ canPick: false, configured: true, trouble: "failed" }))).toBe(false);
-  });
-  it("the change link stands in the status line only where no folder line holds it", () => {
-    expect(changeInStatus(with_({ configured: true, warm: "ok" }))).toBe(true);
-    expect(changeInStatus(with_({ configured: true, warm: "ok", folder: "gesta-backups" }))).toBe(false);
-    expect(changeInStatus(with_({ configured: true, warm: "loading" }))).toBe(false);
-  });
-});
-
-describe("the unused pictures' words", () => {
-  it("counted in the heading, and the button names one picture or these N", () => {
-    expect(unusedWords(1)).toEqual({ heading: "1 unused picture.", button: "Remove this picture" });
-    expect(unusedWords(3)).toEqual({ heading: "3 unused pictures.", button: "Remove these 3 pictures" });
+  it("more than half of them unused at once: what they are, and why none are offered", () => {
+    expect(lines({ warm: "ok", overHalf: 40 })).toMatchObject({ unused: null, overHalf: { about: ABOUT, text: "40 such pictures — more than half of all stored, which looks like a journal read short rather than a tidy-up, so none are offered for removal." } });
   });
 });
