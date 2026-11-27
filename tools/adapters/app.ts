@@ -399,7 +399,7 @@ export const read = {
   editorTextHead: (page: Page) => page.evaluate(() => document.querySelector("#editor .ProseMirror").textContent.slice(0, 30)),
   bookmarks: (page: Page) => page.evaluate(() => { const c = document.querySelector(".bookmarks"); return c ? { rows: [...c.querySelectorAll("li")].map((li) => li.innerText.replace(/\s+/g, " ").trim().slice(0, 40)), foot: c.querySelector(".bookmarks-add")?.textContent.replace(/\s+/g, " ").trim(), focused: document.activeElement?.className.split(" ")[0] } : null; }),
   bookmarksLit: (page: Page) => page.evaluate(() => [...document.querySelectorAll(".bookmarks li.bookmark-typing")].length),
-  backups: (page: Page) => page.evaluate(() => { const c = document.querySelector(".backups"); return c ? { buttons: [...c.querySelectorAll("button")].map((b) => b.textContent), status: c.querySelector(".backups-status")?.textContent || null } : null; }),
+  backups: (page: Page) => page.evaluate(() => { const c = document.querySelector(".backups"); return c ? { buttons: [...c.querySelectorAll("button")].map((b) => b.textContent), status: c.querySelector(".backups-status")?.textContent || null, pictures: [...c.querySelectorAll(".backups-pictures figure")].map((f) => ({ name: f.querySelector("figcaption")?.textContent, shown: !!f.querySelector("img")?.getAttribute("src") })) } : null; }),
   backupsOpen: (page: Page) => page.evaluate(() => !!document.querySelector(".backups")),
   help: (page: Page) => page.evaluate(() => ({ help: !document.querySelector(".helppanel").hidden, menu: !!document.querySelector(".menu"), heading: document.querySelector(".helppanel h3")?.textContent })),
   helpOpen: (page: Page) => page.evaluate(() => ({ help: !document.querySelector(".helppanel").hidden })),

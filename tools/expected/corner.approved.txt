@@ -170,7 +170,7 @@ A over a damaged list: {"panel":{"rows":["your saved bookmarks are damaged — n
 A over the list repaired: {"panel":{"rows":["1 2026-09-06 key link ×","2 Horace you are here key link ×"],"focused":"helppanel"},"standing":"none","cursor":"on section","screen":"commonplace/Horace · sel none · toolbar off · opened bookmarks · rows none · html · corner [whatever stood]"}
 bookmarks damaged: arrived at 2026-09-06: {"cursor":"at a line's start"}
 == backups
-backups: {"buttons":["Set up automatic backups…"],"status":null,"cursor":"on button","screen":"commonplace/Horace · sel none · toolbar off · opened backups · rows none · html · corner [whatever stood]"}
+backups: {"buttons":["Set up automatic backups…"],"status":null,"pictures":[],"cursor":"on button","screen":"commonplace/Horace · sel none · toolbar off · opened backups · rows none · html · corner [whatever stood]"}
 Escape: {"panel":false,"cursor":"on button","screen":"commonplace/Horace · sel none · toolbar off · opened none · rows none · html · corner [whatever stood]"}
 == help
 ⌃⌘H over an open menu: {"help":true,"menu":false,"heading":"Custom keys","cursor":"at a line's start","screen":"commonplace/Horace · sel none · toolbar off · opened help · rows none · html · corner [whatever stood]"}
@@ -747,8 +747,8 @@ a commonplace renamed with every link following: arrived at commonplace/Rename M
 Rename, Renamed Me typed, Enter: {"prompts":["Rename the commonplace \"Rename Me\" to: [Rename Me]"],"confirms":[],"entry":"commonplace/Renamed Me","corner":"renamed to commonplace/Renamed Me — 1 entry, links updated in 1 other","far":"See [it](#commonplace/Renamed%20Me) here.","old":null,"cursor":"on button","screen":"commonplace/Renamed Me · sel none · toolbar off · opened none · rows none · html · corner [whatever stood]"}
 == unused pictures
 unused pictures: arrived at commonplace/Unused Pictures: {"cursor":"at a line's start"}
-the picture deleted from the text, the backups panel opened: {"kept":["commonplace/Unused Pictures-img-1.webp"],"pictureInText":false,"panel":{"buttons":["Set up automatic backups…","Remove 1 unused picture"],"status":null},"cursor":"on button","screen":"commonplace/Unused Pictures · sel none · toolbar off · opened backups · rows none · html · corner [whatever stood]"}
-Remove … unused picture clicked, the confirm accepted: {"corner":"removed 1 unused picture","left":[],"panel":{"buttons":["Set up automatic backups…"],"status":null},"cursor":"none","screen":"commonplace/Unused Pictures · sel none · toolbar off · opened backups · rows none · html · corner [whatever stood]"}
+the picture deleted from the text, the backups panel opened: {"kept":["commonplace/Unused Pictures-img-1.webp"],"pictureInText":false,"panel":{"buttons":["Set up automatic backups…","Remove this picture"],"status":"1 unused picture. Pictures stored in Gesta that no entry shows — most often one pasted and then deleted from the text. No backup holds them, so removing them is for good.","pictures":[{"name":"Unused Pictures-img-1.webp","shown":true}]},"cursor":"on button","screen":"commonplace/Unused Pictures · sel none · toolbar off · opened backups · rows none · html · corner [whatever stood]"}
+Remove this picture clicked, the confirm accepted: {"corner":"removed 1 unused picture","left":[],"panel":{"buttons":["Set up automatic backups…"],"status":null,"pictures":[]},"cursor":"none","screen":"commonplace/Unused Pictures · sel none · toolbar off · opened backups · rows none · html · corner [whatever stood]"}
 the success clicked: {"corner":"copied","clipboard":"removed 1 unused picture","cursor":"none","screen":"commonplace/Unused Pictures · sel none · toolbar off · opened none · rows none · html · corner [whatever stood]"}
 == a commonplace moved with its sub-entries
 a commonplace moved with its sub-entries: arrived at commonplace/Move Source/Essay: {"cursor":"at a line's start"}

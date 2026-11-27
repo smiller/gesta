@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { namedPictures, unnamed, sweepPlan, SWEEP_FLOOR, pictureMoves } from "./pictures.ts";
+import { namedPictures, unnamed, sweepPlan, SWEEP_FLOOR, pictureMoves, pictureBlob } from "./pictures.ts";
 import { memImageStore } from "./store.ts";
 
 const CACHE: Record<string, string> = {
@@ -86,5 +86,16 @@ describe("pictureMoves", () => {
     const images = await stocked();
     await pictureMoves(images).removePictures(["a.webp", "other.webp"]);
     expect((await images.keys()).sort()).toEqual(["longer.webp", "same.webp"]);
+  });
+});
+
+describe("pictureBlob", () => {
+  it("a stored picture's bytes as a blob typed by its name's extension, in either case; an unknown one untyped", () => {
+    const bytes = new Uint8Array([1, 2, 3]);
+    expect(pictureBlob("journal/2026/2026-10-30-img-1.webp", bytes).type).toBe("image/webp");
+    expect(pictureBlob("2018-09-29-sunset-1.JPG", bytes).type).toBe("image/jpeg");
+    expect(pictureBlob("a.png", bytes).type).toBe("image/png");
+    expect(pictureBlob("a.tiff", bytes).type).toBe("application/octet-stream");
+    expect(pictureBlob("a.webp", bytes).size).toBe(3);
   });
 });

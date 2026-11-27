@@ -47,3 +47,9 @@ export function pictureMoves(images: Pick<ImageStore, "get" | "set" | "del">): P
     removePictures: (keys) => Promise.all(keys.map((k) => images.del(k))).then(() => {}),
   };
 }
+
+const MIME: Record<string, string> = { webp: "image/webp", png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", svg: "image/svg+xml" };
+export function pictureBlob(name: string, bytes: Uint8Array): Blob {
+  const ext = (name.split(".").pop() || "").toLowerCase();
+  return new Blob([bytes as BlobPart], { type: MIME[ext] || "application/octet-stream" });
+}

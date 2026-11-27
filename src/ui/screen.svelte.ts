@@ -46,7 +46,7 @@ export interface Screen {
   bookmarks: { rows: BookmarkRow[]; foot: { full: true } | { full: false; name: string } | null; editing: string; draft: string; buf: string; unreadable: boolean; opening: number };
   shortcuts: { query: string; rows: Shortcut[]; active: number; empty: string; editing: boolean; draft: string; dirty: boolean };
   /* `unused` the pictures no entry names; `overHalf` that count where it is more than half of them */
-  backups: { canPick: boolean; configured: boolean; trouble: string; folder: string | null; warm: "ok" | "loading" | "failed"; unused: number; overHalf: number };
+  backups: { canPick: boolean; configured: boolean; trouble: string; folder: string | null; warm: "ok" | "loading" | "failed"; unused: { name: string; src: string | null }[]; overHalf: number };
   gotoToolbar: { open: boolean; kind: AskKind; line: string; page: string; stanza: string; lineLabel: string; pageLabel: string };
   /* ⌃⌘E's toolbar: `count` the line after Find, `any` whether there is a match to replace */
   replace: { open: boolean; find: string; with: string; count: string; any: boolean };
@@ -74,7 +74,7 @@ export function screenState(interval: number): Screen {
     replace: { open: false, find: "", with: "", count: "", any: false },
     bookmarks: { rows: [], foot: null, editing: "", draft: "", buf: "", unreadable: false, opening: 0 },
     shortcuts: { query: "", rows: [], active: 0, empty: "", editing: false, draft: "", dirty: false },
-    backups: { canPick: true, configured: false, trouble: "", folder: null, warm: "loading", unused: 0, overHalf: 0 },
+    backups: { canPick: true, configured: false, trouble: "", folder: null, warm: "loading", unused: [], overHalf: 0 },
     gutter: false, linesOpen: false, markdownMode: false, interval, held: "",
   });
   return screen;

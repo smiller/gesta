@@ -10,6 +10,7 @@
   const status = $derived(backupsStatus(backups));
   const folder = $derived(backupsFolder(backups));
   const change = $derived(offersChange(backups));
+  const UNUSED = "Pictures stored in Gesta that no entry shows — most often one pasted and then deleted from the text. No backup holds them, so removing them is for good.";
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_element_to_interactive_role -->
@@ -21,10 +22,17 @@
     {#if status}<p class="backups-status" class:trouble={status.trouble}>{status.text}{#if change && !folder}{" "}<button type="button" class="backups-change" onclick={onSetup}>change folder…</button>{/if}</p>{/if}
     {#if folder}<p class="backups-status">{folder.lead} <strong>{folder.name}</strong>. <button type="button" class="backups-change" onclick={onSetup}>change folder…</button></p>{/if}
   </div>
-  {#if backups.unused}
-    <div class="backups-auto"><button type="button" onclick={onSweep}>Remove {counted(backups.unused, " unused picture", " unused pictures")}</button></div>
+  {#if backups.unused.length}
+    <p class="backups-status"><strong>{counted(backups.unused.length, " unused picture", " unused pictures")}.</strong> {UNUSED}</p>
+    <div class="backups-pictures">
+      {#each backups.unused as p (p.name)}
+        <figure>{#if p.src}<img src={p.src} alt="" />{:else}<div class="backups-picture-pending"></div>{/if}<figcaption>{p.name}</figcaption></figure>
+      {/each}
+    </div>
+    <div class="backups-auto"><button type="button" onclick={onSweep}>Remove {backups.unused.length === 1 ? "this picture" : "these " + backups.unused.length + " pictures"}</button></div>
   {:else if backups.overHalf}
-    <p class="backups-status trouble">{backups.overHalf} pictures no entry names — more than half of them, so none are removed.</p>
+    <p class="backups-status">{UNUSED}</p>
+    <p class="backups-status trouble">{backups.overHalf} such pictures — more than half of all stored, which looks like a journal read short rather than a tidy-up, so none are offered for removal.</p>
   {/if}
   <p class="backups-note">A folder backup writes the whole journal to a folder you pick once — a live <code>current/</code> copy, plus an <code>archive/</code> folder of dated <code>.zip</code> archives of whatever changed that day. To recover an old version, read <code>archive/manifests/&lt;date&gt;.txt</code> for the archives that day held, unzip them and import the folder they make into a fresh, empty Gesta (a new browser profile — never over this journal), or copy one entry back from its <code>.md</code> file in any editor (a day sits under <code>journal/&lt;year&gt;/</code>, a commonplace under <code>commonplace/</code>).</p>
 </section>
@@ -54,6 +62,10 @@
   .backups-auto button.backups-change { border: none; padding: 0; margin: 0 0 0 0.1em; font-size: 1em; text-decoration: underline; }
   .backups-status { font-size: 0.85em; color: var(--muted); margin: 0.6em 0 0; }
   .backups-status.trouble { color: var(--accent); }
+  .backups-pictures { display: flex; flex-wrap: wrap; gap: 12px; margin: 0.5em 0 0.7em; }
+  .backups-pictures figure { margin: 0; width: 150px; }
+  .backups-pictures img, .backups-picture-pending { width: 150px; height: 100px; object-fit: cover; border: 1px solid var(--rule); border-radius: 4px; display: block; }
+  .backups-pictures figcaption { font-size: 0.72em; color: var(--muted); margin-top: 3px; word-break: break-all; }
   .backups-note { font-size: 0.85em; color: var(--muted); margin: 0.4em 0 1em; }
   code { font-family: var(--mono); font-size: 0.85em; background: var(--aside-bg); border: 1px solid var(--rule); border-radius: 3px; padding: 0.05em 0.3em; }
 </style>

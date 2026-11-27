@@ -3,6 +3,7 @@ import type { Node } from "prosemirror-model";
 import { imageView, pastedPictureBytes } from "./editor/images.ts";
 import { nextImageName, pictureKey } from "./store/names.ts";
 import { imageRefs } from "./store/exportEntries.ts";
+import { pictureBlob } from "./store/pictures.ts";
 import { setLineInterval } from "./editor/lineNumbers.ts";
 import { entryKey, entryHash, todayKey, nsOf, tagParts, NS, asAddress } from "./store/keys.ts";
 import { entryFile } from "./store/names.ts";
@@ -101,7 +102,6 @@ export interface Session {
   jump(date: string, tag: string | null, hl: Highlight, honorMarkers: boolean): void;
   setInterval(n: number): void;
 }
-const MIME: Record<string, string> = { webp: "image/webp", png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", svg: "image/svg+xml" };
 
 export function startSession(opts: SessionOptions): Session {
   const { mount, layer, images, raise } = opts;
@@ -213,8 +213,7 @@ export function startSession(opts: SessionOptions): Session {
   const resolver = (date: string, tag: string | null) => (src: string): Promise<string | null> =>
     images.get(pictureKey(date, tag, src)).then((row) => {
       if (!row) return null;
-      const ext = (src.split(".").pop() || "").toLowerCase();
-      return URL.createObjectURL(new Blob([row.bytes as BlobPart], { type: MIME[ext] || "application/octet-stream" }));
+      return URL.createObjectURL(pictureBlob(src, row.bytes));
     });
   function releaseDetached(): void {
     deleted.resolve();

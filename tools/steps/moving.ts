@@ -17,7 +17,7 @@ section("a commonplace renamed with every link following", async () => {
   await log("Rename, Renamed Me typed, Enter", { prompts: prompts.slice(), confirms: confirms.slice(), entry: await A.entry(page), corner: await saidText(), far: await A.stored(page, "commonplace/Rename Far"), old: await A.stored(page, "commonplace/Rename Me") });
 });
 section("unused pictures", async () => {
-  /* a picture pasted, then deleted from the text: the backups panel offers to remove it, and its button removes it */
+  /* a picture pasted, then deleted from the text: the backups panel shows it by name and offers to remove it, and its button removes it */
   await pictureDeletedTextBackups();
   await removeUnusedPictureClicked();
   await successClicked();
@@ -34,13 +34,13 @@ async function pictureDeletedTextBackups(): Promise<void> {
   await page.keyboard.press("Backspace");
   for (let i = 0; i < 40 && ((await A.stored(page, "commonplace/Unused Pictures")) || "").includes("!["); i++) await rest(page);
   await page.click(S.backupsButton);
-  await waitState(page, { name: "backup", ms: 5000 }, () => /unused picture/.test(document.querySelector(".backups")?.textContent || ""));
+  await waitState(page, { name: "backup", ms: 5000 }, () => !!document.querySelector(".backups .backups-pictures img"));
   await log("the picture deleted from the text, the backups panel opened", { kept, pictureInText: ((await A.stored(page, "commonplace/Unused Pictures")) ?? "").includes("!["), panel: await R.backups(page) });
 }
 async function removeUnusedPictureClicked(): Promise<void> {
-  await page.click(".backups button:has-text('unused picture')").catch(() => {});
+  await page.click(".backups button:has-text('Remove')").catch(() => {});
   await waitForSaid(/removed/, 5000);
-  await log("Remove … unused picture clicked, the confirm accepted", { corner: await saidText(), left: await A.pictureKeys(page, "commonplace/Unused Pictures"), panel: await R.backups(page) });
+  await log("Remove this picture clicked, the confirm accepted", { corner: await saidText(), left: await A.pictureKeys(page, "commonplace/Unused Pictures"), panel: await R.backups(page) });
   await page.click(".alert.success.show").catch(() => {});
 }
 async function successClicked(): Promise<void> {

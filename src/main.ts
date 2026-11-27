@@ -33,7 +33,7 @@ import { folderActs } from "./ui/folderActs.ts";
 import { searchActs, type SearchRow } from "./ui/searchActs.ts";
 import { gotoRowActs, type GotoRow } from "./ui/gotoRowActs.ts";
 import { listenHeldKeys, plainChord } from "./ui/heldKeys.ts";
-import { pictureMoves } from "./store/pictures.ts";
+import { pictureMoves, pictureBlob } from "./store/pictures.ts";
 import { afterLoad } from "./store/toCommonplaces.ts";
 import { formatToolbar } from "./ui/formatToolbarActs.ts";
 import { backupsPanel } from "./ui/backupsPanelActs.ts";
@@ -222,6 +222,8 @@ const win = window as unknown as { showDirectoryPicker?: (opts?: { mode?: "read"
 const bkPanel = backupsPanel({
   bk: screen.backups, canPick: () => !!win.showDirectoryPicker, reader: READER, backup: () => backup,
   layer, images, raise, confirm: (text) => confirm(text), flushSave: () => session.save.flush(),
+  showPicture: (key) => images.get(key).then((row) => (row ? URL.createObjectURL(pictureBlob(key, row.bytes)) : null)),
+  releasePicture: (url) => URL.revokeObjectURL(url),
 });
 const readBackups = bkPanel.read;
 acts.sweep = bkPanel.sweep;

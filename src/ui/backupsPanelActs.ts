@@ -18,6 +18,8 @@ export interface BackupsPanelDeps {
   flushSave: Session["save"]["flush"];
   raise: Raise;
   confirm(text: string): boolean;
+  showPicture(key: string): Promise<string | null>;
+  releasePicture(url: string): void;
 }
 export interface BackupsPanel { read(): void; sweep(): void }
 
@@ -30,12 +32,23 @@ export function backupsPanel(d: BackupsPanelDeps): BackupsPanel {
     const state = loadState(layer);
     return state === "in" ? "ok" : state;
   };
+  const letGo = (): void => { for (const p of bk.unused) if (p.src) d.releasePicture(p.src); };
+  const shown = (keys: string[]): void => {
+    bk.unused = keys.map((k) => ({ name: k.slice(k.lastIndexOf("/") + 1), src: null }));
+    const list = bk.unused;
+    /* a picture read after the panel was read again belongs to no list it shows (pin: backupsPanelActs.test › a picture arriving after) */
+    keys.forEach((k, i) => d.showPicture(k).then((src) => {
+      if (!src) return;
+      if (bk.unused === list) list[i].src = src; else d.releasePicture(src);
+    }, () => {}));
+  };
   const read = (): void => {
     const b = d.backup();
-    Object.assign(bk, { canPick: d.canPick(), configured: b.configured, trouble: b.trouble, folder: b.folder, warm: warmth(), unused: 0, overHalf: 0 });
+    letGo();
+    Object.assign(bk, { canPick: d.canPick(), configured: b.configured, trouble: b.trouble, folder: b.folder, warm: warmth(), unused: [], overHalf: 0 });
     if (d.reader || bk.warm !== "ok") return;
     plannedSweep().then((plan) => {
-      bk.unused = plan.drop.length;
+      shown(plan.drop);
       bk.overHalf = plan.refused;
     }, () => {});
   };
