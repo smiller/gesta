@@ -21,3 +21,7 @@
 {"at":"2026-11-28T07:20","ev":"drop","id":"A37","note":"duplicate of A36, added by the prompt hook"}
 {"at":"2026-11-28T07:20","ev":"drop","id":"A39","note":"duplicate of A38, added by the prompt hook"}
 {"at":"2026-11-28T07:33","ev":"add","id":"A40","list":"A","title":"Third confirmation pass over the A38 fixes, 7d85dbb..e042d6d","detail":"Asked: 'code review, but I don't know how many code reviews we've run on this but it feels like an awful lot.' Why: the A38 fixes changed behaviour. Done when: /code-review high 7d85dbb..e042d6d has run, its findings fixed or dismissed, its cost recorded."}
+{"at":"2026-11-28T07:34","ev":"add","id":"A41","list":"A","title":"The batch review: /code-review at HIGH over 7d85dbb..e042d6d","detail":"Asked: /code-review high 7d85dbb..e042d6d, typed at 07:34. Why: CLAUDE.md's batch review, owed when a batch touches a DOM seam or closes a phase. Done when: its findings land in one fix commit and its cost is recorded in the plan."}
+{"at":"2026-11-28T07:34","ev":"start","id":"A41"}
+{"at":"2026-11-28T07:34","ev":"start","id":"A40"}
+{"at":"2026-11-28T07:40","ev":"done","id":"A40","commits":["13a2aa8"]}
