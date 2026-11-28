@@ -62,3 +62,7 @@
 {"at":"2026-11-27T21:59","ev":"start","id":"A34"}
 {"at":"2026-11-27T22:21","ev":"done","id":"A34","commits":["7f54037"]}
 {"at":"2026-11-27T22:28","ev":"add","id":"A36","list":"A","title":"Confirmation pass over the A34 fixes, aea25be..7f54037","detail":"Asked: 'Sure. Confirmation review.', offered at 149,720 tokens since the A34 fixes changed behaviour. Why: REVIEWS, BY BATCH, the confirmation pass. Done when: /code-review high aea25be..7f54037 has run, its findings fixed in one commit or dismissed, its cost recorded."}
+{"at":"2026-11-27T22:34","ev":"add","id":"A37","list":"A","title":"The batch review: /code-review at HIGH over aea25be..7f54037","detail":"Asked: /code-review high aea25be..7f54037, typed at 22:34. Why: CLAUDE.md's batch review, owed when a batch touches a DOM seam or closes a phase. Done when: its findings land in one fix commit and its cost is recorded in the plan."}
+{"at":"2026-11-27T22:34","ev":"start","id":"A37"}
+{"at":"2026-11-27T22:34","ev":"start","id":"A36"}
+{"at":"2026-11-27T22:58","ev":"done","id":"A36","commits":["f80adf5"]}
