@@ -66,3 +66,4 @@
 {"at":"2026-11-27T22:34","ev":"start","id":"A37"}
 {"at":"2026-11-27T22:34","ev":"start","id":"A36"}
 {"at":"2026-11-27T22:58","ev":"done","id":"A36","commits":["f80adf5"]}
+{"at":"2026-11-27T23:01","ev":"add","id":"A38","list":"A","title":"Confirmation pass over the A36 fixes, 5b81d22..f80adf5","detail":"Asked: 'confirmation pass', offered at 75,272 tokens since the A36 fixes changed behaviour. Why: REVIEWS, BY BATCH, the confirmation pass. Done when: /code-review high 5b81d22..f80adf5 has run, its findings fixed in one commit or dismissed, its cost recorded."}
