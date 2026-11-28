@@ -26,3 +26,8 @@ test("a run is named bare: alone, by its last letter on one page, whole across p
   expect(stephanusRun("2d", "3a")).toBe("2d-3a");
   expect(stephanusRun("9e", "10a")).toBe("9e-10a");
 });
+
+test("a run from a Stephanus number to a label that is not one is named whole", () => {
+  expect(stephanusRun("2a", "xiv")).toBe("2a-xiv");
+  expect(stephanusRun("2a", "2")).toBe("2a-2");
+});

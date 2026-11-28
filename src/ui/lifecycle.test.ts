@@ -71,7 +71,7 @@ function fakeDialogs(log: string[], asked: string[], answers: (string | null | b
   };
 }
 const otherPicture = (pics: Record<string, string>, from: string, to: string): boolean => to in pics && pics[to] !== pics[from];
-function fakePictures(o: Opts, log: string[], pics: Record<string, string>): Pick<LifecycleDeps, "copyPicture" | "removePictures" | "pictureClash" | "pictureKeys"> {
+function fakePictures(o: Opts, log: string[], pics: Record<string, string>, listing: { then: (() => void) | null }): Pick<LifecycleDeps, "copyPicture" | "removePictures" | "pictureClash" | "pictureKeys"> {
   return {
     copyPicture: (from, to) => {
       log.push("pic " + from + " → " + to);
@@ -81,7 +81,7 @@ function fakePictures(o: Opts, log: string[], pics: Record<string, string>): Pic
       return Promise.resolve(true);
     },
     removePictures: (keys) => { if (keys.length) log.push("unpic " + keys.join(", ")); for (const k of keys) delete pics[k]; return Promise.resolve(); },
-    pictureKeys: () => Promise.resolve(Object.keys(pics)),
+    pictureKeys: () => Promise.resolve(Object.keys(pics)).then((keys) => { listing.then?.(); return keys; }),
     pictureClash: (from, to) => { log.push("clash? " + to); return o.failClash ? Promise.reject(new Error("blocked")) : Promise.resolve(otherPicture(pics, from, to)); },
   };
 }
@@ -111,13 +111,13 @@ async function world(o: Opts) {
   if (o.warm !== "no") await layer.warm();
   s.st = EditorState.create({ doc: parseMarkdown(o.md ?? (o.entries ?? {})[here(s)] ?? "") });
   const view = { get state() { return s.st; }, dispatch: (tr: Transaction) => { log.push("edit"); s.st = s.st.apply(tr); } };
-  const pics: Record<string, string> = { ...(o.pics ?? {}) };
+  const pics: Record<string, string> = { ...(o.pics ?? {}) }, listing: { then: (() => void) | null } = { then: null };
   const life = lifecycle({
     layer, journal: journalOf(layer.cache),
     shown: (): Shown | null => (s.dropped ? null : !o.noView ? { mode: "html", view: view as unknown as EditorView } : o.markdown ? { mode: "markdown", replace: REPLACE, spanAt: () => (o.markdownHeading ? "heading" : null) } : null),
     caretInEntry: () => !o.noCaret,
     session: fakeSession(log, s, layer), dialogs: fakeDialogs(log, asked, answers),
-    ...fakePictures(o, log, pics), kept: fakeKept(log), ui: fakeUi(log),
+    ...fakePictures(o, log, pics, listing), kept: fakeKept(log), ui: fakeUi(log),
   });
   return {
     life, layer, log, asked, pics,
@@ -132,6 +132,7 @@ async function world(o: Opts) {
     edit: (f: (st: EditorState) => Transaction) => { s.st = s.st.apply(f(s.st)); },
     leave: (date: string, tag: string | null) => { s.current = { date, tag }; },
     dropView: () => { s.dropped = true; },
+    whileListingPictures: (f: () => void) => { listing.then = f; },
   };
 }
 /* the position just before the first occurrence of `text` in a textblock */
@@ -517,6 +518,13 @@ describe("rename moves a page with its sub-entries", () => {
     expect(w.log.filter((x) => /^(set|del|pic) /.test(x))).toEqual([]);
     expect(w.log.slice(-2)).toEqual(["open commonplace/Essays", "error couldn’t move — a picture named photo.jpg is there already in commonplace/Other"]);
     expect(w.pics["commonplace/Other/photo.jpg"]).toBe("theirs");
+  });
+  it("a sub-entry landing while the pictures are listed moves with the rest", async () => {
+    const w = await world({ at: ["commonplace", "Essays"], entries: { "commonplace/Essays": "e\n", "commonplace/Essays/A": "a\n" } });
+    w.whileListingPictures(() => { w.layer.cache["commonplace/Essays/B"] = "b\n"; });
+    w.answer("commonplace/Letters", true);
+    await w.life.rename();
+    expect(Object.keys(w.layer.cache).filter((k) => k.startsWith("commonplace/")).sort()).toEqual(["commonplace/Letters", "commonplace/Letters/A", "commonplace/Letters/B"]);
   });
   it("a picture two commonplaces share is copied once, and one that stays where it is not at all", async () => {
     const w = await world({ at: ["commonplace", "Essays"], entries: { "commonplace/Essays": "e", "commonplace/Essays/A": "![](shared.webp)\n", "commonplace/Essays/B": "![](shared.webp)\n" }, pics: {} });

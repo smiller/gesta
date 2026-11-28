@@ -113,3 +113,18 @@ test("a folder just picked runs without asking the permission check", async () =
   expect(h.asked).toBe(0);
   expect(raised).toContain("backingUp");
 });
+
+test("a folder picked whose save fails is not taken: the runner keeps the folder it had, and says so", async () => {
+  const was = folder(["prompt"]), picked = Object.assign(folder(["prompt"]), { name: "elsewhere" });
+  const store = memBackupStore();
+  await store.set(was as unknown as FileSystemDirectoryHandle);
+  const raised: string[] = [], changes: BackupState[] = [];
+  const layer = { warmed: true, storeReadFailed: false, cache: { "2026-11-27": "a day" } } as unknown as EntryLayer;
+  const b = backupRunner({ layer, images: memImageStore(), store, picker: () => Promise.resolve(picked), raise: ((k: string) => { raised.push(k); }) as never, onChange: (c) => { changes.push(c); } });
+  await b.runBackup();
+  store.set = () => Promise.reject(new Error("quota"));
+  await b.setupBackupFolder();
+  expect(raised).toContain("couldntSetUpBackups");
+  expect(b.folder).toBe("gesta-backups");
+  expect(changes.at(-1)?.folder).toBe("gesta-backups");
+});

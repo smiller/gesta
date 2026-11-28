@@ -17,9 +17,9 @@ const ABOUT_UNUSED = "Pictures stored in Gesta that no entry shows — most ofte
 const inTrouble = (b: Panel): boolean => b.trouble !== "none";
 const changes = (b: Panel): boolean => b.canPick && b.configured && b.warm === "ok";
 
-/* AN UNLOADED JOURNAL OUTRANKS EVERY OTHER STATUS: no backup runs until it
-   is in, and "Automatic backups are on." would be false exactly when a reader
-   most needs it true (pin: backupsModel.test › a journal not in outranks) */
+/* AN UNLOADED JOURNAL OUTRANKS EVERY OTHER STATUS: until it is in,
+   "Automatic backups are on." would be false exactly when a reader most
+   needs it true (pin: backupsModel.test › a journal not in outranks) */
 function status(b: Panel): { text: string; trouble: boolean } | null {
   if (!b.canPick) return { text: NO_PICKER, trouble: false };
   if (!b.configured) return null;

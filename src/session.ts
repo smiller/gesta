@@ -1,8 +1,9 @@
 import type { EditorView } from "prosemirror-view";
 import type { Node } from "prosemirror-model";
 import { imageView, pastedPictureBytes } from "./editor/images.ts";
-import { pictureKey, pictureIn } from "./store/names.ts";
-import { pictureBlob, nextPictureName } from "./store/pictures.ts";
+import { pictureKey } from "./store/names.ts";
+import { pictureBlob } from "./store/pictures.ts";
+import { picturePaste } from "./ui/picturePaste.ts";
 import { setLineInterval } from "./editor/lineNumbers.ts";
 import { entryKey, entryHash, todayKey, nsOf, tagParts, NS, asAddress } from "./store/keys.ts";
 import { entryFile } from "./store/names.ts";
@@ -11,7 +12,6 @@ import { navNeighbors, unmintedKey, registered } from "./store/lists.ts";
 import { subEntryOrder, type ContentsLink } from "./store/contents.ts";
 import { foldMemory, parseFoldStore } from "./store/foldMemory.ts";
 import { stored } from "./store/local.ts";
-import { errText } from "./store/files.ts";
 import { foldsKey, setFolds } from "./editor/folds.ts";
 import { journalOf } from "./store/headings.ts";
 import { referencePayload, entryLinkParts, referenceAnchorHTML, REFUSAL_ALERT } from "./editor/reference.ts";
@@ -129,32 +129,13 @@ export function startSession(opts: SessionOptions): Session {
     pending: (n) => { publish("savesPending", n); },
   });
   const edited = (): void => { save.edited(); show(); };
-  /* WHERE A PICTURE WAS AIMED is checked when its bytes are ready: a reader
-     can navigate while the decode runs. Every way it cannot land sticks:
-     the gesture is spent. (pin: picture › a picture pasted, then another entry at once) */
-  let decoding = false;
-  /* a write that fails is not a picture that could not be read, and only
-     a full store is said to be full; the error copies the caught error
-     (pin: alerts and surfaces › a picture whose write fails) */
-  function pictureNotSaved(err: unknown): void {
-    console.error("picture not saved", err);
-    raise((err as { name?: string })?.name === "QuotaExceededError" ? "pictureNotSavedFull" : "pictureNotSaved", { copy: errText(err) });
-  }
-  function landPicture(bytes: Awaited<ReturnType<typeof pastedPictureBytes>>, aimedAt: string, aimedView: boolean): Promise<void> | void {
-    if (aimedAt !== ekeyOf() || aimedView !== surface.md) { raise("pictureNowhere"); return; }
-    const at = entryFile(current.date, current.tag), md = currentMd();
-    return images.keys()
-      .then((stored) => { const name = nextPictureName(at, md, stored); return images.set(pictureIn(at, name), bytes).then(() => name); })
-      .then((name) => { surface.current?.insertPicture(name); }, pictureNotSaved);
-  }
-  function pasteFile(file: File): void {
-    if (locked?.has(ekeyOf())) return;
-    if (decoding) { raise("pictureOneAtATime"); return; }
-    const aimedAt = ekeyOf(), aimedView = surface.md;
-    decoding = true;
-    pastedPictureBytes(file).then((bytes) => { decoding = false; return landPicture(bytes, aimedAt, aimedView); })
-      .catch((err: unknown) => { decoding = false; console.error("picture not pasted", err); raise("pictureUnreadable"); });
-  }
+  const pasteFile = picturePaste({
+    where: () => ({ ekey: ekeyOf(), md: surface.md }),
+    locked: () => !!locked?.has(ekeyOf()),
+    decode: pastedPictureBytes,
+    place: () => ({ at: entryFile(current.date, current.tag), md: currentMd() }),
+    images, insert: (name) => { surface.current?.insertPicture(name); }, raise,
+  });
   const folds = foldMemory(stored(NS + "folds", parseFoldStore), () => Object.keys(layer.cache));
   /* the masthead is sticky over the page's top: a place is read, and set,
      just under it (pin: places › Back) */

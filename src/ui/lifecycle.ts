@@ -374,11 +374,14 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     r.moved = Object.keys(plan.moves).map((k) => movedOf(r, k));
     return r;
   }
+  /* a move is planned once the pictures are listed, over the journal its
+     texts are then read from (pin: lifecycle.test › a sub-entry landing
+     while the pictures are listed) */
   function relocateNow(m: Move, hand: HandOver): Promise<void> {
-    const plan = movePlan(layer.cache, m.from, m.to);
-    if ("refuse" in plan) { session.open(m.date, m.old); ui.raise("moveRefused", { mode: m.mode, why: alertWords(plan.refuse) }); return done; }
     /* a store that cannot list its pictures leaves the clash check to refuse a taken name */
     return deps.pictureKeys().catch(() => [] as string[]).then((stored) => {
+      const plan = movePlan(layer.cache, m.from, m.to);
+      if ("refuse" in plan) { session.open(m.date, m.old); ui.raise("moveRefused", { mode: m.mode, why: alertWords(plan.refuse) }); return done; }
       const r = relocation(m, plan, hand, stored);
       return carryPictures(r.moved, r.copied).then(
         (carried) => ("clash" in carried ? moveRefused(r, carried.clash) : writeMoved(r, carried)),

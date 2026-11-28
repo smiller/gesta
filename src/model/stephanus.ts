@@ -19,5 +19,6 @@ export function askedStephanus(typed: string): StephanusAsk {
 
 export function stephanusRun(from: string, to?: string | null): string {
   if (!to || from === to) return from;
-  return from + "-" + (stephanusPage(from) === stephanusPage(to) ? to.slice(-1) : to);
+  const onePage = isStephanus(to) && stephanusPage(from) === stephanusPage(to);
+  return from + "-" + (onePage ? to.slice(-1) : to);
 }

@@ -96,7 +96,9 @@ tools' switches. `tools/claudeLayout.test.ts` fails on a module under
   under the masthead, and where the page shows from), `journalLoad.ts`
   (the journal's load: loading, failed or in, what an act refused
   before it says, and its errors). THE ACTS, the page's handlers, each
-  a factory over the parts main.ts hands it: `searchActs.ts`,
+  a factory over the parts main.ts hands it: `picturePaste.ts` (a picture
+  pasted: stored under the next free name, put where it was aimed, one at
+  a time), `searchActs.ts`,
   `gotoRowActs.ts`, `gotoToolbarActs.ts`, `landingActs.ts` (a landing, ⌃⌘G's or
   a link to a line's, and a search jump centred), `replaceActs.ts`, `bookmarkActs.ts`,
   `formatToolbarActs.ts`, `copyButtonActs.ts`, `folderActs.ts`, `menuActs.ts` (an open

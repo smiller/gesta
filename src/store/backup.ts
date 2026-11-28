@@ -238,8 +238,9 @@ export function backupRunner(opts: BackupOptions): Backup {
   function setupBackupFolder(): Promise<void> {
     if (!picker) { raise("backupsNeedChromium"); return Promise.resolve(); }
     return picker().then((h) => {
+      const was = handle;
       handle = h;
-      return store.set(h as unknown as FileSystemDirectoryHandle).then(() => {
+      return store.set(h as unknown as FileSystemDirectoryHandle).catch((err: unknown) => { handle = was; throw err; }).then(() => {
         configured = true;
         writeRaw(BACKUP_ON, "1");
         writeRaw(BACKUP_SIG, null);   /* the first backup writes everything */
