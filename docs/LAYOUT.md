@@ -89,16 +89,14 @@ tools' switches. `tools/claudeLayout.test.ts` fails on a module under
   why it closed and what the one slot holds), `subEntries.ts`, `lifecycle.ts` (the six acts over
   entries, over ports), `keptState.ts` (what the browser keeps by entry
   key: places, folds, bookmarks, told once per act), `overlays.ts` (one thing open at a time),
-  `tabWrite.ts` (another tab's write: taken, left or said deleted), `bookmarksModel.ts`, `backupsModel.ts`,
+  `tabWrite.ts` (another tab's write: taken, left or said deleted), `picturePaste.ts` (a picture pasted, built by the session: stored under the next free name, put where it was aimed, one at a time), `bookmarksModel.ts`, `backupsModel.ts`,
   `pickKeys.ts`, `richCopy.ts`, `clipboard.ts`, `counted.ts`,
   `heldKeys.ts`, `chords.ts` (every ⌃⌘ chord: its key, act, help
   line and whether the reader has it), `alertArea.ts` (the alert area
   under the masthead, and where the page shows from), `journalLoad.ts`
   (the journal's load: loading, failed or in, what an act refused
   before it says, and its errors). THE ACTS, the page's handlers, each
-  a factory over the parts main.ts hands it: `picturePaste.ts` (a picture
-  pasted: stored under the next free name, put where it was aimed, one at
-  a time), `searchActs.ts`,
+  a factory over the parts main.ts hands it: `searchActs.ts`,
   `gotoRowActs.ts`, `gotoToolbarActs.ts`, `landingActs.ts` (a landing, ⌃⌘G's or
   a link to a line's, and a search jump centred), `replaceActs.ts`, `bookmarkActs.ts`,
   `formatToolbarActs.ts`, `copyButtonActs.ts`, `folderActs.ts`, `menuActs.ts` (an open

@@ -519,12 +519,21 @@ describe("rename moves a page with its sub-entries", () => {
     expect(w.log.slice(-2)).toEqual(["open commonplace/Essays", "error couldn’t move — a picture named photo.jpg is there already in commonplace/Other"]);
     expect(w.pics["commonplace/Other/photo.jpg"]).toBe("theirs");
   });
-  it("a sub-entry landing while the pictures are listed moves with the rest", async () => {
+  it("a sub-entry landing while the pictures are listed refuses the move it was not asked on, and nothing is written", async () => {
     const w = await world({ at: ["commonplace", "Essays"], entries: { "commonplace/Essays": "e\n", "commonplace/Essays/A": "a\n" } });
     w.whileListingPictures(() => { w.layer.cache["commonplace/Essays/B"] = "b\n"; });
     w.answer("commonplace/Letters", true);
     await w.life.rename();
-    expect(Object.keys(w.layer.cache).filter((k) => k.startsWith("commonplace/")).sort()).toEqual(["commonplace/Letters", "commonplace/Letters/A", "commonplace/Letters/B"]);
+    expect(Object.keys(w.layer.cache).filter((k) => k.startsWith("commonplace/")).sort()).toEqual(["commonplace/Essays", "commonplace/Essays/A", "commonplace/Essays/B"]);
+    expect(w.log.at(-1)).toBe("error couldn’t move — the entries changed meanwhile, so nothing was moved");
+  });
+  it("a move refused once the pictures are listed keeps what was typed meanwhile, under the old name", async () => {
+    const w = await world({ at: ["commonplace", "Essays"], entries: { "commonplace/Essays": "e\n", "commonplace/Essays/A": "a\n" } });
+    w.whileListingPictures(() => { w.layer.cache["commonplace/Letters/A"] = "x\n"; w.typeMeanwhile("e, and more\n"); });
+    w.answer("commonplace/Letters", true);
+    await w.life.rename();
+    expect(w.md("commonplace/Essays")).toBe("e, and more\n");
+    expect(w.log.at(-1)).toMatch(/^error couldn’t move — /);
   });
   it("a picture two commonplaces share is copied once, and one that stays where it is not at all", async () => {
     const w = await world({ at: ["commonplace", "Essays"], entries: { "commonplace/Essays": "e", "commonplace/Essays/A": "![](shared.webp)\n", "commonplace/Essays/B": "![](shared.webp)\n" }, pics: {} });

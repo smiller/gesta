@@ -131,7 +131,7 @@ export function startSession(opts: SessionOptions): Session {
   const edited = (): void => { save.edited(); show(); };
   const pasteFile = picturePaste({
     where: () => ({ ekey: ekeyOf(), md: surface.md }),
-    locked: () => !!locked?.has(ekeyOf()),
+    locked: () => isLocked(),
     decode: pastedPictureBytes,
     place: () => ({ at: entryFile(current.date, current.tag), md: currentMd() }),
     images, insert: (name) => { surface.current?.insertPicture(name); }, raise,
@@ -180,7 +180,8 @@ export function startSession(opts: SessionOptions): Session {
      into, the open one kept the typing and lost the import's text unsaid
      (pin: losing nothing › typed into an entry an import overwrites) */
   let locked: Set<string> | null = null;
-  const lockedNow = <S extends Surface>(s: S): S => { s.lock(!!opts.readOnly || !!locked?.has(ekeyOf())); return s; };
+  const isLocked = (): boolean => !!opts.readOnly || !!locked?.has(ekeyOf());
+  const lockedNow = <S extends Surface>(s: S): S => { s.lock(isLocked()); return s; };
   const surface = surfaces({
     build: {
       html: (doc) => lockedNow(mountEditor(doc, current.date, current.tag)),
@@ -436,7 +437,7 @@ export function startSession(opts: SessionOptions): Session {
   return {
     get current() { return current; },
     get shown() { return shownOf(surface.current, html); },
-    get locked() { return !!opts.readOnly || !!locked?.has(ekeyOf()); },
+    get locked() { return isLocked(); },
     focusText: () => { surface.current?.focus(); },
     holdTop: () => {
       const s = surface.current?.markdownMode ? null : surface.current;

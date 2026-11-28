@@ -128,3 +128,21 @@ test("a folder picked whose save fails is not taken: the runner keeps the folder
   expect(b.folder).toBe("gesta-backups");
   expect(changes.at(-1)?.folder).toBe("gesta-backups");
 });
+
+test("a folder picked is not the runner's until its save lands", async () => {
+  const was = folder(["prompt"]), picked = Object.assign(folder(["prompt"]), { name: "elsewhere" });
+  const store = memBackupStore();
+  await store.set(was as unknown as FileSystemDirectoryHandle);
+  const layer = { warmed: true, storeReadFailed: false, cache: { "2026-11-27": "a day" } } as unknown as EntryLayer;
+  const b = backupRunner({ layer, images: memImageStore(), store, picker: () => Promise.resolve(picked), raise: (() => {}) as never, onChange: () => {} });
+  await b.runBackup();
+  const set = store.set.bind(store);
+  let land = (): void => {};
+  store.set = (h) => new Promise<void>((r) => { land = () => { void set(h).then(r); }; });
+  const setup = b.setupBackupFolder();
+  await new Promise((r) => setTimeout(r, 0));
+  expect(b.folder).toBe("gesta-backups");
+  land();
+  await setup;
+  expect(b.folder).toBe("elsewhere");
+});

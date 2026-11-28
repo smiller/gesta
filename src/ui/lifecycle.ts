@@ -316,7 +316,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
      that one. An author re-filed keeps its name as its entry's heading, and one whose books came without an entry is given one (pin: lifecycle.test ›
      an author with no page of its own) */
   type Mode = "move" | "rename" | "refile";
-  interface Move { date: string; old: string; to: string; toDate: string; toTag: string; from: string; mode: Mode }
+  interface Move { date: string; old: string; to: string; toDate: string; toTag: string; from: string; mode: Mode; asked: MovePlan }
   interface Moved { from: string; to: string; named: Record<string, string>; md: string }
   interface Relocation extends Move {
     plan: MovePlan; pageless: boolean; relabel?: { old: string; new: string }; hand: HandOver; there: string;
@@ -337,7 +337,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     const first = movePlan(layer.cache, from, to);
     if ("refuse" in first) return refused(first.refuse);
     if (mode === "move" && !moveAsked(date, old, to, first)) return done;
-    return flushedMove({ date, old, to, toDate, toTag, from, mode });
+    return flushedMove({ date, old, to, toDate, toTag, from, mode, asked: first });
   }
   function flushedMove(m: Move): Promise<void> {
     renaming = true;
@@ -374,14 +374,22 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     r.moved = Object.keys(plan.moves).map((k) => movedOf(r, k));
     return r;
   }
-  /* a move is planned once the pictures are listed, over the journal its
-     texts are then read from (pin: lifecycle.test › a sub-entry landing
-     while the pictures are listed) */
+  const planShape = (p: MovePlan): string => JSON.stringify([Object.entries(p.moves).sort(), Object.entries(p.twins).sort(), p.into]);
+  /* typed while the pictures were listed: kept under the old name (pin:
+     lifecycle.test › a move refused once the pictures are listed) */
+  function refusedUnderWay(m: Move, hand: HandOver, why: string): Promise<void> {
+    return hand.keep().then(() => { session.open(m.date, m.old); ui.raise("moveRefused", { mode: m.mode, why }); });
+  }
+  /* A MOVE DOES WHAT IT WAS ASKED TO OR NOTHING: planned again once the
+     pictures are listed, over the journal its texts are then read from, it
+     refuses if it would now move otherwise (pin: lifecycle.test › a
+     sub-entry landing while the pictures are listed) */
   function relocateNow(m: Move, hand: HandOver): Promise<void> {
     /* a store that cannot list its pictures leaves the clash check to refuse a taken name */
     return deps.pictureKeys().catch(() => [] as string[]).then((stored) => {
       const plan = movePlan(layer.cache, m.from, m.to);
-      if ("refuse" in plan) { session.open(m.date, m.old); ui.raise("moveRefused", { mode: m.mode, why: alertWords(plan.refuse) }); return done; }
+      if ("refuse" in plan) return refusedUnderWay(m, hand, alertWords(plan.refuse));
+      if (planShape(plan) !== planShape(m.asked)) return refusedUnderWay(m, hand, "the entries changed meanwhile, so nothing was moved");
       const r = relocation(m, plan, hand, stored);
       return carryPictures(r.moved, r.copied).then(
         (carried) => ("clash" in carried ? moveRefused(r, carried.clash) : writeMoved(r, carried)),

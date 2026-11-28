@@ -9,15 +9,15 @@ const settle = () => new Promise((r) => setTimeout(r, 0));
 
 function paste(md = "") {
   const images = memImageStore(), raised: string[] = [], inserted: string[] = [];
-  const here = { ekey: "2026-11-27", md: false };
+  const here = { ekey: "2026-11-27", md: false, locked: false, inserting: (name: string): void => { inserted.push(name); } };
   const set = images.set.bind(images);
   const held: (() => void)[] = [];
   let holding = false;
   images.set = (id, b) => (holding ? new Promise<void>((r) => held.push(() => { void set(id, b).then(r); })) : set(id, b));
   const p = picturePaste({
-    where: () => ({ ...here }), locked: () => false, decode: () => Promise.resolve(BYTES),
+    where: () => ({ ekey: here.ekey, md: here.md }), locked: () => here.locked, decode: () => Promise.resolve(BYTES),
     place: () => ({ at: entryFile("2026-11-27"), md }), images,
-    insert: (name) => { inserted.push(name); }, raise: ((k: string) => { raised.push(k); }) as never,
+    insert: (name) => { here.inserting(name); }, raise: ((k: string) => { raised.push(k); }) as never,
   });
   return { p, images, raised, inserted, here, hold: () => { holding = true; }, release: () => { holding = false; held.splice(0).forEach((go) => go()); } };
 }
@@ -31,16 +31,26 @@ test("a picture pasted is stored under the next free name and put in the entry i
   expect(await s.images.keys()).toContain("journal/2026/2026-11-27-img-3.webp");
 });
 
-test("another entry opened while the picture is stored: it is not put there, and the paste says it had nowhere to land", async () => {
+async function movedAway(meanwhile: (here: ReturnType<typeof paste>["here"]) => void) {
   const s = paste();
   s.hold();
   s.p(file);
   await settle();
-  s.here.ekey = "commonplace/B";
+  meanwhile(s.here);
   s.release();
   await settle();
+  return s;
+}
+
+test("another entry opened while the picture is stored: it is not put there, and the paste says it had nowhere to land", async () => {
+  const s = await movedAway((here) => { here.ekey = "commonplace/B"; });
   expect(s.inserted).toEqual([]);
   expect(s.raised).toEqual(["pictureNowhere"]);
+});
+
+test("the entry locked while the picture is stored: it is not put there, and the paste says it had nowhere to land", async () => {
+  const s = await movedAway((here) => { here.locked = true; });
+  expect([s.inserted, s.raised]).toEqual([[], ["pictureNowhere"]]);
 });
 
 test("a picture pasted while the last is still being stored is refused, and the last lands under its own name", async () => {
@@ -60,11 +70,24 @@ test("a picture pasted while the last is still being stored is refused, and the 
 
 test("a picture that cannot be read says so, and the next paste is taken", async () => {
   const s = paste();
-  vi.spyOn(console, "error").mockImplementation(() => {});
+  const quiet = vi.spyOn(console, "error").mockImplementation(() => {});
   const p = picturePaste({ where: () => s.here, locked: () => false, decode: () => Promise.reject(new Error("bad")), place: () => ({ at: entryFile("2026-11-27"), md: "" }), images: s.images, insert: () => {}, raise: ((k: string) => { s.raised.push(k); }) as never });
   p(file);
   await settle();
   p(file);
   await settle();
   expect(s.raised).toEqual(["pictureUnreadable", "pictureUnreadable"]);
+  quiet.mockRestore();
+});
+
+test("a paste that fails once the picture is read says it was not saved, and the next paste is taken", async () => {
+  const s = paste();
+  const quiet = vi.spyOn(console, "error").mockImplementation(() => {});
+  s.here.inserting = () => { throw new Error("no view"); };
+  s.p(file);
+  await settle();
+  s.p(file);
+  await settle();
+  expect(s.raised).toEqual(["pictureNotSaved", "pictureNotSaved"]);
+  quiet.mockRestore();
 });
