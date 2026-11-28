@@ -50,3 +50,8 @@
 {"at":"2026-11-27T18:26","ev":"add","id":"A32.1.4","list":"A","title":"The Backups panel's lines from one function","parent":"A32.1","detail":"Asked: candidate 3 of the A32.1 run, 'All yes', grilled, 'yes'. Why: six one-line predicates composed in the template, the panel's words in two places, and the Helium reading taking the unused-pictures heading as the status. Done when: backupsLines(state) returns the lines by role, the template draws them, Helium reads by role, every state's render unchanged, accepted."}
 {"at":"2026-11-27T18:26","ev":"start","id":"A32.1.4"}
 {"at":"2026-11-27T18:41","ev":"done","id":"A32.1.4","commits":["1156c91"]}
+{"at":"2026-11-27T18:44","ev":"add","id":"A32.1.5","list":"A","title":"One answer to which pictures an entry names","parent":"A32.1","detail":"Asked: candidate 5 of the A32.1 run, 'All yes' as the way to fix S35, grilled, 'yes'. Why: four modules read an entry's pictures their own way; a paste's name looked only at the text, so it could overwrite an unused picture (S35), and a move into an entry was saved only by a refusal. Done when: pictures.ts answers shown, kept and the next free name; a paste and a move number past every stored picture; the Helium step shows both kept; accepted."}
+{"at":"2026-11-27T18:44","ev":"start","id":"A32.1.5"}
+{"at":"2026-11-27T18:44","ev":"start","id":"S35"}
+{"at":"2026-11-27T21:49","ev":"done","id":"A32.1.5","commits":["a70131f"]}
+{"at":"2026-11-27T21:49","ev":"done","id":"S35","commits":["a70131f"]}

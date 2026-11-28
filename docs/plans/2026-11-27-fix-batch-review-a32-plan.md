@@ -34,3 +34,9 @@
   second read; the twin render cannot see a duplicate key server-side);
   backup.ts held at health 10 by naming the paused check; the corner diff
   (the note's gutter "none") read and approved; `npm run verify` green.
+- 15:00 the architecture run (A32.1) walked the batch's files; cost 123,179
+  tokens (input 2, cache creation 421, cache read 115,810, output 6,946),
+  from the last message of its transcript. Five candidates, all built:
+  1 the Stephanus number (5bb58da), 2 the panel follows the runner
+  (2b5dd45), 4 trouble as a kind (dcdb54e), 3 the panel's lines (1156c91),
+  5 pictures' one answer, fixing S35 (a70131f).
