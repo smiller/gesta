@@ -1,9 +1,8 @@
 import type { EditorView } from "prosemirror-view";
 import type { Node } from "prosemirror-model";
 import { imageView, pastedPictureBytes } from "./editor/images.ts";
-import { nextImageName, pictureKey } from "./store/names.ts";
-import { imageRefs } from "./store/exportEntries.ts";
-import { pictureBlob } from "./store/pictures.ts";
+import { pictureKey, pictureIn } from "./store/names.ts";
+import { pictureBlob, nextPictureName } from "./store/pictures.ts";
 import { setLineInterval } from "./editor/lineNumbers.ts";
 import { entryKey, entryHash, todayKey, nsOf, tagParts, NS, asAddress } from "./store/keys.ts";
 import { entryFile } from "./store/names.ts";
@@ -143,8 +142,10 @@ export function startSession(opts: SessionOptions): Session {
   }
   function landPicture(bytes: Awaited<ReturnType<typeof pastedPictureBytes>>, aimedAt: string, aimedView: boolean): Promise<void> | void {
     if (aimedAt !== ekeyOf() || aimedView !== surface.md) { raise("pictureNowhere"); return; }
-    const name = nextImageName(entryFile(current.date, current.tag).base, imageRefs(currentMd()));
-    return images.set(pictureKey(current.date, current.tag, name), bytes).then(() => { surface.current?.insertPicture(name); }, pictureNotSaved);
+    const at = entryFile(current.date, current.tag), md = currentMd();
+    return images.keys()
+      .then((stored) => { const name = nextPictureName(at, md, stored); return images.set(pictureIn(at, name), bytes).then(() => name); })
+      .then((name) => { surface.current?.insertPicture(name); }, pictureNotSaved);
   }
   function pasteFile(file: File): void {
     if (locked?.has(ekeyOf())) return;

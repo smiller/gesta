@@ -1,5 +1,6 @@
-import { describe, it, expect } from "vitest";
-import { namedPictures, unnamed, sweepPlan, SWEEP_FLOOR, pictureMoves, pictureBlob } from "./pictures.ts";
+import { describe, it, test, expect } from "vitest";
+import { namedPictures, unnamed, sweepPlan, SWEEP_FLOOR, pictureMoves, pictureBlob, takenNames, nextPictureName, imageRefs, patternRefs } from "./pictures.ts";
+import { entryFile } from "./names.ts";
 import { memImageStore } from "./store.ts";
 
 const CACHE: Record<string, string> = {
@@ -98,4 +99,40 @@ describe("pictureBlob", () => {
     expect(pictureBlob("a.tiff", bytes).type).toBe("application/octet-stream");
     expect(pictureBlob("a.webp", bytes).size).toBe(3);
   });
+});
+
+describe("the names a new picture may not take", () => {
+  const at = entryFile("commonplace", "Unused Pictures");
+  it("a picture stored under the entry's folder and named by no text still holds its name, so the next is past it", () => {
+    expect(nextPictureName(at, "", ["commonplace/Unused Pictures-img-1.webp"])).toBe("Unused Pictures-img-2.webp");
+    expect(nextPictureName(at, "![](<Unused Pictures-img-2.webp>)", ["commonplace/Unused Pictures-img-3.webp"])).toBe("Unused Pictures-img-4.webp");
+  });
+  it("what the text names by either reading counts, and what is stored for another entry or another folder does not", () => {
+    expect(nextPictureName(at, "```\n![](<Unused Pictures-img-5.webp>)\n```\n", [])).toBe("Unused Pictures-img-6.webp");
+    expect(nextPictureName(at, "", ["commonplace/Other-img-7.webp", "commonplace/Unused Pictures/Unused Pictures-img-8.webp", "journal/2026/Unused Pictures-img-9.webp"])).toBe("Unused Pictures-img-1.webp");
+  });
+  it("taken: the text's names and the stored names for either of the entry's stems, nothing else of the folder", () => {
+    const sub = entryFile("commonplace", "Essays/A");
+    expect(takenNames(sub, "![](x.png)", ["commonplace/Essays/commonplace--Essays--A-img-2.webp", "commonplace/Essays/A-img-1.webp", "commonplace/Essays/twin.webp", "commonplace/Essays/B-img-1.webp"]).sort())
+      .toEqual(["A-img-1.webp", "commonplace--Essays--A-img-2.webp", "x.png"]);
+  });
+});
+
+test("imageRefs: relative refs, bare or <bracketed>, unwrapped and deduplicated; the rest is the browser's", () => {
+  expect(imageRefs("no pictures")).toEqual([]);
+  expect(imageRefs("![](a-img-1.webp) ![x](<Trip Log-img-2.webp>) ![](a-img-1.webp) ![](https://x/y.png) ![](data:image/png;base64,AA) ![](/abs.png)"))
+    .toEqual(["a-img-1.webp", "Trip Log-img-2.webp"]);
+});
+
+test("imageRefs: every picture the editor shows, read as the editor reads it — a name with brackets, a title, brackets in the words — and none in code", () => {
+  expect(imageRefs("![](Notes(2)-img-1.webp) ![a](t.png \"title\") ![fig [1]](y.png)\n\n```\n![](code.png)\n```\n"))
+    .toEqual(["Notes(2)-img-1.webp", "t.png", "y.png"]);
+});
+
+test("patternRefs: the picture syntax read whole — a title, brackets in the words, a name with brackets", () => {
+  expect(patternRefs("![a](t.png \"title\") ![fig [1]](y.png) ![](Notes(2)-img-1.webp)")).toEqual(["t.png", "y.png", "Notes(2)-img-1.webp"]);
+});
+
+test("imageRefs: a text the editor cannot read is read by its picture syntax, so nothing it may hold is missed", () => {
+  expect(imageRefs("::: verse\n![](kept.png)\n:::\n:::\n")).toContain("kept.png");
 });

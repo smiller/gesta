@@ -71,7 +71,7 @@ function fakeDialogs(log: string[], asked: string[], answers: (string | null | b
   };
 }
 const otherPicture = (pics: Record<string, string>, from: string, to: string): boolean => to in pics && pics[to] !== pics[from];
-function fakePictures(o: Opts, log: string[], pics: Record<string, string>): Pick<LifecycleDeps, "copyPicture" | "removePictures" | "pictureClash"> {
+function fakePictures(o: Opts, log: string[], pics: Record<string, string>): Pick<LifecycleDeps, "copyPicture" | "removePictures" | "pictureClash" | "pictureKeys"> {
   return {
     copyPicture: (from, to) => {
       log.push("pic " + from + " → " + to);
@@ -81,6 +81,7 @@ function fakePictures(o: Opts, log: string[], pics: Record<string, string>): Pic
       return Promise.resolve(true);
     },
     removePictures: (keys) => { if (keys.length) log.push("unpic " + keys.join(", ")); for (const k of keys) delete pics[k]; return Promise.resolve(); },
+    pictureKeys: () => Promise.resolve(Object.keys(pics)),
     pictureClash: (from, to) => { log.push("clash? " + to); return o.failClash ? Promise.reject(new Error("blocked")) : Promise.resolve(otherPicture(pics, from, to)); },
   };
 }
@@ -437,7 +438,8 @@ describe("the pictures left behind", () => {
     expect(back.pics["commonplace/commonplace--Letters-img-1.webp"]).toBe("e");
   });
   it("each copy is checked, renamed or not, one at a time just before it is made; a clash takes back those made, keeps what was typed, and names it", async () => {
-    const w = await world({ at: ["commonplace", "Essays"], entries: ENTRIES, pics: { ...PICS, "bookshelf/Miller, Sean/Letters/bookshelf--Miller, Sean--Letters--A-img-1.webp": "other" } });
+    const entries = { ...ENTRIES, "commonplace/Essays/A": "![](commonplace--Essays--A-img-1.webp) ![](a-photo.jpg)\n" };
+    const w = await world({ at: ["commonplace", "Essays"], entries, pics: { ...PICS, "commonplace/Essays/a-photo.jpg": "p", "bookshelf/Miller, Sean/Letters/a-photo.jpg": "other" } });
     w.typeMeanwhile("typed\n");
     w.answer("bookshelf/Miller, Sean/Letters", true);
     await w.life.rename();
@@ -448,7 +450,16 @@ describe("the pictures left behind", () => {
     ]);
     expect(w.pics["bookshelf/Miller, Sean/shared.webp"]).toBeUndefined();
     expect(w.md("commonplace/Essays")).toBe("typed\n");
-    expect(w.log.slice(-2)).toEqual(["open commonplace/Essays", "error couldn’t move — a picture named bookshelf--Miller, Sean--Letters--A-img-1.webp is there already in bookshelf/Miller, Sean/Letters"]);
+    expect(w.log.slice(-2)).toEqual(["open commonplace/Essays", "error couldn’t move — a picture named a-photo.jpg is there already in bookshelf/Miller, Sean/Letters"]);
+  });
+  it("a picture renamed into a folder already holding one under that name, named by no entry, is numbered past it, and that one kept", async () => {
+    const unused = "bookshelf/Miller, Sean/Letters/bookshelf--Miller, Sean--Letters--A-img-1.webp";
+    const w = await world({ at: ["commonplace", "Essays"], entries: ENTRIES, pics: { ...PICS, [unused]: "other" } });
+    w.answer("bookshelf/Miller, Sean/Letters", true);
+    await w.life.rename();
+    expect(w.md("bookshelf/Miller, Sean/Letters/A")).toBe("![](<bookshelf--Miller, Sean--Letters--A-img-2.webp>)\n");
+    expect(w.pics["bookshelf/Miller, Sean/Letters/bookshelf--Miller, Sean--Letters--A-img-2.webp"]).toBe("a");
+    expect(w.pics[unused]).toBe("other");
   });
   it("a picture read that fails reopens the commonplace, says so, and keeps what was typed", async () => {
     const w = await world({ at: ["commonplace", "Essays"], entries: ENTRIES, pics: PICS, failClash: true });

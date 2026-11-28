@@ -9,10 +9,9 @@ import { typedName, typedAddress, filingForm, shownForm } from "./naming.ts";
 import { subEntrySpec, takenText, subTreeHasContent, blankSubTree, renamePrompt, movePrompt, moveConfirm, deleteConfirm, deleteLanding, hostKey } from "./subEntries.ts";
 import { pointsInto, withHeading, linkingKeys } from "../store/refile.ts";
 import { movePlan, moveLinks, joined, pictureNames, renamePictures, type MovePlan } from "../store/move.ts";
-import { imageRefs } from "../store/exportEntries.ts";
 import { splitKey } from "../store/keys.ts";
-import { pictureKey } from "../store/names.ts";
-import { unnamed, picturesOf } from "../store/pictures.ts";
+import { pictureKey, entryFile } from "../store/names.ts";
+import { unnamed, picturesOf, takenNames } from "../store/pictures.ts";
 import { rootLabel } from "./rootListing.ts";
 import { retargetLinks, relabelLinks } from "../store/links.ts";
 import { cutsHeading, linkAfterRefusal, placeLinkAfter } from "../editor/insertLink.ts";
@@ -54,6 +53,7 @@ export interface LifecycleDeps {
   /* whether `to` holds a picture other than the one under `from` */
   pictureClash(from: string, to: string): Promise<boolean>;
   removePictures(keys: string[]): Promise<void>;
+  pictureKeys(): Promise<string[]>;
 }
 /* each settles once its writes have landed */
 export interface Lifecycle {
@@ -320,7 +320,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
   interface Moved { from: string; to: string; named: Record<string, string>; md: string }
   interface Relocation extends Move {
     plan: MovePlan; pageless: boolean; relabel?: { old: string; new: string }; hand: HandOver; there: string;
-    rootNames: Record<string, string>; moved: Moved[]; copied: string[]; twinPictures: string[];
+    rootNames: Record<string, string>; moved: Moved[]; copied: string[]; twinPictures: string[]; stored: string[];
   }
   type Carried = { lost: number; olds: string[] };
   interface Tally { left: string[]; updated: number; stayed: string[] }
@@ -349,8 +349,11 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
   }
   const headedMd = (r: Relocation, md: string): string => (r.mode === "refile" ? withHeading(md, r.old) ?? md : md);
   const otherText = (r: Relocation, md: string): string => moveLinks(md, r.from, r.plan) ?? md;
-  const picturesFor = (r: Relocation, k: string): Record<string, string> =>
-    pictureNames(k, r.plan.moves[k], layer.entryMd(k), k === r.from && r.plan.into ? imageRefs(r.there) : []);
+  function picturesFor(r: Relocation, k: string): Record<string, string> {
+    const [toDate, toTag] = splitKey(r.plan.moves[k]);
+    const taken = takenNames(entryFile(toDate, toTag), k === r.from && r.plan.into ? r.there : "", r.stored);
+    return pictureNames(k, r.plan.moves[k], layer.entryMd(k), taken);
+  }
   function rootText(r: Relocation, md: string): string {
     const own = renamePictures(headedMd(r, moveLinks(md, r.from, r.plan, r.relabel) ?? md), r.rootNames);
     return r.plan.into ? joined(otherText(r, r.there), own) : own;
@@ -360,12 +363,12 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     const named = picturesFor(r, k);
     return { from: k, to: r.plan.moves[k], named, md: renamePictures(otherText(r, layer.entryMd(k)), named) };
   }
-  function relocation(m: Move, plan: MovePlan, hand: HandOver): Relocation {
+  function relocation(m: Move, plan: MovePlan, hand: HandOver, stored: string[]): Relocation {
     const pageless = !(m.from in plan.moves);
     if (pageless) plan.moves[m.from] = m.to;
     const r: Relocation = {
       ...m, plan, pageless, relabel: relabelOf(m), hand, there: plan.into ? layer.entryMd(m.to) : "",
-      rootNames: {}, moved: [], copied: [], twinPictures: Object.keys(plan.twins).flatMap((k) => picturesOf(k, layer.entryMd(k))),
+      rootNames: {}, moved: [], copied: [], stored, twinPictures: Object.keys(plan.twins).flatMap((k) => picturesOf(k, layer.entryMd(k))),
     };
     r.rootNames = picturesFor(r, m.from);
     r.moved = Object.keys(plan.moves).map((k) => movedOf(r, k));
@@ -374,11 +377,14 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
   function relocateNow(m: Move, hand: HandOver): Promise<void> {
     const plan = movePlan(layer.cache, m.from, m.to);
     if ("refuse" in plan) { session.open(m.date, m.old); ui.raise("moveRefused", { mode: m.mode, why: alertWords(plan.refuse) }); return done; }
-    const r = relocation(m, plan, hand);
-    return carryPictures(r.moved, r.copied).then(
-      (carried) => ("clash" in carried ? moveRefused(r, carried.clash) : writeMoved(r, carried)),
-      () => moveRefused(r, "a picture could not be copied, nothing was moved"),
-    );
+    /* a store that cannot list its pictures leaves the clash check to refuse a taken name */
+    return deps.pictureKeys().catch(() => [] as string[]).then((stored) => {
+      const r = relocation(m, plan, hand, stored);
+      return carryPictures(r.moved, r.copied).then(
+        (carried) => ("clash" in carried ? moveRefused(r, carried.clash) : writeMoved(r, carried)),
+        () => moveRefused(r, "a picture could not be copied, nothing was moved"),
+      );
+    });
   }
   /* typed while the copies ran: kept under the old name (pin:
      lifecycle.test › a failed move keeps what was typed) */

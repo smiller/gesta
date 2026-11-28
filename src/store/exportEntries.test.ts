@@ -1,25 +1,8 @@
 import { test, expect } from "vitest";
-import { exportEntries, imageRefs, patternRefs, archiveRoots, missingPictures } from "./exportEntries.ts";
+import { exportEntries, archiveRoots, missingPictures } from "./exportEntries.ts";
 import { splitKey } from "./keys.ts";
 import { memImageStore } from "./store.ts";
 import { filePath } from "./files.ts";
-
-test("imageRefs: relative refs, bare or <bracketed>, unwrapped and deduplicated; the rest is the browser's", () => {
-  expect(imageRefs("no pictures")).toEqual([]);
-  expect(imageRefs("![](a-img-1.webp) ![x](<Trip Log-img-2.webp>) ![](a-img-1.webp) ![](https://x/y.png) ![](data:image/png;base64,AA) ![](/abs.png)"))
-    .toEqual(["a-img-1.webp", "Trip Log-img-2.webp"]);
-});
-
-test("imageRefs: every picture the editor shows, read as the editor reads it — a name with brackets, a title, brackets in the words — and none in code", () => {
-  expect(imageRefs("![](Notes(2)-img-1.webp) ![a](t.png \"title\") ![fig [1]](y.png)\n\n```\n![](code.png)\n```\n"))
-    .toEqual(["Notes(2)-img-1.webp", "t.png", "y.png"]);
-});
-test("patternRefs: the picture syntax read whole — a title, brackets in the words, a name with brackets", () => {
-  expect(patternRefs("![a](t.png \"title\") ![fig [1]](y.png) ![](Notes(2)-img-1.webp)")).toEqual(["t.png", "y.png", "Notes(2)-img-1.webp"]);
-});
-test("imageRefs: a text the editor cannot read is read by its picture syntax, so nothing it may hold is missed", () => {
-  expect(imageRefs("::: verse\n![](kept.png)\n:::\n:::\n")).toContain("kept.png");
-});
 
 test("splitKey and archiveRoots read the key alone", () => {
   expect(splitKey("2026-01-05")).toEqual(["2026-01-05", null]);

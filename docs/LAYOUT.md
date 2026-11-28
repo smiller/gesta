@@ -73,7 +73,9 @@ tools' switches. `tools/claudeLayout.test.ts` fails on a module under
   `shortcuts.ts`, `contents.ts`, `foldMemory.ts` (which entries fold, and the
   sections each holds otherwise than it starts them), `placeState.ts`,
   `links.ts` (links rewritten on a rename or delete), `shelves.ts`,
-  `refile.ts`, `move.ts` (an entry to another key), `pictures.ts`,
+  `refile.ts`, `move.ts` (an entry to another key), `pictures.ts` (an
+  entry's pictures: those its text shows, those kept, the next free name,
+  the sweep),
   `toCommonplaces.ts` (once: the retired `page/` entries moved to
   `commonplace/`),
   `entrySave.ts` (the open entry's save: the debounce, leaving an

@@ -17,7 +17,7 @@ section("a commonplace renamed with every link following", async () => {
   await log("Rename, Renamed Me typed, Enter", { prompts: prompts.slice(), confirms: confirms.slice(), entry: await A.entry(page), corner: await saidText(), far: await A.stored(page, "commonplace/Rename Far"), old: await A.stored(page, "commonplace/Rename Me") });
 });
 section("unused pictures", async () => {
-  /* a picture pasted, then deleted from the text: the backups panel shows it by name and offers to remove it, and its button removes it */
+  /* a picture pasted, then deleted from the text, then another pasted: the backups panel shows the first by name and offers to remove it, and its button removes it */
   await pictureDeletedTextBackups();
   await removeUnusedPictureClicked();
   await successClicked();
@@ -33,9 +33,17 @@ async function pictureDeletedTextBackups(): Promise<void> {
   await page.keyboard.press("Meta+a");
   await page.keyboard.press("Backspace");
   for (let i = 0; i < 40 && ((await A.stored(page, "commonplace/Unused Pictures")) || "").includes("!["); i++) await rest(page);
+  await anotherPasted();
   await page.click(S.backupsButton);
   await waitState(page, { name: "backup", ms: 5000 }, () => !!document.querySelector(".backups .backups-pictures img"));
   await log("the picture deleted from the text, the backups panel opened", { kept, pictureInText: ((await A.stored(page, "commonplace/Unused Pictures")) ?? "").includes("!["), panel: await R.backups(page) });
+}
+/* the next picture is numbered past the unused one, which stays stored (pin: pictures.test › a picture stored under the entry's folder) */
+async function anotherPasted(): Promise<void> {
+  await R.pastePng(page);
+  await R.waitImg(page);
+  await landed(page, 1500);
+  await log("another picture pasted, after it", { kept: await A.pictureKeys(page, "commonplace/Unused Pictures"), text: await A.stored(page, "commonplace/Unused Pictures") });
 }
 async function removeUnusedPictureClicked(): Promise<void> {
   await page.click(".backups button:has-text('Remove')").catch(() => {});

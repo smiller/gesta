@@ -1,47 +1,11 @@
-import { entryFile, collidingFile, pictureIn, RELATIVE_SRC } from "./names.ts";
+import { entryFile, collidingFile, pictureIn } from "./names.ts";
+import { imageRefs } from "./pictures.ts";
 import { splitKey } from "./keys.ts";
 import { yieldToTaskQueue } from "./io.ts";
 import type { ExportFile } from "./files.ts";
 import type { ImageStore } from "./store.ts";
-import { parseMarkdown } from "../model/parse.ts";
-import { schema } from "../model/schema.ts";
 import { PHRASES } from "../model/alertText.ts";
 
-/* group 1 the address as written, bracketed or bare, a bare one holding one
-   level of balanced brackets; a title and brackets in the words allowed */
-export const imageLinks = (): RegExp => /!\[(?:[^\]\n\\[]|\\.|\[[^\]\n]*\])*\]\((<[^>\n]*>|(?:[^()\s]|\([^()\s]*\))*)(?:\s+(?:"[^"\n]*"|'[^'\n]*'|\([^)\n]*\)))?\s*\)/g;
-const relative = (srcs: string[]): string[] => Array.from(new Set(srcs.filter((s) => s && RELATIVE_SRC.test(s))));
-/* the picture syntax alone: a name with brackets, a title or brackets in the
-   words misread (pin: exportEntries.test › imageRefs: a text the editor
-   cannot read) */
-export function patternRefs(md: string): string[] {
-  const out: string[] = [];
-  if (md.indexOf("![") === -1) return out;
-  const re = imageLinks();
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(md))) out.push(m[1].charAt(0) === "<" ? m[1].slice(1, -1) : m[1]);
-  return relative(out);
-}
-/* the pictures a text holds, read by parsing it as markdown, so a name with
-   brackets, a title or brackets in the words are read whole (pin:
-   exportEntries.test › imageRefs: every picture the editor shows) */
-export function imageRefs(md: string): string[] {
-  if (md.indexOf("![") === -1) return [];
-  const shown = shownPictures(md);
-  return shown ? relative(shown) : patternRefs(md);
-}
-/* every picture the parsed text holds, in order, null where it will not
-   parse; the last text's answer is kept, the same text being asked twice in
-   a row */
-let lastShown: [string, string[] | null] | null = null;
-export function shownPictures(md: string): string[] | null {
-  if (lastShown && lastShown[0] === md) return lastShown[1];
-  let out: string[] | null = [];
-  try { parseMarkdown(md).descendants((n) => { if (n.type === schema.nodes.image) out!.push(String(n.attrs.src)); return true; }); }
-  catch { out = null; }
-  lastShown = [md, out];
-  return out;
-}
 /* MEASURED on HTML: 128 KB a batch ran a 5.8 ms mean */
 export const EXPORT_YIELD_BYTES = 128 * 1024;
 export interface Collision extends Error { collision: true }
