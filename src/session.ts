@@ -134,7 +134,10 @@ export function startSession(opts: SessionOptions): Session {
     locked: () => isLocked(),
     decode: pastedPictureBytes,
     place: () => ({ at: entryFile(current.date, current.tag), md: currentMd() }),
-    images, insert: (name) => { surface.current?.insertPicture(name); }, raise,
+    images, insert: (name) => {
+      if (!surface.current) throw new Error("no view to put the picture in");
+      surface.current.insertPicture(name);
+    }, raise,
   });
   const folds = foldMemory(stored(NS + "folds", parseFoldStore), () => Object.keys(layer.cache));
   /* the masthead is sticky over the page's top: a place is read, and set,

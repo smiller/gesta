@@ -8,7 +8,7 @@ const file = {} as File;
 const settle = () => new Promise((r) => setTimeout(r, 0));
 
 function paste(md = "") {
-  const images = memImageStore(), raised: string[] = [], inserted: string[] = [];
+  const images = memImageStore(), raised: string[] = [], inserted: string[] = [], copies: unknown[] = [];
   const here = { ekey: "2026-11-27", md: false, locked: false, inserting: (name: string): void => { inserted.push(name); } };
   const set = images.set.bind(images);
   const held: (() => void)[] = [];
@@ -17,9 +17,9 @@ function paste(md = "") {
   const p = picturePaste({
     where: () => ({ ekey: here.ekey, md: here.md }), locked: () => here.locked, decode: () => Promise.resolve(BYTES),
     place: () => ({ at: entryFile("2026-11-27"), md }), images,
-    insert: (name) => { here.inserting(name); }, raise: ((k: string) => { raised.push(k); }) as never,
+    insert: (name) => { here.inserting(name); }, raise: ((k: string, p?: { copy?: string }) => { raised.push(k); if (p?.copy) copies.push(p.copy); }) as never,
   });
-  return { p, images, raised, inserted, here, hold: () => { holding = true; }, release: () => { holding = false; held.splice(0).forEach((go) => go()); } };
+  return { p, images, raised, inserted, copies, here, hold: () => { holding = true; }, release: () => { holding = false; held.splice(0).forEach((go) => go()); } };
 }
 
 test("a picture pasted is stored under the next free name and put in the entry it was pasted into", async () => {
@@ -80,7 +80,7 @@ test("a picture that cannot be read says so, and the next paste is taken", async
   quiet.mockRestore();
 });
 
-test("a picture stored that cannot be put in says it had nowhere to land, and the next paste is taken", async () => {
+test("a picture stored that cannot be put in says it had nowhere to land, the error to copy, and the next paste is taken", async () => {
   const s = paste();
   const quiet = vi.spyOn(console, "error").mockImplementation(() => {});
   s.here.inserting = () => { throw new Error("no view"); };
@@ -89,6 +89,7 @@ test("a picture stored that cannot be put in says it had nowhere to land, and th
   s.p(file);
   await settle();
   expect(s.raised).toEqual(["pictureNowhere", "pictureNowhere"]);
+  expect(s.copies).toEqual(["Error: no view", "Error: no view"]);
   quiet.mockRestore();
 });
 

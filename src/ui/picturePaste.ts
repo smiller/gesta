@@ -41,7 +41,7 @@ const aimed = (d: PicturePasteDeps, aim: Aim): boolean => same(aim, d.where()) &
    (pin: picturePaste.test › a picture stored that cannot be put in) */
 function put(d: PicturePasteDeps, aim: Aim, name: string): void {
   if (!aimed(d, aim)) { d.raise("pictureNowhere"); return; }
-  try { d.insert(name); } catch (err) { console.error("picture not put in", err); d.raise("pictureNowhere"); }
+  try { d.insert(name); } catch (err) { console.error("picture not put in", err); d.raise("pictureNowhere", { copy: errText(err) }); }
 }
 function land(d: PicturePasteDeps, bytes: Uint8Array, aim: Aim): Promise<void> | void {
   if (!aimed(d, aim)) { d.raise("pictureNowhere"); return; }

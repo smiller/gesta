@@ -327,7 +327,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
   const shelvesPlace = (date: string, tag: string): boolean => date === NS_BOOK.key && tagParts(tag).name === SHELVES;
   function moveAsked(date: string, old: string, to: string, plan: MovePlan): boolean {
     const twinTitles = Object.keys(plan.twins).map((k) => firstHeading(layer.entryMd(k)) || tagParts(splitKey(k)[1]!).leaf);
-    return dialogs.confirm(moveConfirm({ date, tag: old, shown: shownName(date, old) }, to, { moved: Object.keys(plan.moves).length - 1, into: plan.into, twins: twinTitles }));
+    return dialogs.confirm(moveConfirm({ date, tag: old, shown: shownName(date, old) }, to, { moved: Object.keys(plan.moves).filter((k) => k !== entryKey(date, old)).length, into: plan.into, twins: twinTitles }));
   }
   function relocate(date: string, old: string, to: string, mode: Mode): Promise<void> {
     const from = entryKey(date, old);

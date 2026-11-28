@@ -81,7 +81,7 @@ export const ALERTS = {
   storeUnreadable: error("the store could not be read — reload", "The browser’s storage could not be read at launch; a click copies the error."),
   pictureNotSavedFull: error("picture not saved — storage full", "A pasted picture could not be stored: the browser’s storage is full."),
   pictureNotSaved: error("picture not saved", "A pasted picture could not be stored, for another reason; a click copies the error."),
-  pictureNowhere: error("the picture had nowhere to land — paste it again", "Another entry or the other view was opened while a pasted picture was being read."),
+  pictureNowhere: error("the picture had nowhere to land — paste it again", "Another entry or the other view was opened, or the entry locked, while a pasted picture was being read or stored; or it could not be put in, and a click copies the error."),
   pictureUnreadable: error("that picture couldn’t be read — try copying it as a PNG", "A pasted picture’s data could not be decoded."),
   lineNumbersNotSaved: error("line numbers not saved — storage full", "The choice in the Line numbering row (⌃⌘L opens it) could not be kept."),
   shortcutsNotSaved: error("shortcuts not saved — storage full", "Save in the shortcuts panel could not write. Resolved by the next save that works."),

@@ -521,13 +521,14 @@ describe("rename moves a page with its sub-entries", () => {
     expect(w.log.slice(-2)).toEqual(["open commonplace/Essays", "error couldn’t move — a picture named photo.jpg is there already in commonplace/Other"]);
     expect(w.pics["commonplace/Other/photo.jpg"]).toBe("theirs");
   });
-  it("a page never stored, typed into and moved before its save, moves: its first save is not a change to the plan", async () => {
+  it("a page never stored, typed into and moved before its save, moves: asked with its sub-entries counted, its first save is not a change to the plan", async () => {
     const w = await world({ at: ["commonplace", "Essays"], entries: { "commonplace/Essays/A": "a\n" } });
     w.typeUnsaved("new text\n");
     w.answer("commonplace/Letters", true);
     await w.life.rename();
-    expect(w.md("commonplace/Letters")).toBe("new text\n");
-    expect(w.md("commonplace/Letters/A")).toBe("a\n");
+    expect(w.asked[1]).toBe("Move the commonplace “Essays” and its 1 sub-entry to commonplace/Letters?");
+    expect([w.md("commonplace/Letters"), w.md("commonplace/Letters/A")]).toEqual(["new text\n", "a\n"]);
+    expect([w.md("commonplace/Essays"), w.md("commonplace/Essays/A")]).toEqual([null, null]);
   });
   it("a sub-entry landing while the pictures are listed refuses the move it was not asked on, and nothing is written", async () => {
     const w = await world({ at: ["commonplace", "Essays"], entries: { "commonplace/Essays": "e\n", "commonplace/Essays/A": "a\n" } });
