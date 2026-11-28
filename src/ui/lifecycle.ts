@@ -374,7 +374,10 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     r.moved = Object.keys(plan.moves).map((k) => movedOf(r, k));
     return r;
   }
-  const planShape = (p: MovePlan): string => JSON.stringify([Object.entries(p.moves).sort(), Object.entries(p.twins).sort(), p.into]);
+  /* the entry moved is left out: a page never stored is stored as the move
+     begins, between the two plans (pin: lifecycle.test › a page never
+     stored, typed into and moved) */
+  const planShape = (p: MovePlan, from: string): string => JSON.stringify([Object.entries(p.moves).filter(([k]) => k !== from).sort(), Object.entries(p.twins).sort(), p.into]);
   /* typed while the pictures were listed: kept under the old name (pin:
      lifecycle.test › a move refused once the pictures are listed) */
   function refusedUnderWay(m: Move, hand: HandOver, why: string): Promise<void> {
@@ -389,7 +392,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     return deps.pictureKeys().catch(() => [] as string[]).then((stored) => {
       const plan = movePlan(layer.cache, m.from, m.to);
       if ("refuse" in plan) return refusedUnderWay(m, hand, alertWords(plan.refuse));
-      if (planShape(plan) !== planShape(m.asked)) return refusedUnderWay(m, hand, "the entries changed meanwhile, so nothing was moved");
+      if (planShape(plan, m.from) !== planShape(m.asked, m.from)) return refusedUnderWay(m, hand, "the entries changed meanwhile, so nothing was moved");
       const r = relocation(m, plan, hand, stored);
       return carryPictures(r.moved, r.copied).then(
         (carried) => ("clash" in carried ? moveRefused(r, carried.clash) : writeMoved(r, carried)),

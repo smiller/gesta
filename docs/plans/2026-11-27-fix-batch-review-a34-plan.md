@@ -60,3 +60,20 @@
   health 10 after splitting the paste's factory and sharing the tests'
   setup.
 - 22:41 `npm run verify` green, the whole Helium verdict played: corner, order, bridge, reader ok, the approved run unchanged.
+
+## The second confirmation pass (A38)
+
+- 23:02 `/code-review high 5b81d22..f80adf5`, asked; cost 87,664 tokens
+  (input 2, cache creation 280, cache read 84,053, output 3,329), from the
+  last message of its transcript. Four findings, all fixed:
+  1. MEASURED by the reviewer's probe: a page never stored, typed into and
+     moved within the save's wait, was refused as "the entries changed
+     meanwhile": its first save, as the move begins, added it to the second
+     plan. The entry moved is left out of the comparison.
+  2. A picture stored that could not be put in said "not saved": it says it
+     had nowhere to land.
+  3. The paste's lock had no test: one for a paste on a locked entry. The
+     read-only half is session.ts wiring, which no test reaches.
+  4. The aim comment's lock half was unpinned: pinned.
+- 23:0x 1 and 2 each a failing test first; health 10.
+- 23:07 `npm run verify` green, the whole Helium verdict played: corner, order, bridge, reader ok, the approved run unchanged.

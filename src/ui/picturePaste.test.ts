@@ -80,7 +80,7 @@ test("a picture that cannot be read says so, and the next paste is taken", async
   quiet.mockRestore();
 });
 
-test("a paste that fails once the picture is read says it was not saved, and the next paste is taken", async () => {
+test("a picture stored that cannot be put in says it had nowhere to land, and the next paste is taken", async () => {
   const s = paste();
   const quiet = vi.spyOn(console, "error").mockImplementation(() => {});
   s.here.inserting = () => { throw new Error("no view"); };
@@ -88,6 +88,14 @@ test("a paste that fails once the picture is read says it was not saved, and the
   await settle();
   s.p(file);
   await settle();
-  expect(s.raised).toEqual(["pictureNotSaved", "pictureNotSaved"]);
+  expect(s.raised).toEqual(["pictureNowhere", "pictureNowhere"]);
   quiet.mockRestore();
+});
+
+test("a paste on a locked entry stores nothing, puts nothing in and says nothing", async () => {
+  const s = paste();
+  s.here.locked = true;
+  s.p(file);
+  await settle();
+  expect([await s.images.keys(), s.inserted, s.raised]).toEqual([[], [], []]);
 });

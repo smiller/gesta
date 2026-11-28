@@ -31,14 +31,17 @@ function unreadable(d: PicturePasteDeps, err: unknown): void {
 }
 /* WHERE A PICTURE WAS AIMED is checked when its bytes are ready and again
    once they are stored: a reader can navigate, or the entry be locked,
-   meanwhile. Every way it
-   cannot land sticks: the gesture is spent, and a picture stored is left
-   unused (pin: picture › a picture pasted, then another entry at once)
-   (pin: picturePaste.test › another entry opened while the picture is
-   stored) */
+   meanwhile. Every way it cannot land sticks: the gesture is spent, and a
+   picture stored is left unused (pin: picture › a picture pasted, then
+   another entry at once) (pin: picturePaste.test › another entry opened
+   while the picture is stored) (pin: picturePaste.test › the entry locked
+   while the picture is stored) */
 const aimed = (d: PicturePasteDeps, aim: Aim): boolean => same(aim, d.where()) && !d.locked();
+/* a picture stored that cannot be put in was saved: it had nowhere to land
+   (pin: picturePaste.test › a picture stored that cannot be put in) */
 function put(d: PicturePasteDeps, aim: Aim, name: string): void {
-  if (aimed(d, aim)) d.insert(name); else d.raise("pictureNowhere");
+  if (!aimed(d, aim)) { d.raise("pictureNowhere"); return; }
+  try { d.insert(name); } catch (err) { console.error("picture not put in", err); d.raise("pictureNowhere"); }
 }
 function land(d: PicturePasteDeps, bytes: Uint8Array, aim: Aim): Promise<void> | void {
   if (!aimed(d, aim)) { d.raise("pictureNowhere"); return; }

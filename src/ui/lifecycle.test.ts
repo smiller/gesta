@@ -112,11 +112,12 @@ async function world(o: Opts) {
   s.st = EditorState.create({ doc: parseMarkdown(o.md ?? (o.entries ?? {})[here(s)] ?? "") });
   const view = { get state() { return s.st; }, dispatch: (tr: Transaction) => { log.push("edit"); s.st = s.st.apply(tr); } };
   const pics: Record<string, string> = { ...(o.pics ?? {}) }, listing: { then: (() => void) | null } = { then: null };
+  const session = fakeSession(log, s, layer), save = session.save as EntrySave;
   const life = lifecycle({
     layer, journal: journalOf(layer.cache),
     shown: (): Shown | null => (s.dropped ? null : !o.noView ? { mode: "html", view: view as unknown as EditorView } : o.markdown ? { mode: "markdown", replace: REPLACE, spanAt: () => (o.markdownHeading ? "heading" : null) } : null),
     caretInEntry: () => !o.noCaret,
-    session: fakeSession(log, s, layer), dialogs: fakeDialogs(log, asked, answers),
+    session, dialogs: fakeDialogs(log, asked, answers),
     ...fakePictures(o, log, pics, listing), kept: fakeKept(log), ui: fakeUi(log),
   });
   return {
@@ -127,6 +128,7 @@ async function world(o: Opts) {
     doc: () => s.st.doc,
     select: (from: number, to = from) => { s.st = s.st.apply(s.st.tr.setSelection(TextSelection.create(s.st.doc, from, to))); },
     typeMeanwhile: (md: string) => { s.typed = md; },
+    typeUnsaved: (md: string) => { s.typed = md; save.edited(); },
     onFlush: (f: () => void) => { s.onFlush = f; },
     onSet: (f: (key: string) => void) => { s.onSet = f; },
     edit: (f: (st: EditorState) => Transaction) => { s.st = s.st.apply(f(s.st)); },
@@ -518,6 +520,14 @@ describe("rename moves a page with its sub-entries", () => {
     expect(w.log.filter((x) => /^(set|del|pic) /.test(x))).toEqual([]);
     expect(w.log.slice(-2)).toEqual(["open commonplace/Essays", "error couldn’t move — a picture named photo.jpg is there already in commonplace/Other"]);
     expect(w.pics["commonplace/Other/photo.jpg"]).toBe("theirs");
+  });
+  it("a page never stored, typed into and moved before its save, moves: its first save is not a change to the plan", async () => {
+    const w = await world({ at: ["commonplace", "Essays"], entries: { "commonplace/Essays/A": "a\n" } });
+    w.typeUnsaved("new text\n");
+    w.answer("commonplace/Letters", true);
+    await w.life.rename();
+    expect(w.md("commonplace/Letters")).toBe("new text\n");
+    expect(w.md("commonplace/Letters/A")).toBe("a\n");
   });
   it("a sub-entry landing while the pictures are listed refuses the move it was not asked on, and nothing is written", async () => {
     const w = await world({ at: ["commonplace", "Essays"], entries: { "commonplace/Essays": "e\n", "commonplace/Essays/A": "a\n" } });
