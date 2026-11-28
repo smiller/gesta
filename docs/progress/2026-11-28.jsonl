@@ -16,3 +16,7 @@
 {"at":"2026-11-28T07:19","ev":"carry","id":"A38","list":"A","title":"Confirmation pass over the A36 fixes, 5b81d22..f80adf5","detail":"Asked: 'confirmation pass', offered at 75,272 tokens since the A36 fixes changed behaviour. Why: REVIEWS, BY BATCH, the confirmation pass. Done when: /code-review high 5b81d22..f80adf5 has run, its findings fixed in one commit or dismissed, its cost recorded.","started":{"at":"2026-11-27T23:02","approx":false}}
 {"at":"2026-11-28T07:19","ev":"carry","id":"A39","list":"A","title":"The batch review: /code-review at HIGH over 5b81d22..f80adf5","detail":"Asked: /code-review high 5b81d22..f80adf5, typed at 23:02. Why: CLAUDE.md's batch review, owed when a batch touches a DOM seam or closes a phase. Done when: its findings land in one fix commit and its cost is recorded in the plan.","started":{"at":"2026-11-27T23:02","approx":false}}
 {"at":"2026-11-28T07:19","ev":"done","id":"A38","commits":["e042d6d"]}
+{"at":"2026-11-28T07:20","ev":"drop","id":"A33","note":"duplicate of A32, added by the prompt hook"}
+{"at":"2026-11-28T07:20","ev":"drop","id":"A35","note":"duplicate of A34, added by the prompt hook"}
+{"at":"2026-11-28T07:20","ev":"drop","id":"A37","note":"duplicate of A36, added by the prompt hook"}
+{"at":"2026-11-28T07:20","ev":"drop","id":"A39","note":"duplicate of A38, added by the prompt hook"}
