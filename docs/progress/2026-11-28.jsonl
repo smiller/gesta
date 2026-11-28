@@ -25,3 +25,4 @@
 {"at":"2026-11-28T07:34","ev":"start","id":"A41"}
 {"at":"2026-11-28T07:34","ev":"start","id":"A40"}
 {"at":"2026-11-28T07:40","ev":"done","id":"A40","commits":["13a2aa8"]}
+{"at":"2026-11-28T07:40","ev":"drop","id":"A41","note":"duplicate of A40, added by the prompt hook"}
