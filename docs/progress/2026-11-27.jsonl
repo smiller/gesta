@@ -57,3 +57,7 @@
 {"at":"2026-11-27T21:49","ev":"done","id":"S35","commits":["a70131f"]}
 {"at":"2026-11-27T21:50","ev":"done","id":"A32.1","commits":["92c549c"]}
 {"at":"2026-11-27T21:51","ev":"add","id":"A34","list":"A","title":"Batch review 929c4cf..d6176f0: the A32.1 builds, S35","detail":"Owed: the A32.1 builds touch DOM seams (main.ts, session.ts). Why: REVIEWS, BY BATCH; no further architecture run, the batch being that run's own builds. Done when: /code-review high 929c4cf..d6176f0 has run, its findings fixed in one commit, its cost recorded."}
+{"at":"2026-11-27T21:59","ev":"add","id":"A35","list":"A","title":"The batch review: /code-review at HIGH over 929c4cf..d6176f0","detail":"Asked: /code-review high 929c4cf..d6176f0, typed at 21:59. Why: CLAUDE.md's batch review, owed when a batch touches a DOM seam or closes a phase. Done when: its findings land in one fix commit and its cost is recorded in the plan."}
+{"at":"2026-11-27T21:59","ev":"start","id":"A35"}
+{"at":"2026-11-27T21:59","ev":"start","id":"A34"}
+{"at":"2026-11-27T22:21","ev":"done","id":"A34","commits":["7f54037"]}
